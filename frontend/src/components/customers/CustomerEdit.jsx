@@ -68,6 +68,7 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
   const [success, setSuccess] = useState(false);
   const [originalRoleId, setOriginalRoleId] = useState(null);
   const [hasActiveAccount, setHasActiveAccount] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const { 
     register, 
@@ -100,6 +101,7 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
     const fetchCustomer = async () => {
       setIsLoading(true);
       setError(null);
+      setIsAdmin(false);
 
       if (!id_user) {
         setError('ID de usuario no proporcionado');
@@ -130,6 +132,13 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
               : activeAccount.DIM_RoleId;
 
             setOriginalRoleId(capitalizedRole || null);
+            
+            // Verificar si el rol es administrativo (delegado, comitiva, subdelegado)
+            const adminRoles = ['delegado', 'comitiva', 'subdelegado'];
+            if (activeAccount.DIM_RoleId && 
+                adminRoles.includes(activeAccount.DIM_RoleId.toLowerCase())) {
+              setIsAdmin(true);
+            }
           } else {
             setHasActiveAccount(false);
             setOriginalRoleId(null);
@@ -181,9 +190,10 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
         fechaCuenta: hasActiveAccount ? fechaActual : false,
         EstadoPersonaOriginal: hasActiveAccount ? originalRoleId.toLowerCase() : false
       };
-      console.log(payload);
+      
       const response = await EditarUsuario(payload);
       
+      // Verificar la respuesta del backend
       if (response && response.success) {
         if (onUpdate) {
           onUpdate(response.data);
@@ -193,9 +203,14 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
           onClose();
         }, 2000);
       } else {
-        throw new Error(response.message || "Error al actualizar el usuario");
+        // Manejar errores del backend
+        const errorMessage = response?.message || 
+                            response?.data?.message || 
+                            "Error al actualizar el usuario";
+        throw new Error(errorMessage);
       }
     } catch (err) {
+      // Mostrar mensaje de error específico del backend
       setError(err.message || "Error al guardar los cambios");
     } finally {
       setIsSubmitting(false);
@@ -232,6 +247,27 @@ return (
             {error}
           </div>
         ) : customer ? (
+          isAdmin ? (
+            <div>
+              <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg">
+                <h3 className="text-lg font-bold text-yellow-800 dark:text-yellow-100 mb-2">
+                  Usuario Administrador
+                </h3>
+                <p className="text-yellow-700 dark:text-yellow-200">
+                  No se pueden modificar los datos de un usuario administrador (delegado, comitiva, subdelegado).
+                </p>
+              </div>
+              
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+                >
+                  Salir
+                </button>
+              </div>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit(onSubmit)}>
             {success && (
               <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-100 rounded-lg">
@@ -242,7 +278,6 @@ return (
             <div className="mb-6">
               <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-100">Información del Cliente</h3>
               
-              {/* MEJORA VISUAL: Campos de solo lectura con mejor formato */}
               <div className="space-y-4 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -259,7 +294,6 @@ return (
                   </div>
                 </div>
                 
-                {/* Nombre completo como información estática */}
                 <div>
                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nombre Completo</label>
                   <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
@@ -377,6 +411,7 @@ return (
               </button>
             </div>
           </form>
+          )
         ) : (
           <div className="p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-100 rounded-lg">
             No se encontraron datos del cliente

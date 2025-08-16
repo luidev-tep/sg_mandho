@@ -40,8 +40,7 @@ class Role:
             - Roles de administrador no pueden crearse desde interfaz
         """
         is_vaild, dim_role_data = insertar_role(role_data["status"])
-
-        print(f"Rol insertado: {dim_role_data}")
+        
         print(f"es valido : {is_vaild}")
         if is_vaild:
             return True, dim_role_data,"Rol obtendido exitosamente"

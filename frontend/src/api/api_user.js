@@ -173,44 +173,56 @@ export const MostrarUsuarios = (data) => {
 
 
 export const EditarUsuario = async (data) => {
-    //Validacion para ver si crear una nueva cuenta o no modificar nada
-    const data_account = {
-        status: data.estadoPersona,
-        customer_id: data.DIM_CustomerId,
-        start_date: data.fechaCuenta,
-        end_date: "",
-        orginal_status: data.EstadoPersonaOriginal,
-    };
+    try {
+        // Primero actualizar el usuario
+        const updateResponse = await api.post('update_user/', data, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
 
-    const shouldCreateAccount = await validate_edit_account(data_account);
-    if (shouldCreateAccount) {
-        console.log("hubo cuenta");
-        crearCuenta(data_account);
-    }
-    else {
-        console.log("no hubo cuenta");
-    }
-    
-    return api.post('update_user/', data, {
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+        if (updateResponse.data.status !== 'success') {
+            const errorMessage = updateResponse.data.message || 'Respuesta inesperada del backend al actualizar usuario';
+            throw new Error(errorMessage);
         }
-    })
-    .then(response => {
-        if (response.data.status === 'success') {
-            return {
-                data: normalizeUserData(response.data.body),
-                success: true
-            };
+
+        // Si la actualización fue exitosa, ahora validar y crear cuenta si es necesario
+        const data_account = {
+            status: data.estadoPersona,
+            customer_id: data.DIM_CustomerId,
+            start_date: data.fechaCuenta,
+            end_date: "",
+            orginal_status: data.EstadoPersonaOriginal,
+        };
+
+        const shouldCreateAccount = await validate_edit_account(data_account);
+        if (shouldCreateAccount) {
+            console.log("Actualizando cuenta");
+            await crearCuenta(data_account);
         } else {
-            throw new Error(response.data.message || 'Respuesta inesperada del backend');
+            console.log("No se requiere actualización de cuenta");
         }
-    })
-    .catch(error => {
-        console.error("Error en EditarUsuario:", error);
-        throw error;
-    });
+
+        return {
+            data: normalizeUserData(updateResponse.data.body),
+            success: true
+        };
+    } catch (error) {
+        console.error("Error en EditarUsuario:", {
+            error: error,
+            responseData: error.response?.data,
+            status: error.response?.status
+        });
+        
+        const backendMessage = error.response?.data?.message;
+        const errorMessage = backendMessage || error.message || "Error al actualizar el usuario";
+        
+        return {
+            success: false,
+            message: errorMessage
+        };
+    }
 }
 // API.js
 export const DesactivarUsuario = (DIM_CustomerId) => {
@@ -261,4 +273,43 @@ const normalizeUserData = (userData) => {
         street: userData.CustomerAddress,
         number_ext: userData.CustomerNumberExt
     };
+};
+
+export const MostrarAdmin = () => {
+    console.log("MostrarAdmin Hola dese aqui el admin");
+    console.log("Esta api aun no es funcional");
+    const items = [
+    // La informacion proveniente del backend deberia venir en este formato
+    [
+      {
+        id: 0,
+        name: 'Carlos Martínez',
+        role: 'delegado',
+        details: 'buenavista Av.20 noviembre s/n',
+        date: '2025-05-01',
+      },
+    ],
+    // Grupo 2 (Subdelegados) - 1 por manzana (6 en total)
+    [
+      {
+        id: 2,
+        name: 'Pedro Sánchez',
+        role: 'subdelegado',
+        details: 'tepetate Av.20 noviembre s/n',
+        date: '2025-05-01',
+      },
+    ],
+    // Grupo 3 (Comotivas personal) - 5 en total
+    [
+      {
+        id: 7,
+        name: 'Sofía Mendoza',
+        role: 'comotiva',
+        details: 'buenavista Av.20 noviembre s/n',
+        date: '2025-05-01',
+      },
+    ],
+  ];
+
+  return items;
 };

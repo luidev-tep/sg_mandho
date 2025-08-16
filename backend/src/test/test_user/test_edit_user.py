@@ -2,10 +2,12 @@ from src.users.user import UserCrud
 
 def test_edit_user() -> None:
     """Funcion para editar si es que se esta editando un usuario correctamente
+
+    Pasooo
     """
     handler = UserCrud()
     user_json = {
-        "DIM_CustomerId": "74ca90c2-5657-5eef",
+        "DIM_CustomerId": "ed37cb83-f080-5e41",
         "CustomerAddress": "",
         "CustomerFraction": "garambullo",
         "CustomerNumberExt": '08'
