@@ -16,7 +16,7 @@ from src.users.repository.edit import edit_user
 #base_de_datos = BdPrueba()
 
 #importaciones de eliminar 
-from src.users.repository.delete import set_defuncion, defuncion_validation
+from src.users.repository.delete import set_defuncion, defuncion_validation, is_admin
 from src.accounts.account import AccountCrud
 class UserCrud:
     """ 
@@ -60,6 +60,8 @@ class UserCrud:
                 "CustomerFraction": user_json.get("manzana") or "s/n",
                 "CustomerNumberExt": user_json.get("numero_ext") or "s/n"
             }
+
+            
             persona = User(**user_data)
             
             #BANDERA DE VALIDACION AQUI
@@ -182,11 +184,18 @@ class UserCrud:
         
         format_data = to_edit(data_edit)
         
-        isvalid = edit_user(format_data)
 
+        isvalid = edit_user(format_data)
+        
         if not isvalid:
             return 400, "No se pudo actualizar el registro", {}
         
+        #SE MODIFICO AQUI. eSTA VALIDACIONES DEBRAS REVISARSE EN EL FUTURO
+        if is_admin(data_edit["DIM_CustomerId"]):
+            return 403, "No se pueden editar los datos de un administrador", {}
+        
+        if not defuncion_validation(data_edit["DIM_CustomerId"]): #Para verificar si el usuario ya esta marcado como defuncion
+            return 403, "No se pueden editar los datos de un usuario fallecido", {}
         #Obtener el nuevo ususario para regresarlo en la respuesta
         new_user = get_user(data_edit["DIM_CustomerId"])
 
@@ -213,12 +222,17 @@ class UserCrud:
         if not result:
             return 400, message, {}
         
+        #Se debe agregar un metodo para poder hacer defunciones de administrador controladas. Por el momento si se trata de eliminar un usuario admin este no podra ser 
+        #defuncionado
+        if is_admin(defuncion_data["DIM_CustomerId"]):
+            return 403, "Se nesecita permiso de un administrador", {}
         
         if not defuncion_validation(defuncion_data["DIM_CustomerId"]): #Para verificar si el usuario ya esta marcado como defuncion
-            return 400, "El usuario ya se encuentra como defuncion", {}
+            return 403, "El usuario ya se encuentra como defuncion", {}
         
         set_defuncion(defuncion_data["DIM_CustomerId"])
         
+        #SE MODIFICO AQUI. eSTA VALIDACIONES DEBRAS REVISARSE EN EL FUTURO
         #Modificar la cuenta del usuario, para desactivarlo
         handrer_account.desactivate_account(defuncion_data["DIM_CustomerId"])
         

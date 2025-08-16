@@ -1,44 +1,40 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
-function JobListItem(props) {
+function JobListItem({ id, name, role, details, date }) {
   return (
     <div
-      className={`bg-white dark:bg-gray-800 shadow-xs rounded-xl px-5 py-4`}
+      className="bg-white dark:bg-gray-800 shadow-xs rounded-xl px-5 py-4 border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-colors duration-200"
     >
-      <div className="md:flex justify-between items-center space-y-4 md:space-y-0 space-x-2">
+      <div className="md:flex justify-between items-center space-y-3 md:space-y-0">
         {/* Left side */}
-        <div className="flex items-start space-x-3 md:space-x-4">
-          <div className="w-9 h-9 shrink-0 mt-1">
-            <img className="w-9 h-9 rounded-full" src={props.image} width="36" height="36" alt={props.company} />
+        <div className="flex items-start space-x-4">
+          <div className="w-10 h-10 shrink-0 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+            <span className="text-lg font-medium text-gray-500 dark:text-gray-300">
+              {name.charAt(0).toUpperCase()}
+            </span>
           </div>
-            <div>
-              <span className="font-semibold text-gray-800 dark:text-gray-100">
-                {props.role}
-              </span>
-              <div className="text-sm">{props.details}</div>
-            </div>
+          <div>
+            <h3 className="font-bold text-gray-800 dark:text-gray-100">
+              {name}
+            </h3>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              {role}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {details}
+            </p>
+          </div>
         </div>
+
         {/* Right side */}
-        <div className="flex items-center space-x-4 pl-10 md:pl-0">
-          <div className="text-sm text-gray-500 dark:text-gray-400 italic whitespace-nowrap">{props.date}</div>
-          {props.type && (
-            <div
-              className={`text-xs inline-flex font-medium rounded-full text-center px-2.5 py-1 ${
-                props.type === 'Featured'
-                  ? 'bg-yellow-500/20 text-yellow-700'
-                  : 'bg-green-500/20 text-green-700'
-              }`}
-            >
-              {props.type}
-            </div>
-          )}
-          <button className={`${props.fav ? 'text-yellow-500' : 'text-gray-300 dark:text-gray-600 hover:text-gray-400 dark:hover:text-gray-500'}`}>
-            <span className="sr-only">Bookmark</span>
-            <svg className="w-3 h-4 fill-current" width="12" height="16" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2 0C.9 0 0 .9 0 2v14l6-3 6 3V2c0-1.1-.9-2-2-2H2Z" />
-            </svg>
-          </button>
+        <div className="flex items-center space-x-4 pl-14 md:pl-0 mt-3 md:mt-0">
+          <div className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {new Date(date).toLocaleDateString('es-MX', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })}
+          </div>
         </div>
       </div>
     </div>

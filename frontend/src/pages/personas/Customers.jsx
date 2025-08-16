@@ -1,6 +1,5 @@
 // Customer interfaz principal
-// Customers.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../../partials/SideBar';
 import Header from '../../partials/Header';
 import DateSelect from '../../components/DateSelect';
@@ -8,15 +7,11 @@ import FilterButton from '../../components/DropdownFilter';
 import CustomersTable from '../../partials/customers/CustomersTable';
 import { Link } from 'react-router-dom';
 
-function Customers() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [filters, setFilters] = useState({});
-
 
   /**
  * Componente principal para la gestión de personas (Clientes/Usuarios).
  * 
- * - Maneja la apertura/cierre de la barra lateral con `sidebarOpen`.
+ * - Maneja la aper  tura/cierre de la barra lateral con `sidebarOpen`.
  * - Controla los ítems seleccionados en la tabla mediante `selectedItems`.
  * - Mantiene un objeto `filters` que contiene filtros activos combinados
  *   de fecha y categorías para filtrar los datos mostrados.
@@ -65,6 +60,10 @@ function Customers() {
  * - Área principal con título, filtros y botón para agregar usuario.
  * - Tabla con los datos filtrados y paginación.
  */
+function Customers() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [filters, setFilters] = useState({});
+
 
   const handleDateFilterChange = (dateValue) => {
     setFilters(prev => {
@@ -79,6 +78,14 @@ function Customers() {
       return newFilters;
     });
   };
+
+    // Limpiar búsqueda al cambiar de vista
+  useEffect(() => {
+    // Limpiar búsqueda al desmontar el componente
+    return () => {
+      window.dispatchEvent(new CustomEvent('globalSearch', { detail: '' }));
+    };
+  }, []);
 
   const handleCategoryFilterChange = (categoryFilters) => {
     setFilters(prev => {

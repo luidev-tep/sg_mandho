@@ -53,3 +53,28 @@ def defuncion_validation(DIM_CustomerId) -> bool:
         return False
     finally:
         handler_coencction.close_conexion()
+    
+def is_admin(DIM_CustomerId) -> bool:
+    """Funcion la cual se encarga de verificar si el usuario a marcqr como fallecido es administrador"""
+    handler_connection = Conexion()
+    try:
+        query = """SELECT r.RoleType 
+                    from DIM_Role as r, DIM_Account as a
+                    where r.DIM_RoleId = a.DIM_RoleId AND
+                    a.DIM_CustomerId = ?"""
+        
+        handler_connection.cursor.execute(query, (DIM_CustomerId,))
+        tipo_rol = handler_connection.cursor.fetchone()
+
+        if tipo_rol is None:
+            print("No se encontro informacion en la consulta")
+            return False
+        elif tipo_rol[0] == "administrador":
+            return True
+        else:
+            return False
+    except sqlite3.Error as e:
+        print(f"Error al verificar la informacion de la persona: {e}")
+        return False
+    finally:
+        handler_connection.close_conexion()
