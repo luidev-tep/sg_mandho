@@ -184,12 +184,6 @@ class UserCrud:
         
         format_data = to_edit(data_edit)
         
-
-        isvalid = edit_user(format_data)
-        
-        if not isvalid:
-            return 400, "No se pudo actualizar el registro", {}
-        
         #SE MODIFICO AQUI. eSTA VALIDACIONES DEBRAS REVISARSE EN EL FUTURO
         if is_admin(data_edit["DIM_CustomerId"]):
             return 403, "No se pueden editar los datos de un administrador", {}
@@ -198,6 +192,13 @@ class UserCrud:
             return 403, "No se pueden editar los datos de un usuario fallecido", {}
         #Obtener el nuevo ususario para regresarlo en la respuesta
         new_user = get_user(data_edit["DIM_CustomerId"])
+        
+        #Se movio la edicion de ususario hasta que pase todas las validaciones
+        isvalid = edit_user(format_data)
+        
+        if not isvalid:
+            return 400, "No se pudo actualizar el registro", {}
+        
 
         return 201, "El usuario se ha actualizado correctamente", new_user
         

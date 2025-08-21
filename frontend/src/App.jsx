@@ -27,7 +27,7 @@ import PaymentStatus from './pages/payments/PaymentStatus.jsx';
 
 //Cuentas modulo
 import Cuenta from './pages/cuentas/Cuenta.jsx';
-import mosntrarCuentas from './pages/cuentas/MostrarCuentas.jsx';
+
 
 //import Navigation from './components/Navigation.jsx';
 
@@ -73,7 +73,6 @@ function App() {
           <Route path="/personas/registro" element={<UserRegister />} />
           <Route path="/personas/usuarios" element={<Customers />} />
 
-          <Route path="/cuentas/mostrar" element={<mosntrarCuentas />} />
           <Route path="/Cuentas/Cuenta" element={<Cuenta />} />
 
           {/* Para poder acceder a crear un pago se accede a este componente dinamico */}
