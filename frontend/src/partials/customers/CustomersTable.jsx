@@ -168,31 +168,32 @@ function CustomersTable({ filters }) {
                 {/* Columna Imagen */}
                 <th className="px-3 py-3 whitespace-nowrap w-10">
                   <div className="flex items-center justify-center">
-                    <p>Imagen</p>
+                    <p className="hidden md:block">Imagen</p>
+                    <p className="md:hidden">Img</p>
                   </div>
                 </th>
 
                 {/* Resto de columnas */}
-                <th className="px-4 py-3 whitespace-nowrap text-left min-w-[110px]">
+                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
                   <div className="font-semibold">Nombre</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-left min-w-[110px]">
+                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left hidden md:table-cell">
                   <div className="font-semibold">Apellidos</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-left min-w-[90px]">
-                  <div className="font-semibold">Fecha de nacimiento</div>
+                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-center">
+                  <div className="font-semibold hidden md:block">Manzana</div>
+                  <div className="font-semibold md:hidden">Mz</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-center min-w-[70px]">
-                  <div className="font-semibold">Manzana</div>
-                </th>
-                <th className="px-4 py-3 whitespace-nowrap text-center min-w-[90px]">
+                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-center hidden lg:table-cell">
                   <div className="font-semibold">Dirección</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-left min-w-[90px]">
-                  <div className="font-semibold">Fecha de Alta</div>
+                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
+                  <div className="font-semibold hidden md:block">Fecha nacimiento</div>
+                  <div className="font-semibold md:hidden">Nac.</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap text-left min-w-[150px]">
-                  <div className="font-semibold">Fecha Defunción</div>
+                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
+                  <div className="font-semibold hidden md:block">Fecha Defunción</div>
+                  <div className="font-semibold md:hidden">Def.</div>
                 </th>
                 <th className="px-2 py-3 whitespace-nowrap w-20 text-center">
                   <span className="font-semibold">Acciones</span>
@@ -212,7 +213,6 @@ function CustomersTable({ filters }) {
                   birth_date={customer.date_of_birth}
                   manzana={customer.manzana}
                   address={customer.street + ' ' + customer.number_ext}
-                  date_of_start={customer.date_user_start}
                   date_of_end={customer.date_user_end}
                   handleClick={handleClick}
                   isChecked={isCheck.includes(customer.id_user)}

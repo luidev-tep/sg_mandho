@@ -70,27 +70,20 @@ function SearchDropdown({
             ref={searchInput}
             className="w-full border-0 px-4 py-3 focus:ring-0 focus:outline-none dark:bg-gray-800 dark:text-gray-100"
             type="search"
-            placeholder="Buscar (mínimo 3 caracteres)..."
+            placeholder="Buscar (Escribe para empezar a buscar)..."
             value={searchTerm}
             onChange={handleSearchChange}
           />
-          <button
-            type="button"
-            className="absolute right-0 top-0 mt-3 mr-4 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
-            onClick={() => {
-              setSearchTerm('');
-              window.dispatchEvent(new CustomEvent('globalSearch', { detail: '' }));
-            }}
-          >
-            <span className="sr-only">Limpiar</span>
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 16 16">
-              <path d="M7.95 6.536l4.242-4.243a1 1 0 111.415 1.414L9.364 7.95l4.243 4.242a1 1 0 11-1.415 1.415L7.95 9.364l-4.243 4.243a1 1 0 01-1.414-1.415L6.536 7.95 2.293 3.707a1 1 0 011.414-1.414L7.95 6.536z" />
+          <div className="absolute right-0 top-0 mt-3 mr-4 flex items-center text-gray-400">
+            <svg className="w-4 h-4 fill-current mr-1" viewBox="0 0 16 16">
+              <path d="M7 14c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7zM7 2C4.243 2 2 4.243 2 7s2.243 5 5 5 5-2.243 5-5-2.243-5-5-5zM15.707 14.293L13.314 11.9a8.019 8.019 0 01-1.414 1.414l2.393 2.393a.997.997 0 001.414 0 .999.999 0 000-1.414z" />
             </svg>
-          </button>
+            <span className="text-sm">Buscar</span>
+          </div>
         </div>
         {searchTerm.length > 0 && searchTerm.length < 3 && (
           <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
-            Escribe al menos 3 caracteres...
+            Escribe para empezar a buscar ... 
           </div>
         )}
         {searchTerm.length >= 3 && (

@@ -46,6 +46,7 @@ export const formatDate = (dateString) => {
  * @returns {Promise<object>} - Promesa que se resuelve con la respuesta del servidor
  * @throws {Error} - Si ocurre algún error durante la creación
  */
+// Codigo de api - Corrección en el manejo de errores
 export const crearCuenta = async (data) => {
   try {
     // Validación básica de los datos requeridos
@@ -64,7 +65,11 @@ export const crearCuenta = async (data) => {
       data: response.data
     };
   } catch (err) {
-    console.error('Error al crear cuenta:', err);
+    console.error('Error al crear cuenta:', {
+      error: err,
+      responseData: err.response?.data,
+      status: err.response?.status
+    });
     
     // Mejor manejo de errores para el frontend
     const errorResponse = {

@@ -16,6 +16,9 @@ from src.accounts.services.validate import convertir_a_formato_legible, validate
 #importacion de roles
 from src.dim_roles.role import Role
 
+#importacion de validaciones para saber si es administrador o usuario eliminado
+from src.users.repository.delete import is_admin, defuncion_validation
+
 #Manejadro de los roles para cuenta, ya que es a donde esta asociado
 handler_role = Role()
 
@@ -48,6 +51,14 @@ class AccountCrud():
         resultado, mensaje = validate_data(account_json,campos, tipo_campos, "account")
         
         if resultado:
+            #SE MODIFICO AQUI. eSTA VALIDACIONES DEBRAS REVISARSE EN EL FUTURO
+            if is_admin(account_json["customer_id"]):
+                return 403, "No se pueden editar los datos de un administrador"
+            
+            if not defuncion_validation(account_json["customer_id"]): #Para verificar si el usuario ya esta marcado como defuncion
+                return 403, "No se pueden editar los datos de un usuario fallecido"
+            
+            #Obtener el nuevo ususario para regresarlo en la respuesta
             #Creamos la instancia de clases que se ingresaran a la bd
             dim_date = DIM_DATE()
             
@@ -66,7 +77,7 @@ class AccountCrud():
             
             #Validaciones para ver si la cuenta debe ser activa u inactiva
             status_name = estado.get_status_id("","account")
-
+            
             is_active, Status, EndDate = validate_status(account_json["status"])  
 
             #En caso de no ser activas las variables se asignan como desactivadas
@@ -74,8 +85,8 @@ class AccountCrud():
                 status_id = Status
                 account_json["end_date"] = EndDate
             else:
-
                 status_id = status_name
+
             if estado and dim_date and valido:
                 
                 account_data = {
@@ -93,14 +104,14 @@ class AccountCrud():
                 cuenta = DIM_Account(**account_data)
                 
                 request, message = insert(cuenta)
-
                 if request:
                     mensaje = "Cuenta creada con exito"
                     return 200, mensaje
                 else:
                     return 501, f"Error inesperado: {message}"
             else:
-                print("Termino por que estado, o dim_date o valido es falso")
+                mensaje = "Termino por que estado no es activo, o dim_date no correcto o no es valido"
+                print(mensaje)
                 return 501, mensaje
         else:
             return 400, mensaje

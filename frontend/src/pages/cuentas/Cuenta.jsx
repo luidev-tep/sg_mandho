@@ -1,3 +1,4 @@
+// Codigo de cuenta - Corrección en el manejo de errores
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -45,12 +46,7 @@ function Cart() {
   };
 
   const getErrorMessage = (error) => {
-    if (!error.response) return 'Error de conexión';
-    switch(error.response.status) {
-      case 400: return error.response.data?.message || 'Datos inválidos';
-      case 500: return 'Error interno del servidor';
-      default: return 'Error al crear la cuenta';
-    }
+    return error.message || 'Error de conexión';
   };
 
   const onSubmit = async (data) => {
@@ -95,7 +91,11 @@ function Cart() {
         text: getErrorMessage(err), 
         type: 'error' 
       });
-      console.error(err);
+      console.error('Error al crear cuenta:', {
+        error: err,
+        responseData: err.response?.data,
+        status: err.response?.status
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -201,7 +201,7 @@ function Cart() {
 
                   <div className="flex items-center justify-between gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                     <Link
-                      to="/modulo/personas"
+                      to="/personas/usuarios"
                       className="flex-1 px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 text-gray-900 dark:text-white font-medium rounded-lg shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-95 text-center"
                     >
                       <span className="flex items-center justify-center">

@@ -216,7 +216,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
                         </a>
                         <div className="lg:hidden lg:sidebar-expanded:block 2xl:block">
                           <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
-                            <li className="mb-1 last:mb-0">
+                            {/* <li className="mb-1 last:mb-0">
                               <NavLink
                                 end
                                 to="/"
@@ -228,7 +228,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
                                   Informes
                                 </span>
                               </NavLink>
-                            </li>
+                            </li> */}
                             <li className="mb-1 last:mb-0">
                               <NavLink
                                 end
@@ -355,7 +355,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
                             <li className="mb-1 last:mb-0">
                               <NavLink
                                 end
-                                to="/modulo/personas"
+                                to="/personas/usuarios"
                                 className={({ isActive }) =>
                                   "block transition duration-150 truncate " + (isActive ? "text-violet-500" : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
                                 }

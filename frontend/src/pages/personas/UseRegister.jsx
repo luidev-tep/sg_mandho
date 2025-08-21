@@ -504,7 +504,7 @@ function UserRegister() {
                     {/* Botones de acción */}
                     <div className="flex items-center justify-between gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                       <Link
-                        to="/modulo/personas"
+                        to="/personas/usuarios"
                         className={`
                           flex-1 px-6 py-3
                           bg-gradient-to-r from-gray-100 to-gray-200
