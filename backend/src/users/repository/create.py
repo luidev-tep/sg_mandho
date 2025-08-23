@@ -1,7 +1,8 @@
 from src.utils.conexion import Conexion
+from src.users.models.user import User
 import sqlite3
 class Create():
-    def insert_user(self, data: object) -> bool:
+    def insert_user(self, data: User) -> bool:
         """Método responsable de insertar un usuario a la base de datos
         
         Tabla: Table DIM_Customer {

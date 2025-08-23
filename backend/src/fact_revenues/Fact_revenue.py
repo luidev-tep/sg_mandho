@@ -12,27 +12,45 @@ from src.fact_revenues.services.service import valide_amount
 
 from src.fact_revenues.repository.insert import insert_fact_revenue
 # Importacion del handler de movimiento
-from src.dim_movement.DIM_movent import DIM_Movement 
+from src.dim_movement.DIM_movent import DIM_Movement
 
 handler_movement = DIM_Movement()
 handler_status = DIM_status()
+
+
 class factRevenueCrud():
     def create_fact_revenue(self, data_json: dict) -> tuple[Literal[500], Literal['Error creating payment']] | tuple[Literal[201], Literal['Payment created successfully']]:
-        """Esta es la funcion que se encargara de crear una nuevo pago, debera validar la informacion y registrar el pago como venga desde el frontend
+        """
+        Crea un nuevo pago en la base de datos.
+
+        Esta función valida la cantidad del pago, determina su estado,
+        y luego construye y registra el objeto de pago en la base de datos.
+
         Args:
-            data_json (dict): Informacion del pago
+            data_json (dict): Un diccionario que contiene la información del pago,
+                             incluyendo 'amount', 'DIM_ServiceDetailsId', 'DIM_AccountId',
+                             'FactAmount', y 'movementName'.
+
+        Returns:
+            tuple[Literal[500], Literal['Error creating payment']] | tuple[Literal[201], Literal['Payment created successfully']]:
+                Una tupla con un código de estado y un mensaje descriptivo.
+                - (400, "La cantidad registrada no coincide con la del servicio") si la cantidad no es válida.
+                - (500, "Error creating payment") si falla la inserción en la base de datos.
+                - (201, "Payment created successfully") si el pago se crea correctamente.
         """
         isvalid = valide_amount(data_json['amount'], data_json['DIM_ServiceDetailsId'])
 
         if not isvalid:
             return 400, "La cantidad registrada no coincide con la del servicio"
         
+        # LAS NUEVALIDACIONES DEBERIAR IR AQUI
         statusName = get_status_payment(data_json['amount'], data_json['FactAmount'])
 
         estatus_id = handler_status.get_status_id(statusName, "fact_revenue")
 
         dim_date_data = DIM_DATE()
         #Validar como se debe guardar el pago
+        print(f"Datos del diccionario json", data_json)
         data_format = {
             'FACT_RevenueId': create_id([statusName, data_json['DIM_AccountId'], data_json['FactAmount'], dim_date_data.dateId]), #Asi se evita que el id se repita
             'DIM_DateId': dim_date_data.dateId,
@@ -52,6 +70,6 @@ class factRevenueCrud():
         isvalid = insert_fact_revenue(fact_register)
 
         if not isvalid:
-            return 500, "Error creating payment"
-        #fALTA POR AGREGAR A LA BASE DE DATOS LA INFORMACION 
-        return 201, "Payment created successfully"
+            return 500, "Error creando el pago"
+        
+        return 201, "Pago creado exitosamente"

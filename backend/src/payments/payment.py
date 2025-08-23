@@ -11,10 +11,16 @@ fact_revenue_handler = factRevenueCrud()
 dim_service_details_handler = ServiceDetailsCrud()
 handler_dim_service_owner = DIM_ServiceOnwersCrud()
 
+
+#importaciones de mostrar pagos
+from src.payments.repository.read_payments import ReadPayment
+
+read_payments_handler = ReadPayment()
+
 class PaymentCrud:
     """Clase para manejar las operaciones CRUD de pagos."""
 
-    def create_fact_revenue(self, data_json: dict) -> tuple[int, Any]:
+    def create_payment(self, data_json: dict) -> tuple[int, Any]:
         """Crea un nuevo registro de pago en la tabla FACT_Revenue.
 
         Esta función valida los datos de entrada, obtiene los IDs de servicios
@@ -31,6 +37,7 @@ class PaymentCrud:
                              - (201, "message"): Pago creado exitosamente.
         """
         #pasar amount a float
+        #SE DEBEN AGREGAR MULTIPLES VALIDACIONES se agregan en la funcionb para crear EL FACT REVENUE PARA QUE NO SE CREEN PAGOS PARA ETX ETX
         data_json['amount'] = float(data_json['amount'])
         data_json['FactAmount'] = float(data_json['FactAmount'])
         fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'amount', 'AnioPago', 'FactAmount','movementName']
@@ -62,3 +69,89 @@ class PaymentCrud:
         except Exception as e:
             # Capturar cualquier excepción inesperada y devolver un error del servidor
             return 500, f"Error creando el pago: {str(e)}"
+        
+
+    def read_payments(self, filters: dict) -> tuple[int, Any, list]:
+        """Lee los registros de pagos basados en los filtros proporcionados.
+
+        Esta función valida los filtros, obtiene los registros de pagos
+        correspondientes y devuelve el resultado.
+
+        Args:
+            filters (dict): Un diccionario con los filtros para la búsqueda de pagos.
+
+        Returns:
+            tuple[int, Any]: Una tupla con el código de estado HTTP y los datos o un mensaje.
+                             - (400, "message"): Filtros inválidos.
+                             - (500, "message"): Error interno del servidor.
+                             - (200, data): Datos de pagos encontrados.
+        """
+        
+        fields_required = ['serviceName', 'filters']
+        type_fields = [str, dict]
+        is_valid, message = validate_data(filters, fields_required, type_fields, "payment")
+
+        if not is_valid:
+            return 400, message, []
+        
+        try:
+            if filters['filters'] == {}:
+                #Cuando no se proporcionan filtros solo se devuelven todos los registros del servicio
+                code, data = read_payments_handler.get_payments_by_service(filters['serviceName'])
+
+                if code != 200:
+                    print(f"Error al leer los pagos: {data}")
+                    return code, "No se encontraron pagos", []
+                
+                #print(f"Code: {code}, Data: Datos creados satisfactoriamente, /n {data[0]}")
+                
+                return code, "Datos obtenidos satisfactoriamente", data
+            #CASO 2
+            elif filters['filters'] != {}:
+                print(f"Se aplicaran filtros a la consulta {filters['filters']}    {filters['serviceName']} ")
+                #Cuando se proporcionan filtros se deben aplicar los filtros a la consulta
+                code, data = read_payments_handler.get_payments_with_filters(filters['serviceName'], filters['filters'])
+
+                if code != 200:
+                    print(f"Error al leer los pagos: {data}")
+                    return code, "Error a la hora de aplicar filtros", []
+                
+                #print(f"Code: {code}, Data: Datos creados satisfactoriamente, /n {data[0]}")
+                return code, "Datos obtenidos satisfactoriamente", data
+            else:
+                return 400, "Filtros inválidos", []
+                
+        except Exception as e:
+            print(e)
+            # Capturar cualquier excepción inesperada y devolver un error del servidor
+            return 500, f"Error leyendo los pagos: {str(e)}", []
+        
+    def get_cost(self, data_json: dict) -> tuple[int, Any, list]:
+        """Obtiene el costo de un servicio o producto basado en los datos proporcionados.
+
+        Esta función valida los datos de entrada, calcula el costo correspondiente
+        y devuelve el resultado.
+
+        Args:
+            data_json (dict): Un diccionario con los datos necesarios para calcular el costo.
+
+        Returns:
+            tuple[int, Any]: Una tupla con el código de estado HTTP y los datos o un mensaje.
+                             - (400, "message"): Datos faltantes o inválidos.
+                             - (500, "message"): Error interno del servidor.
+                             - (200, data): Costo calculado.
+        """
+        fields_required = ['ServiceName', 'DIM_DateId']
+        type_fields = [str, int]
+
+        is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
+
+        if not is_valid:
+            return 400, message, []
+        
+        try:
+            pass
+        
+        except Exception as e:
+            # Capturar cualquier excepción inesperada y devolver un error del servidor
+            return 500, f"Error obteniendo el costo: {str(e)}", []

@@ -245,6 +245,52 @@ VALUES
 ('0901a1e6-8779-5695', '080c33d3-7f33-55d7', '1fbd9d83-7a85-50ec', 'ed37cb83-f080-5e41', '2025-01-01', '2025-12-31');
 
 
+--CREACION DE UNA VISTA, SOLAMENTE SE AGRGA UNA, PUESTO QUE AUN NO SE SABE SI SERA EL DISENIO FINAL, PUEDE CAMBIAR
+CREATE VIEW VISTA_PAGOS_AGUA AS 
+SELECT 
+    customer.CustomerName, 
+    customer.CustomerMiddleName, 
+    customer.CustomerLastName, 
+    customer.CustomerSecondLastName,
+    rol.RoleName, 
+    estado_cuenta.StatusName AS StatusCuenta,
+    estado_factura.StatusName AS StatusFactura,
+    DetalleServicio.ServiceDetailesType,
+    factura.amount, 
+    factura.DIM_DateId,
+    factura.FACT_RevenueId,
+	cuenta.DIM_AccountId,
+    customer.DIM_CustomerId --obtener id del cliente para poder filtrar por clientes
+FROM FACT_Revenue AS factura
+INNER JOIN DIM_Account AS cuenta ON factura.DIM_AccountId = cuenta.DIM_AccountId
+INNER JOIN DIM_Customer AS customer ON cuenta.DIM_CustomerId = customer.DIM_CustomerId
+INNER JOIN DIM_Role AS rol ON cuenta.DIM_RoleId = rol.DIM_RoleId
+INNER JOIN DIM_Status AS estado_cuenta ON cuenta.DIM_StatusId = estado_cuenta.DIM_StatusId
+INNER JOIN DIM_Status AS estado_factura ON factura.DIM_StatusId = estado_factura.DIM_StatusId
+INNER JOIN DIM_ServiceDetails AS DetalleServicio ON factura.DIM_ServiceDetailsId = DetalleServicio.DIM_ServiceDetailsId
+INNER JOIN DIM_Service AS servicio ON DetalleServicio.DIM_ServiceId = servicio.DIM_ServiceId
+WHERE servicio.ServiceName = 'agua';
+
+-- Eliminamos la vista si existe, esto es solo si se quiere actualizar la vista
+--DROP VIEW IF EXISTS VISTA_PAGOS_AGUA;
+
+--eSTE ES UN EJEMPLO DE LA CNONSULTA QUE SE CREO PARA PODER ACCEDER A LA VISTA CON FILTROS 
+--TANTO DE ANIO COMO DE INACTIVOS  ASI COMO DE LAS MANZANAS A LAS QUE SE PERTENECE
+SELECT vw.*
+FROM VISTA_PAGOS_AGUA as vw
+INNER JOIN DIM_Customer AS p 
+    ON vw.DIM_CustomerId = p.DIM_CustomerId
+INNER JOIN DIM_Date AS d 
+    ON vw.DIM_DateId = d.DIM_DateId
+WHERE 
+	(p.CustomerFraction = 'cerritos' or p.CustomerFraction = 'yhonda') and 
+	d.FiscalYear = 'Y25' 
+	and 
+     vw.StatusFactura = 'pendiente';
+
+select * from DIM_Date
+	
+
 -- Índices adicionales para mejorar el rendimiento
 -- CREATE INDEX idx_customer_date ON DIM_Customer(DIM_DateId);
 -- CREATE INDEX idx_account_customer ON DIM_Account(DIM_CustomerId);
