@@ -44,3 +44,21 @@ class ServiceDetailsCrud:
         
         except Exception as e:
             return 500, f"Error creating service details: {e}"
+    
+    def get_service_by_date_servicetype(self,  service_type: str, date_id: int,) -> tuple:
+        """
+        Retrieve service details based on date ID and service type.
+
+        Args:
+            date_id (int): The date ID to filter by.
+            service_type (str): The service type to filter by.
+
+        Returns:
+            tuple: A tuple containing the status code and the service details or an error message.
+        """
+        try:
+            
+            pass
+        
+        except Exception as e:
+            return 500, f"Error retrieving service details: {e}"

@@ -47,8 +47,15 @@ class DIM_DATE:
             Optional[DIM_DATE_MODEL]: Modelo de fecha si existe, None si no se encuentra
         """
         try:
-            # Implementación pendiente para obtener fecha por ID
-            pass
+            connection = Conexion()
+            query = "SELECT * FROM DIM_Date WHERE DIM_DateId = ?"
+            connection.cursor.execute(query, (date_id,))
+            result = connection.cursor.fetchone()
+
+            if result is None:
+                return None
+            
+            return self._row_to_model(result)
         except sqlite3.Error as e:
             print(f"Error al obtener fecha por ID: {e}")
             return None

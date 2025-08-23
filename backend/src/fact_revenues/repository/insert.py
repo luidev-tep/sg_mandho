@@ -1,7 +1,8 @@
 from src.utils.conexion import Conexion
+from src.fact_revenues.models.fact_revenue import FACT_Revenue
 import sqlite3
 
-def insert_fact_revenue(data_revenue: object) -> bool:
+def insert_fact_revenue(data_revenue: FACT_Revenue) -> bool:
     """Inserta un nuevo registro de ingresos en la tabla FACT_Revenue.
 
     Esta función toma un objeto de datos de ingresos y lo inserta en la base

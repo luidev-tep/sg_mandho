@@ -76,7 +76,7 @@ def create_user():# -> tuple[Any, Literal[400]] | tuple | tuple[Any, Literal[500
 
 
 @user_route.route("/api/user/read_user/", methods=["POST"])  # Sin slash
-def read_information():# -> tuple[Any, Literal[400]] | tuple[Any, Literal[200]] | tuple | tuple[Any, Literal[500]]:
+def read_information() -> tuple[Any, Literal[400]] | tuple[Any, Literal[200]] | tuple | tuple[Any, Literal[500]]:
     """
     Este endpoint se centra en manejar 2 casos principales, la lectura de todos los uaurios o de uno solo, 
     Funcionamiento:
@@ -116,7 +116,7 @@ def read_information():# -> tuple[Any, Literal[400]] | tuple[Any, Literal[200]] 
     
 
 @user_route.route("/api/user/update_user/", methods=["POST"])
-def update_info_user():
+def update_info_user() -> tuple[Any]:
     """Endpoint para actualizar la información de un usuario.
 
     Este endpoint espera recibir datos en formato JSON a través de una solicitud POST.

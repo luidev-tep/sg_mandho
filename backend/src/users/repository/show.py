@@ -1,7 +1,8 @@
+import sqlite3
 from src.utils.conexion import Conexion
 from src.users.models.user import User
-import sqlite3
-from src.dim_dates.dim_date import DIM_DATE
+from src.utils.build_filters import BuildFilters
+
 
 def get_all_users() -> list:
     """Funcion la cual sirve para obtener a todos los usuarios, 
@@ -109,7 +110,7 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
         list[dict]: Lista de usuarios que coinciden con los filtros
     """
     conecion = Conexion()
-
+    handler_filters = BuildFilters()
     # Query base - Asegurando que coincida el número de columnas seleccionadas con las esperadas
     query = """SELECT       
         p.DIM_CustomerId,
@@ -132,14 +133,14 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
     try:
         # Construcción de condiciones (se mantiene igual)
         if 'CustomerFraction' in filters and filters['CustomerFraction']:
-            manzana_cond, manzana_values = build_manzana_condition(filters['CustomerFraction'])
+            manzana_cond, manzana_values = handler_filters.build_manzana_condition(filters['CustomerFraction'])
             query += f" AND ({manzana_cond})"
             valores.extend(manzana_values)
 
         if 'CustomerEndDate' in filters and filters['CustomerEndDate']:
             query += " AND  p.CustomerEndDate is not 's/n'"
 
-        fechas_cond, fechas_values = add_date(filters.get("DIM_Date"))
+        fechas_cond, fechas_values = handler_filters.add_date(filters.get("DIM_Date"))
         if fechas_cond:
             query += f" AND {fechas_cond}"
             valores.extend(fechas_values)
@@ -173,72 +174,5 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
     except Exception as e:
         print(f"[ERROR] Fallo al ejecutar consulta: {str(e)}")
         raise
-def build_manzana_condition(manzanas: list) -> tuple[str, list]:
-    """
-    Construye la condición SQL para filtrar por manzanas.
-    
-    Args:
-        manzanas (list): Lista de nombres de manzanas a filtrar
-        
-    Returns:
-        tuple: (condicion_sql, valores) donde:
-            - condicion_sql: string con la condición OR
-            - valores: lista de valores para los parámetros
-    """
-    condiciones = []
-    valores = []
-    
-    manzanas_mapping = {
-        "cerritos": "p.CustomerFraction = ?",
-        "centro": "p.CustomerFraction = ?",
-        "yhonda": "p.CustomerFraction = ?",
-        "tepetate": "p.CustomerFraction = ?",
-        "garambullo": "p.CustomerFraction = ?",
-        "buenavista": "p.CustomerFraction = ?",
-    }
-    
-    for manzana in manzanas:
-        if manzana in manzanas_mapping:
-            condiciones.append(manzanas_mapping[manzana])
-            valores.append(manzana)
-    
-    return " OR ".join(condiciones), valores
 
-def add_date(fechafiscal: str) -> tuple[str, list]:
-    """
-    Genera condiciones SQL para filtros de fecha fiscal
-    
-    Args:
-        fechafiscal (str): Tipo de fecha fiscal ('FiscalYear', 'FiscalMonth', etc.)
-        
-    Returns:
-        tuple: (condicion_sql, valores) donde:
-            - condicion_sql: string con la condición WHERE (ej: "d.FiscalYear = ?")
-            - valores: lista de valores para los parámetros
-    """
-    if not fechafiscal:
-        return "", []
-    
-    try:
-        dim_date = DIM_DATE()
-        fechas = dim_date.generar_fechas(fechafiscal)
-        
-        if not fechas:
-            return "", []
-        
-        condiciones = []
-        valores = []
-        
-        for clave, valor in fechas.items():
-            condiciones.append(f"d.{clave} = ?")
-            valores.append(valor)
-        
-        condicion_sql = " AND ".join(condiciones)
-        print(f"[DEBUG] Generadas condiciones de fecha: {condicion_sql}")
-        
-        return condicion_sql, valores
-        
-    except Exception as e:
-        print(f"[ERROR] Error al procesar fechas fiscales: {str(e)}")
-        return "", []
 
