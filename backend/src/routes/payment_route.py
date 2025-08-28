@@ -61,13 +61,22 @@ def read_payment() -> Response:
         payment_json = request.json
         if not payment_json:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
-        
-        estado, mensaje, datos = payment_options.read_payments(payment_json)
+            
+        if 'filters' in payment_json:
+            estado, mensaje, datos = payment_options.read_payments(payment_json)
 
-        if 200 <= estado <= 205:
-            return send_success(mensaje, datos, estado)
-        else:
-            return send_error(mensaje, estado)
+            if 200 <= estado <= 205:
+                return send_success(mensaje, datos, estado)
+            else:
+                return send_error(mensaje, estado)
+            
+        if "DIM_CustomerId" in payment_json:
+
+            estado, mensaje, datos = payment_options.read_payments_customer_id(payment_json)
+            if 200 <= estado <= 205:
+                return send_success(mensaje, datos, estado)
+            else:
+                return send_error(mensaje, estado)
             
     except Exception as e:
         print(f"Error al leer el pago: {e}")
@@ -83,8 +92,8 @@ def get_cost() -> Response:
     devuelve el costo correspondiente.
 
     Args:{
-            service_id: int, "ID del servicio o producto"
-            quantity: int, "Cantidad del servicio o producto"
+            serviceName: str, "Nombre del servicio o producto"
+            DIM_CustomerId: str, "ID del cliente"
             //Este endpoind sera solo para la infromacion en general puesto que deben haver algunos filtros especificos 
         }
     Returns:

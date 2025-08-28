@@ -6,6 +6,8 @@ from src.dim_service.DIM_Service import DIM_Service
 
 from src.utils.id_generator import create_id
 
+from src.dim_servicedetails.repository.show import get_amount_by_service_and_date
+
 #Si esta clase se hace predefinida, se esta logica no sera tan utils hasta que la clase sea creada
 # y se cree en la interfaz un metodo para poder interactusl con ella
 class ServiceDetailsCrud:
@@ -45,7 +47,7 @@ class ServiceDetailsCrud:
         except Exception as e:
             return 500, f"Error creating service details: {e}"
     
-    def get_service_by_date_servicetype(self,  service_type: str, date_id: int,) -> tuple:
+    def get_amount_by_date_servicetype(self,  service_type: str, year: int,) -> tuple:
         """
         Retrieve service details based on date ID and service type.
 
@@ -54,11 +56,26 @@ class ServiceDetailsCrud:
             service_type (str): The service type to filter by.
 
         Returns:
-            tuple: A tuple containing the status code and the service details or an error message.
+            tuple: A tuple containing the status code and the amount details or an error message.
         """
+        handler_date = DIM_DATE()
+        handler_service = DIM_Service()
         try:
+            fiscal_year = handler_date.get_fiscal_year(year)
             
-            pass
-        
+            service_id = handler_service.get_service_id(service_type)
+
+            if not service_id:
+                return 404, {}
+            
+            amount = get_amount_by_service_and_date(service_type, fiscal_year)
+
+            if amount == 0.0:
+                return 404, {}
+            
+            return 200, {"amount": amount}
+
         except Exception as e:
-            return 500, f"Error retrieving service details: {e}"
+            return 500, {}
+        
+    

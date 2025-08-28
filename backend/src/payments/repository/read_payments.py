@@ -24,11 +24,44 @@ class ReadPayment:
         - VISTA_PAGOS_FERIA
         - VISTA_PAGOS_PANTEON
         - VISTA_PAGOS_DELEGACION
+
+
         """
-        self.agua = "SELECT vw.* FROM VISTA_PAGOS_AGUA as vw "
-        self.feria = "SELECT vw.* FROM VISTA_PAGOS_FERIA as vw "
-        self.panteon = "SELECT vw.* FROM VISTA_PAGOS_PANTEON as vw "
-        self.delegacion = "SELECT vw.* FROM VISTA_PAGOS_DELEGACION as vw "
+        self.__Query_base = """      
+        SELECT
+        vw.CustomerName,
+        vw.CustomerMiddleName,
+        vw.CustomerLastName,
+        vw.CustomerSecondLastName,
+        vw.RoleName,
+        vw.StatusCuenta,
+        vw.StatusFactura,
+        vw.ServiceDetailesType,
+        sum(vw.amount) as amount,
+        vw.YearPay,
+        vw.DIM_AccountId,
+        vw.DIM_CustomerId
+        FROM [tabla] as vw
+
+        [filtros]
+
+        GROUP BY 
+        vw.CustomerName,
+        vw.CustomerMiddleName,
+        vw.CustomerLastName,
+        vw.CustomerSecondLastName,
+        vw.RoleName,
+        vw.StatusCuenta,
+        vw.StatusFactura,
+        vw.ServiceDetailesType,
+        vw.YearPay,
+        vw.DIM_AccountId,
+        vw.DIM_CustomerId"""
+
+        self.agua = self.__Query_base.replace("[tabla]", "VISTA_PAGOS_AGUA")
+        self.feria = self.__Query_base.replace("[tabla]", "VISTA_PAGOS_FERIA")
+        self.panteon = self.__Query_base.replace("[tabla]", "VISTA_PAGOS_PANTEON")
+        self.delegacion = self.__Query_base.replace("[tabla]", "VISTA_PAGOS_DELEGACION")
 
     def _obtener_query(self, servicename: str) -> str:
         """
@@ -121,19 +154,19 @@ class ReadPayment:
         object_conection = Conexion()
         handler_filters = BuildFilters()
         query_base = self._obtener_query(service_name)
-        
+        query_filtros = ""
         if not query_base:
             return 400, []
         
         if not filters['DIM_Date']:
             return 404, []
         # Construcción de la consulta base con JOIN
-        query_base += """
+        query_filtros += """
                 INNER JOIN DIM_Customer AS p 
                 ON vw.DIM_CustomerId = p.DIM_CustomerId
                 INNER JOIN DIM_Date AS d 
                     ON vw.DIM_DateId = d.DIM_DateId
-                WHERE d.FiscalYear =  ?  """  # Se agrega la tabla para buscar por filtros de manzana también
+                WHERE vw.YearPay =  ?  """  # Se agrega la tabla para buscar por filtros de manzana también
         
         values = [filters.get("DIM_Date")]
 
@@ -141,15 +174,19 @@ class ReadPayment:
             # Construcción de condiciones adicionales basadas en los filtros proporcionados
             if 'CustomerFraction' in filters and filters['CustomerFraction']:
                 manzana_cond, manzana_values = handler_filters.build_manzana_condition(filters['CustomerFraction'])
-                query_base += f" AND ({manzana_cond})"
+                query_filtros += f" AND ({manzana_cond})"
                 values.extend(manzana_values)
 
             # Filtro específico para el estado de la factura pendiente
             if 'DIM_StatusId' in filters and filters['DIM_StatusId']:
-                query_base += " AND  vw.StatusFactura = 'pendiente'"
+                query_filtros += " AND  vw.StatusFactura = 'pendiente'"
             
-            #print("DEBUG query_base:", query_base)
-            # Ejecutar la consulta con los filtros
+            
+            
+            query_base = query_base.replace("[filtros]", query_filtros)
+            print("DEBUG query_base:", query_base)
+            print("DEBUG values:", values)
+            #Ejecutar la consulta con los filtros
             object_conection.cursor.execute(query_base, tuple(values))
             registros = object_conection.cursor.fetchall()
 
@@ -158,6 +195,9 @@ class ReadPayment:
                 return 400, []
 
             # Crear los objetos con los resultados obtenidos
+            # print("#"*100)
+            # print([registro for registro in registros if registro])
+            # print("#"*100)
             datos = [handler_vista.build_vista(*registro) for registro in registros if registro]
 
             return 200, datos
@@ -168,3 +208,9 @@ class ReadPayment:
         finally:
             # Aseguramos que la conexión se cierre
             object_conection.close_conexion()
+    
+
+"""
+            if 'DIM_CustomerId' in filters and filters['DIM_CustomerId']:
+                query_filtros += " AND  vw.DIM_CustomerId = ?"
+                values.append(filters['DIM_CustomerId'])"""

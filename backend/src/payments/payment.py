@@ -11,11 +11,18 @@ fact_revenue_handler = factRevenueCrud()
 dim_service_details_handler = ServiceDetailsCrud()
 handler_dim_service_owner = DIM_ServiceOnwersCrud()
 
+#importaciones para Buscar un pago pendiente
+from src.accounts.account import AccountCrud
+from src.payments.repository.get_pending_pays import get_pending_pays
+from datetime import datetime
+from src.dim_service.DIM_Service import DIM_Service
+from src.dim_servicedetails.repository.show import get_service_detailsId_by_ServiceId
 
 #importaciones de mostrar pagos
 from src.payments.repository.read_payments import ReadPayment
 
-read_payments_handler = ReadPayment()
+from src.payments.repository.get_fact_revenues_customer import get_fact_revenues_by_customer_id
+payments_handler = ReadPayment()
 
 class PaymentCrud:
     """Clase para manejar las operaciones CRUD de pagos."""
@@ -97,7 +104,7 @@ class PaymentCrud:
         try:
             if filters['filters'] == {}:
                 #Cuando no se proporcionan filtros solo se devuelven todos los registros del servicio
-                code, data = read_payments_handler.get_payments_by_service(filters['serviceName'])
+                code, data = payments_handler.get_payments_by_service(filters['serviceName'])
 
                 if code != 200:
                     print(f"Error al leer los pagos: {data}")
@@ -110,7 +117,7 @@ class PaymentCrud:
             elif filters['filters'] != {}:
                 print(f"Se aplicaran filtros a la consulta {filters['filters']}    {filters['serviceName']} ")
                 #Cuando se proporcionan filtros se deben aplicar los filtros a la consulta
-                code, data = read_payments_handler.get_payments_with_filters(filters['serviceName'], filters['filters'])
+                code, data = payments_handler.get_payments_with_filters(filters['serviceName'], filters['filters'])
 
                 if code != 200:
                     print(f"Error al leer los pagos: {data}")
@@ -129,29 +136,102 @@ class PaymentCrud:
     def get_cost(self, data_json: dict) -> tuple[int, Any, list]:
         """Obtiene el costo de un servicio o producto basado en los datos proporcionados.
 
-        Esta función valida los datos de entrada, calcula el costo correspondiente
-        y devuelve el resultado.
+        Esta función valida los datos de entrada, Ademas debera buscar cuales son los pagos que ese cliente en especifico puede pagar, 
+        para lograr eso se deben hacer peticiones, de que cuentas ya pagaron, ya que recordemos que cada cliente puede tener ciertas cuentas
+        ademas se debe ir haciendo esto verificando por anio,  una vez hecho esto, se deberan devolver las cuentas que el 
+        cliente aun no ha pagado para poder realizar el pago,
 
         Args:
             data_json (dict): Un diccionario con los datos necesarios para calcular el costo.
 
         Returns:
-            tuple[int, Any]: Una tupla con el código de estado HTTP y los datos o un mensaje.
+            tuple[int, str, list]: Una tupla con el código de estado HTTP y los datos o un mensaje.
                              - (400, "message"): Datos faltantes o inválidos.
                              - (500, "message"): Error interno del servidor.
                              - (200, data): Costo calculado.
+                             - list: Una lista de dict los cuales contienen la ifnormacin
+                             de pagos que el cliente puede realizar.
         """
-        fields_required = ['ServiceName', 'DIM_DateId']
-        type_fields = [str, int]
+        account_handler = AccountCrud()
+        service_handler = DIM_Service()
+
+        fields_required = ['ServiceName', 'DIM_CustomerId']
+        type_fields = [str, str]
 
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 
         if not is_valid:
             return 400, message, []
         
-        try:
-            pass
+        data_format = {
+            "id_user": data_json['DIM_CustomerId'],
+        }
+        #oBTENER PRIMERO TODAS LA CUENTAS ASOCIADAS AL CLIENTE
+        codigo_esta, mensaje, cuentas = account_handler.read_account(data_format)
+        print("pasamo obquiero cuentas")
+        if codigo_esta != 200:
+            return codigo_esta, mensaje, []
         
+        
+        id_accounts = [cuenta['DIM_AccountId'] for cuenta in cuentas]  # Obtener los IDs de las cuentas
+
+
+        print("pasamo cuenta")
+        #Se generaran los anios desde los que se va a buscar \
+        anios_filtro = [anio for anio in range(2020, datetime.now().year + 1)]
+
+        service_id = service_handler.get_service_id(data_json['ServiceName'])
+        service_details_ids = get_service_detailsId_by_ServiceId(service_id)
+
+        print(id_accounts)
+        print(anios_filtro)
+        print(service_details_ids)
+
+
+        #data = get_pending_pays(anios_filtro, id_accounts, data_json['ServiceName'])
+        # code, data = dim_service_details_handler.get_service_by_date_servicetype(data_json)
+        # if code != 200:
+        #     print(f"Error al obtener el costo: {data}")
+        #     return code, "No se pudo obtener el costo", []
+        
+        # return code, "Costo obtenido satisfactoriamente", data
+        return 200, "nla bla bkla", []
+    
+
+    def read_payments_customer_id(self, filters: dict) -> tuple[int, Any, list]:
+        """Lee los registros de pagos basados en los filtros proporcionados.
+
+        Esta función valida los filtros, obtiene los registros de pagos
+        correspondientes y devuelve el resultado.
+
+        Args:
+            filters (dict): Un diccionario con los filtros para la búsqueda de pagos.
+
+        Returns:
+            tuple[int, Any]: Una tupla con el código de estado HTTP y los datos o un mensaje.
+                             - (400, "message"): Filtros inválidos.
+                             - (500, "message"): Error interno del servidor.
+                             - (200, data): Datos de pagos encontrados.
+        """
+        
+        fields_required = ['DIM_CustomerId', 'serviceName', 'service_type']
+        type_fields = [str, str, str]
+        is_valid, message = validate_data(filters, fields_required, type_fields, "payment")
+
+        if not is_valid:
+            return 400, message, []
+        
+        try:
+            
+            #Cuando no se proporcionan filtros solo se devuelven todos los registros del servicio
+            code, data = get_fact_revenues_by_customer_id(**filters)
+
+            if code != 200:
+                print(f"Error al leer los pagos: {data}")
+                return code, "No se encontraron pagos", []
+            
+            return code, "Datos obtenidos satisfactoriamente", data
         except Exception as e:
+            print(e)
             # Capturar cualquier excepción inesperada y devolver un error del servidor
-            return 500, f"Error obteniendo el costo: {str(e)}", []
+            return 500, f"Error leyendo los pagos: {str(e)}", []

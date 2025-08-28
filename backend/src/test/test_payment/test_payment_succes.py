@@ -25,7 +25,7 @@ def valid_payment_data():
         "EndDate": "2022-12-31"
     }
 
-def test_partial_data_success(payment_handler, valid_payment_data):
+def test_partial_data_success(payment_handler: PaymentCrud, valid_payment_data):
     """
     Test que campos adicionales no requeridos no afectan el funcionamiento:
     1. Verifica que con datos adicionales (no requeridos) se crea correctamente
@@ -35,7 +35,7 @@ def test_partial_data_success(payment_handler, valid_payment_data):
     extra_data['campo_extra'] = 'valor_extra'
     extra_data['otro_campo'] = 123
 
-    status_code, message = payment_handler.create_fact_revenue(extra_data)
+    status_code, message = payment_handler.create_payment(extra_data)
     
     if status_code != 201:
         # Si falla, verificar que el error NO sea por los campos adicionales

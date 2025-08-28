@@ -6,10 +6,11 @@ function DateSelectPayment({ onFilterChange }) {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
   
+  // MODIFICADO: value ahora es el año completo (número)
   const options = years.map((year, index) => ({
     id: index,
     period: year.toString(),
-    value: 'Y' + year.toString().slice(-2)
+    value: year  // Cambiado a número (año completo)
   }));
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -40,16 +41,17 @@ function DateSelectPayment({ onFilterChange }) {
     return () => document.removeEventListener('keydown', keyHandler);
   }, [dropdownOpen]);
 
-const handleSelection = (id) => {
-  const selectedOption = options.find(option => option.id === id);
-  if (!selectedOption) return;
-  
-  setSelected(id);
-  setDropdownOpen(false);
-  if (onFilterChange) {
-    onFilterChange(selectedOption.value);
-  }
-};
+  const handleSelection = (id) => {
+    const selectedOption = options.find(option => option.id === id);
+    if (!selectedOption) return;
+    
+    setSelected(id);
+    setDropdownOpen(false);
+    if (onFilterChange) {
+      // MODIFICADO: Envía el año completo (número) en lugar de la cadena "YXX"
+      onFilterChange(selectedOption.value);
+    }
+  };
 
 return (
   <div className="relative">

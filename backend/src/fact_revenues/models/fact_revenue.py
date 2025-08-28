@@ -1,5 +1,8 @@
 class FACT_Revenue:
-    def __init__(self, FACT_RevenueId: str, DIM_DateId: str, DIM_AccountId: str, DIM_ServiceDetailsId: str, DIM_MovementId:str, DIM_StatusId: str, amount: float, ) -> None:
+    def __init__(self, FACT_RevenueId: str, DIM_DateId: str,
+                  DIM_AccountId: str, DIM_ServiceDetailsId: str, 
+                  DIM_MovementId:str, DIM_StatusId: str,
+                    amount: float, YearPay: int) -> None:
         self.Fact_RevenueId = FACT_RevenueId
         self.DIM_DateId = DIM_DateId
         self.DIM_AccountId = DIM_AccountId
@@ -7,6 +10,7 @@ class FACT_Revenue:
         self.DIM_MovementId = DIM_MovementId
         self.DIM_StatusId = DIM_StatusId
         self.amount = amount
+        self.YearPay = YearPay
 
     def to_dict(self) -> dict[str, str | float]:
         return {
@@ -16,7 +20,8 @@ class FACT_Revenue:
             "DIM_ServiceDetailsId": self.DIM_ServiceDetailsId,
             "DIM_MovementId": self.DIM_MovementId,
             "DIM_StatusId": self.DIM_StatusId,
-            "amount": self.amount
+            "amount": self.amount,
+            "YearPay": self.YearPay
         }
     
     

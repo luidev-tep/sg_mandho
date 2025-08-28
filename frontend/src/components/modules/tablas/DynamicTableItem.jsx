@@ -4,9 +4,9 @@ import Image01 from '../../../images/user-40-01.jpg';
 import Image02 from '../../../images/user-40-02.jpg';
 import Image03 from '../../../images/user-40-03.jpg';
 import Imagen04 from '../../../images/user-40-04.jpg';
-import ActionMenu from '../../../components/customers/ActionMenu';
+import ActionMenu from './ActionMenu';
 
-function CustomersTableItem(props) {
+function DynamicTableItem(props) {
     const imageMap = {
         'Image01': Image01,
         'Image02': Image02,
@@ -72,8 +72,10 @@ function CustomersTableItem(props) {
             <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
                 <div className="flex justify-center items-center min-h-[44px] min-w-[44px] rounded-md hover:shadow-md transition-shadow duration-200">
                     <ActionMenu 
-                        id_user={props.id}
+                        id_user={props.dim_customer_id}
+                        serviceName={props.service_name}
                         onUpdate={props.onEditSuccess}
+                        props={props}
                     />
                 </div>
             </td>
@@ -81,4 +83,4 @@ function CustomersTableItem(props) {
     );
 }
 
-export default CustomersTableItem;
+export default DynamicTableItem;

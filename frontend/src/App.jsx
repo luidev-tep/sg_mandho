@@ -24,7 +24,7 @@ import UserRegister from './pages/personas/UseRegister.jsx';
 //IMPORTACIO DE LOS MENUS DE PAGOS 
 import DynamicGeneratePay from './pages/payments/DynamicGeneratePay.jsx'
 import PaymentStatus from './pages/payments/PaymentStatus.jsx';  
-import AguaMenu from './pages/payments/AguaMenu.jsx'; // Agua menu
+import DynamicMenu from './pages/payments/DynamicMenu.jsx'; // Agua menu
 
 //Cuentas modulo
 import Cuenta from './pages/cuentas/Cuenta.jsx';
@@ -79,7 +79,7 @@ function App() {
           {/* Para poder acceder a crear un pago se accede a este componente dinamico */}
           <Route path="/modulos/crear_pago/:moduleName" element={<DynamicGeneratePay />} />
           <Route path="/modulos/estado_pago" element={<PaymentStatus />} />
-          <Route path="/modulos/agua" element={<AguaMenu />} />
+          <Route path="/modulos/:moduleName" element={<DynamicMenu />} />
           {/* Rutas adicionales */}
         </Routes>
     </>

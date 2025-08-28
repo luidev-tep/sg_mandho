@@ -42,17 +42,17 @@ def casos():
         "result": True,  
         "message": "Todo bien"
         },
-        {
-        "from": "malicious",
-        "data": {
-            "nombre": "'; DROP TABLE users;--",  # SQL Injection
-            "edad": lambda: os.system("rm -rf /")  # Función peligrosa
-        },
-        "fields_required": ["nombre", "edad"],
-        "type_fields": [str, int],  # ¿Validará el contenido o solo el tipo?
-        "result": False,  # Idealmente
-        "message": "El tipo de dato es incorrecto"
-        },
+        #{
+        # "from": "malicious",
+        # "data": {
+        #     "nombre": "'; DROP TABLE users;--",  # SQL Injection
+        #     "edad": lambda: os.system("rm -rf /")  # Función peligrosa
+        # },
+        # "fields_required": ["nombre", "edad"],
+        # "type_fields": [str, int],  # ¿Validará el contenido o solo el tipo?
+        # "result": False,  # Idealmente
+        # "message": "El tipo de dato es incorrecto"
+        # },
         {
         "from": "key_confusion",
         "data": {

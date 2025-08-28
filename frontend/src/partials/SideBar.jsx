@@ -20,9 +20,9 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
   // Definir las opciones para cada módulo
   const moduleOptionsMap = {
     panteon: [
-      { path: "/panteon/editar", label: "informes registro" },
-      { path: "/panteon/usuarios", label: "Ver Registros" },
-      { path: "/panteon/generar", label: "Generar Registro" }
+      { path: "/modulos/generar_reporte/panteon", label: "Generar Reporte" },
+      { path: "/modulos/panteon", label: "Ver Registros" },
+      { path: "/modulos/crear_pago/panteon", label: "Generar Registro" }
     ], 
     personas: [
       { path: "/personas/usuarios", label: "lista de personas" },
@@ -30,14 +30,19 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
       { path: "/personas/registro", label: "Agregar persona" }
     ],
     agua: [
-      { path: "/agua/pagos", label: "Ver pagos" },
-      { path: "/agua/generar", label: "Generar recibo" },
-      { path: "/agua/reportes", label: "Reportes" }
+      { path: "/modulos/agua", label: "Ver pagos" },
+      { path: "/modulos/crear_pago/agua", label: "Generar recibo" },
+      { path: "/modulos/generar_reporte/agua", label: "Generar Reportes" }
     ],
     delegacion: [
-      { path: "/delegacion/registros", label: "ver registros" },
-      { path: "/delegacion/informes", label: "Generar informe" },
-      { path: "/delegacion/configuracion", label: "Configuración" }
+      { path: "/modulos/delegacion", label: "ver registros" },
+      { path: "/modulos/crear_pago/delegacion", label: "Generar recibo" },
+      { path: "/modulos/generar_reporte/delegacion", label: "Generar Reporte" }
+    ],
+    feria: [
+      { path: "/modulos/feria", label: "ver registros" },
+      { path: "/modulos/crear_pago/feria", label: "Generar recibo" },
+      { path: "/modulos/generar_reporte/feria", label: "Generar Reportes" }
     ]
   };
 
@@ -55,6 +60,9 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
     } else if (pathname.includes("personas")) {
       setActiveModule("personas");
       setModuleOptions(moduleOptionsMap.personas);  // Corregido: usar personas en lugar de delegacion
+    } else if (pathname.includes("feria")) {
+      setActiveModule("feria");
+      setModuleOptions(moduleOptionsMap.feria);
     }
   }, [pathname]);
 
@@ -304,7 +312,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
                             <li className="mb-1 last:mb-0">
                               <NavLink
                                 end
-                                to="/modulo/panteon"
+                                to="/modulos/panteon"
                                 className={({ isActive }) =>
                                   "block transition duration-150 truncate " + (isActive ? "text-violet-500" : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
                                 }
@@ -331,14 +339,14 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
                                 }}
                               >
                                 <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                  agua
+                                  Agua
                                 </span>
                               </NavLink>
                             </li>
                             <li className="mb-1 last:mb-0">
                               <NavLink
                                 end
-                                to="/modulo/delegacion"
+                                to="/modulos/delegacion"
                                 className={({ isActive }) =>
                                   "block transition duration-150 truncate " + (isActive ? "text-violet-500" : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
                                 }
@@ -349,6 +357,23 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
                               >
                                 <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                                   Delegacion
+                                </span>
+                              </NavLink>
+                            </li>
+                            <li className="mb-1 last:mb-0">
+                              <NavLink
+                                end
+                                to="/modulos/feria"
+                                className={({ isActive }) =>
+                                  "block transition duration-150 truncate " + (isActive ? "text-violet-500" : "text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200")
+                                }
+                                onClick={() => {
+                                  setActiveModule("feria");
+                                  setModuleOptions(moduleOptionsMap.feria);
+                                }}
+                              >
+                                <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                  Feria
                                 </span>
                               </NavLink>
                             </li>

@@ -2,18 +2,24 @@ import sqlite3
 from src.utils.conexion import Conexion
 
 
-def get_amount_by_id( serviceDetails_id: str) -> float:
-    """Obtiene el monto de un servicio por su ID.
-
-    Busca en la base de datos el monto asociado a un `DIM_ServiceDetailsId`.
-    Si el ID no se encuentra o hay un error, devuelve 0.0.
-
-    Args:
-        serviceDetails_id (str): El ID del detalle del servicio.
-
+def get_amount_by_id(serviceDetails_id: str) -> float:
+    """
+    Retrieves the amount of a service by its Service Details ID.
+    
+    This function queries the database to find the amount associated with a 
+    specific service details identifier. If the ID is not found or an error 
+    occurs during the database operation, the function returns 0.0.
+    
+    Parameters:
+        serviceDetails_id (str): The unique identifier of the service details.
+    
     Returns:
-        float: El monto del servicio como un número flotante. Retorna 0.0 si
-            el ID no existe o si ocurre un error.
+        float: The amount associated with the service details ID as a floating 
+               point number. Returns 0.0 if the ID doesn't exist or if an error occurs.
+    
+    Example:
+        >>> get_amount_by_id("4942db5a-04b2-57b2")
+        1500.0
     """
     object_conecttion = Conexion()
     try:
@@ -25,26 +31,35 @@ def get_amount_by_id( serviceDetails_id: str) -> float:
             return result[0]
         else:
             return 0.0
-        
+            
     except Exception as e:
         print(f"Error retrieving amount: {str(e)}")
         return 0.0
-            
-def get_service_detailsIS_by_ServiceType( serviceType: str) -> str:
-    """Obtiene el ID de un detalle de servicio por su tipo.
+    finally:
+        object_conecttion.close_conexion()
 
-    Busca un ID de `DIM_ServiceDetails` basado en el `ServiceDetailsType`.
-    Si no se encuentra o hay un error, devuelve una cadena vacía.
 
-    Args:
-        serviceType (str): El tipo de servicio a buscar.
-
-    Returns:
-        str: El ID del detalle del servicio si se encuentra. Retorna una
-            cadena vacía ("") si no se encuentra o si ocurre un error.
+def get_service_detailsIS_by_ServiceType(serviceType: str) -> str:
     """
+    Retrieves the Service Details ID based on the service type.
+    
+    This function searches for a service details identifier in the database 
+    that matches the specified service type. If no matching record is found 
+    or an error occurs during the database operation, an empty string is returned.
+    
+    Parameters:
+        serviceType (str): The type of service to search for.
+    
+    Returns:
+        str: The service details identifier if found. Returns an empty string 
+             if no matching service type is found or if an error occurs.
+    
+    Example:
+        >>> get_service_detailsIS_by_ServiceType("Ranchero")
+        "4942db5a-04b2-57b2"
+    """
+    object_conecttion = Conexion()
     try:
-        object_conecttion = Conexion()
         query = "SELECT DIM_ServiceDetailsId FROM DIM_ServiceDetails WHERE ServiceDetailesType = ?"
         object_conecttion.cursor.execute(query, (serviceType,))
         result = object_conecttion.cursor.fetchone()
@@ -53,6 +68,92 @@ def get_service_detailsIS_by_ServiceType( serviceType: str) -> str:
             return result[0]
         else:
             return ""
+            
     except Exception as e:
         print(f"Error retrieving service details: {str(e)}")
         return ""
+    finally:
+        object_conecttion.close_conexion()
+
+
+def get_service_detailsId_by_ServiceId(ServiceId: str) -> list:
+    """
+    Retrieves all Service Details IDs associated with a specific Service ID.
+    
+    This function queries the database to find all service details identifiers 
+    that are linked to the given service ID. The function returns a list of 
+    these identifiers. If no records are found or an error occurs, an empty 
+    list is returned.
+    
+    Parameters:
+        ServiceId (str): The unique identifier of the service.
+    
+    Returns:
+        list: A list of service details identifiers associated with the service ID. 
+              Returns an empty list if no records are found or if an error occurs.
+    
+    Example:
+        >>> get_service_detailsId_by_ServiceId("service_123")
+        ["4942db5a-04b2-57b2", "d8e3ce13-aef7-5594"]
+    """
+    object_conecttion = Conexion()
+    try:
+        query = "SELECT DIM_ServiceDetailsId FROM DIM_ServiceDetails WHERE DIM_ServiceId = ?"
+        object_conecttion.cursor.execute(query, (ServiceId,))
+        result = object_conecttion.cursor.fetchall()
+        
+        if result is not None:
+            return [row[0] for row in result]
+        else:
+            return []
+            
+    except Exception as e:
+        print(f"Error retrieving service details: {str(e)}")
+        return []
+    finally:
+        object_conecttion.close_conexion()
+
+
+def get_amount_by_service_and_date(serviceType: str, date: str) -> float:
+    """
+    Retrieves the cost of a service for a specific date.
+    
+    This function calculates the amount of a service type for a particular date, 
+    taking into account that service costs may vary over time. It joins the 
+    service details with the date dimension to find the appropriate cost for 
+    the specified fiscal year.
+    
+    Parameters:
+        serviceType (str): The type of service to search for.
+        date (str): The target date in 'YYYY-MM-DD' format for which the amount 
+                   should be retrieved. The function uses the fiscal year from this date.
+    
+    Returns:
+        float: The amount of the service for the specified date. Returns 0.0 if 
+               no matching record is found or if an error occurs.
+    
+    Example:
+        >>> get_amount_by_service_and_date("Ranchero", "2023-05-15")
+        1200.0
+    """
+    object_conecttion = Conexion()
+    try:
+        query = """
+        SELECT ds.amount
+        FROM DIM_ServiceDetails AS ds
+        JOIN DIM_Date AS dd ON ds.DIM_DateId = dd.DIM_DateId
+        WHERE ds.ServiceDetailesType = ? AND dd.FiscalYear = ?
+        """
+        object_conecttion.cursor.execute(query, (serviceType, date))
+        result = object_conecttion.cursor.fetchone()
+        
+        if result is not None:
+            return result[0]
+        else:
+            return 0.0
+            
+    except Exception as e:
+        print(f"Error retrieving amount by service and date: {str(e)}")
+        return 0.0
+    finally:
+        object_conecttion.close_conexion()

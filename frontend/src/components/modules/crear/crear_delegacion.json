@@ -5,5 +5,5 @@
   "successTitle": "Pago de Delegación Registrado",
   "successMessage": "El pago del servicio de delegación ha sido registrado para",
   "componentType": "delegacion",
-  "menuPath": "/modulo/delegacion"
+  "menuPath": "/modulos/delegacion"
 }
