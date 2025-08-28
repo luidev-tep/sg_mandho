@@ -59,6 +59,17 @@ class DIM_DATE:
         except sqlite3.Error as e:
             print(f"Error al obtener fecha por ID: {e}")
             return None
+
+    def get_fiscal_year(self, year: int) -> str:
+        """"
+        Funcion la cual obtendra el anio fiscal basado en el anio que se le haya ingresado
+        Args:
+            year (int): El anio que se desea obtener el anio fiscal
+
+        Returns:
+            str: El anio fiscal en formato 'Yaa' (aa = ultimos dos digitos del anio)
+        """
+        return f"Y{str(year)[-2:]}"
     
     def get_by_object_date(self, year: int, month: int, day: int) -> Optional[DIM_DATE_MODEL]:
         """
@@ -156,7 +167,7 @@ class DIM_DATE:
         finally:
             handler_connection.close_conexion()
     
-    def obtener_prefijos(self) -> dict[str, str]:
+    def __obtener_prefijos(self) -> dict[str, str]:
         """
         Genera representaciones codificadas de los componentes de fecha actual.
         
@@ -188,7 +199,7 @@ class DIM_DATE:
         Returns:
             Optional[dict]: Diccionario con los componentes solicitados, None si el prefijo no es válido
         """
-        fechas = self.obtener_prefijos()
+        fechas = self.__obtener_prefijos()
         
         if prefijo == "FiscalDay":
             return fechas

@@ -5,5 +5,5 @@
   "successTitle": "Pago de Feria Registrado",
   "successMessage": "El pago del servicio de feria ha sido registrado para",
   "componentType": "feria",
-  "menuPath": "/modulo/feria"
+  "menuPath": "/modulos/feria"
 }

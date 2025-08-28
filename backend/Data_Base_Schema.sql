@@ -121,6 +121,7 @@ CREATE TABLE FACT_Revenue (
     DIM_MovementId TEXT,
     DIM_StatusId TEXT,
     amount REAL NOT NULL,
+    YearPay INTEGER NOT NULL,
     timestamp TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
     FOREIGN KEY (DIM_DateId) REFERENCES DIM_Date(DIM_DateId),
     FOREIGN KEY (DIM_AccountId) REFERENCES DIM_Account(DIM_AccountId),
@@ -246,7 +247,8 @@ VALUES
 
 
 --CREACION DE UNA VISTA, SOLAMENTE SE AGRGA UNA, PUESTO QUE AUN NO SE SABE SI SERA EL DISENIO FINAL, PUEDE CAMBIAR
-CREATE VIEW VISTA_PAGOS_AGUA AS 
+
+CREATE VIEW VISTA_PAGOS_AGUA AS --CAMBIAR NOMBRE DE LA VISTA SEGUN EL SERVICIO
 SELECT 
     customer.CustomerName, 
     customer.CustomerMiddleName, 
@@ -256,7 +258,8 @@ SELECT
     estado_cuenta.StatusName AS StatusCuenta,
     estado_factura.StatusName AS StatusFactura,
     DetalleServicio.ServiceDetailesType,
-    factura.amount, 
+    factura.amount,
+    factura.YearPay, 
     factura.DIM_DateId,
     factura.FACT_RevenueId,
 	cuenta.DIM_AccountId,
@@ -269,7 +272,7 @@ INNER JOIN DIM_Status AS estado_cuenta ON cuenta.DIM_StatusId = estado_cuenta.DI
 INNER JOIN DIM_Status AS estado_factura ON factura.DIM_StatusId = estado_factura.DIM_StatusId
 INNER JOIN DIM_ServiceDetails AS DetalleServicio ON factura.DIM_ServiceDetailsId = DetalleServicio.DIM_ServiceDetailsId
 INNER JOIN DIM_Service AS servicio ON DetalleServicio.DIM_ServiceId = servicio.DIM_ServiceId
-WHERE servicio.ServiceName = 'agua';
+WHERE servicio.ServiceName = 'agua'; --CAMBIAR SEGUN EL SERVICIO
 
 -- Eliminamos la vista si existe, esto es solo si se quiere actualizar la vista
 --DROP VIEW IF EXISTS VISTA_PAGOS_AGUA;
@@ -289,6 +292,38 @@ WHERE
      vw.StatusFactura = 'pendiente';
 
 select * from DIM_Date
+
+-- Ejemplo de la consulta que se haria para ver los pagos de lar personas
+-- Unidos por anio y por cuenta
+
+SELECT
+vw.CustomerName,
+vw.CustomerMiddleName,
+vw.CustomerLastName,
+vw.CustomerSecondLastName,
+vw.RoleName,
+vw.StatusCuenta,
+vw.StatusFactura,
+vw.ServiceDetailesType,
+sum(vw.amount) as amount,
+vw.YearPay,
+vw.DIM_AccountId,
+vw.DIM_CustomerId
+FROM VISTA_PAGOS_AGUA as vw --La tabla tamibien seria dinamic
+--Filtros irian aqui
+GROUP BY 
+vw.CustomerName,
+vw.CustomerMiddleName,
+vw.CustomerLastName,
+vw.CustomerSecondLastName,
+vw.RoleName,
+vw.StatusCuenta,
+vw.StatusFactura,
+vw.ServiceDetailesType,
+vw.YearPay,
+vw.DIM_AccountId,
+vw.DIM_CustomerId
+
 	
 
 -- Índices adicionales para mejorar el rendimiento

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { GetCostoServicio } from '../../api/pagos/api_get_costo_servicio';
 
 const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData }) => {
   const CURRENT_WATER_COST = 360; // Costo actual

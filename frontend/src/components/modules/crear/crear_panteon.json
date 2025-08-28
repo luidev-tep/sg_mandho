@@ -5,5 +5,5 @@
   "successTitle": "Pago de Panteón Registrado",
   "successMessage": "El pago del servicio de panteón ha sido registrado para",
   "componentType": "panteon",
-  "menuPath": "/modulo/panteon"
+  "menuPath": "/modulos/panteon"
 }

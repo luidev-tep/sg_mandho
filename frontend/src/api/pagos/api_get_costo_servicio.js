@@ -4,12 +4,17 @@ const api = axios.create({
     baseURL: 'http://127.0.0.1:5000/api/payment/'
 });
 
-export const GetCostoServicio = async (data) => {
+export const GetCostoServicio = async (DIM_CustomerId, moduleName) => {
     try {
         // Validación de campos requeridos
-        if (!data.serviceName && !data.DIM_DateId) {
+        if (!DIM_CustomerId && !moduleName) {
             throw new Error('Faltan campos requeridos para mostrar los pagos');
         }
+
+        const data = {
+            DIM_CustomerId: DIM_CustomerId,
+            moduleName: moduleName
+        };
 
         //console.log("Los datos llegaron correctamente a Api.js en MostrarPagos", data);
         const response = await api.post('get_cost/', data);
@@ -42,4 +47,8 @@ export const GetCostoServicio = async (data) => {
         }
         throw new Error(errorMessage);
     }
+};
+
+export const getAmount = async (data) => {
+    return 360.00
 };

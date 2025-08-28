@@ -46,8 +46,9 @@ class factRevenueCrud():
         # LAS NUEVALIDACIONES DEBERIAR IR AQUI
         statusName = get_status_payment(data_json['amount'], data_json['FactAmount'])
 
+        # Aqui se DEBE HACER UNA VALIDACION PARA VER SI YA PAGO EL TOTAL DEL SERVICIO Y QUE SE MARQUE COMO COMPLETOS 
+        # TODOS LOS REGISTROS ASOCIADOS A ESE ANIO EN ESE SERVICIO
         estatus_id = handler_status.get_status_id(statusName, "fact_revenue")
-
         dim_date_data = DIM_DATE()
         #Validar como se debe guardar el pago
         print(f"Datos del diccionario json", data_json)
@@ -58,7 +59,8 @@ class factRevenueCrud():
             'DIM_ServiceDetailsId': data_json['DIM_ServiceDetailsId'],
             'DIM_MovementId': handler_movement.get_movement_id(data_json['movementName']),
             'DIM_StatusId': estatus_id,
-            'amount': data_json['FactAmount']
+            'amount': data_json['FactAmount'],
+            'YearPay': data_json['AnioPago'],
         }
         
         fact_register = FACT_Revenue(**data_format)

@@ -9,7 +9,7 @@ import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 import { crearRegistroPago } from '../../api/pagos/api_crear_pago.js';
 import { useAuth } from "../../utils/AuthContext.jsx";
 import { useParams, useNavigate } from 'react-router-dom';
-
+import { GetCostoServicio } from '../../api/pagos/api_get_costo_servicio.js';
 
 // Componentes dinámicos (carga diferida)
 const COMPONENT_CONFIG = {
@@ -53,17 +53,15 @@ const DynamicGeneratePay = () => {
   const navigate = useNavigate();
   const { moduleName } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // <- Aquí se corrige el error
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fechaActual] = useState(new Date().toISOString().split('T')[0]);
   const [moduleConfig, setModuleConfig] = useState(null);
   const [moduleData, setModuleData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-    // Estado para almacenar los datos de la cuenta
-  const [accountData, setAccountData] = useState(null); // <- ¡Aquí lo defines!
-  const [message, setMessage] = useState({ text: '', type: '' }); // Definido correctamente como objeto
-  const [showSuccessOptions, setShowSuccessOptions] = useState(false); // Añadido porque se usa en onSubmit
-    // Obtenemos el estado de autenticación
+  const [accountData, setAccountData] = useState(null);
+  const [message, setMessage] = useState({ text: '', type: '' });
+  const [showSuccessOptions, setShowSuccessOptions] = useState(false);
   const { state } = useAuth();
   const { usuario } = state;
   
@@ -72,12 +70,10 @@ const DynamicGeneratePay = () => {
     return error.response?.data?.message || error.message || 'Ocurrió un error al procesar el pago';
   };
 
-
   // Estados para validación
   const [isChildValid, setIsChildValid] = useState(false);
   const [isModuleChildValid, setIsModuleChildValid] = useState(false);
   const [isParentValid, setIsParentValid] = useState(false);
-
 
   // Configurar react-hook-form con validaciones Yup solo para campos del padre
   const { 
@@ -95,7 +91,6 @@ const DynamicGeneratePay = () => {
   }
   });
 
-
   // Efecto para validar el formulario padre
   useEffect(() => {
     setIsParentValid(isParentFormValid);
@@ -105,6 +100,29 @@ const DynamicGeneratePay = () => {
   const isFormValid = isChildValid && 
                      isParentValid && 
                      (moduleConfig ? (moduleConfig.componentType === 'obtener_cuenta' ? true : isModuleChildValid) : false);
+
+  // Efecto para obtener el costo del servicio cuando el cliente sea válido
+  useEffect(() => {
+    const fetchCostoServicio = async () => {
+      if (isChildValid && accountData && accountData.customerId) {
+        try {
+          const costoData = await GetCostoServicio(accountData.customerId, moduleName);
+          // Actualizar moduleData con la información del servicio
+          setModuleData(prev => ({
+            // ...prev,
+            // amount: costoData.amount,
+            // serviceType: costoData.serviceName,
+            // Podemos setear el año también si es necesario
+          }));
+        } catch (error) {
+          console.error('Error al obtener costo del servicio:', error);
+          // No es necesario mostrar error ya que el componente hijo ya validó
+        }
+      }
+    };
+
+    fetchCostoServicio();
+  }, [isChildValid, accountData, moduleName]);
 
   // Cargar configuración del módulo
   useEffect(() => {
@@ -149,67 +167,65 @@ const DynamicGeneratePay = () => {
     setIsModuleChildValid(valid);
   }, []);
 
-const onSubmit = async (data) => {
-  try {
-    if (!usuario) {
-      throw new Error('No hay usuario logueado');
-    }
-    
-    setIsSubmitting(true);
-    
-    const payload = {
-      ...data,
-      DIM_OnwerCustomerId: usuario.DIM_CustomerId,
-      DIM_AccountId: accountData.accountId,
-      DIM_CustomerId: accountData.customerId,
-      ServiceName: moduleName,
-      fecha: fechaActual, 
-      serviceDetailsType: moduleData.serviceType,
-      amount: moduleData.amount,
-      AnioPago: data.anioPago,
-      movementName: "ingreso",
-      FactAmount: data.cantidadRecibida
-    };
-
-    const response = await crearRegistroPago(payload);
-    
-    if (response && response.message === "Pago creado satisfactoriamente") {
-      // Redirigir a página de éxito
-      navigate(`/modulos/estado_pago/?type=success&text=${encodeURIComponent(
-        `${moduleConfig.successMessage || 'Pago registrado exitosamente para'} ${accountData.customerName || 'el cliente'}`
-      )}&customerName=${encodeURIComponent(accountData.customerName || '')}&menuPath=${encodeURIComponent(moduleConfig.menuPath || '/')}`);
-      
-      // Terminar la ejecución aquí con return
-      return;
-    }
-    
-    // Solo llegar aquí si no fue exitoso
-    const errorMessage = response?.message || 
-                       response?.data?.message || 
-                       'Error desconocido al procesar el pago';
-    throw new Error(errorMessage);
-    
-  } catch (err) { 
-    console.error('❌ Error en onSubmit:', err.message);
-    let errorMessage = 'Error al procesar el pago';
-    
-    if (err.response) {
-      errorMessage = err.response.data?.message || 
-        err.response.data?.error || 
-        err.message;
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
-    
-    navigate(`/modulos/estado_pago/?type=error&text=${encodeURIComponent(errorMessage)}&customerName=${encodeURIComponent(accountData?.customerName || '')}&menuPath=${encodeURIComponent(moduleConfig.menuPath || '/')}`);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-    // Manejador para recibir datos de la cuenta
   const handleAccountData = useCallback((data) => {
-    setAccountData(data); // Ahora setAccountData está definido
+    setAccountData(data);
   }, []);
+
+  const onSubmit = async (data) => {
+    try {
+      if (!usuario) {
+        throw new Error('No hay usuario logueado');
+      }
+      
+      setIsSubmitting(true);
+      
+      const payload = {
+        ...data,
+        DIM_OnwerCustomerId: usuario.DIM_CustomerId,
+        DIM_AccountId: accountData.accountId,
+        DIM_CustomerId: accountData.customerId,
+        ServiceName: moduleName,
+        fecha: fechaActual, 
+        serviceDetailsType: moduleData.serviceType,
+        amount: moduleData.amount,
+        AnioPago: data.anioPago,
+        movementName: "ingreso",
+        FactAmount: data.cantidadRecibida
+      };
+
+      const response = await crearRegistroPago(payload);
+      
+      if (response && response.message === "Pago creado satisfactoriamente") {
+        // Redirigir a página de éxito
+        navigate(`/modulos/estado_pago/?type=success&text=${encodeURIComponent(
+          `${moduleConfig.successMessage || 'Pago registrado exitosamente para'} ${accountData.customerName || 'el cliente'}`
+        )}&customerName=${encodeURIComponent(accountData.customerName || '')}&menuPath=${encodeURIComponent(moduleConfig.menuPath || '/')}`);
+        
+        return;
+      }
+      
+      const errorMessage = response?.message || 
+                         response?.data?.message || 
+                         'Error desconocido al procesar el pago';
+      throw new Error(errorMessage);
+      
+    } catch (err) { 
+      console.error('❌ Error en onSubmit:', err.message);
+      let errorMessage = 'Error al procesar el pago';
+      
+      if (err.response) {
+        errorMessage = err.response.data?.message || 
+          err.response.data?.error || 
+          err.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      navigate(`/modulos/estado_pago/?type=error&text=${encodeURIComponent(errorMessage)}&customerName=${encodeURIComponent(accountData?.customerName || '')}&menuPath=${encodeURIComponent(moduleConfig.menuPath || '/')}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Modificado para hacer merge con datos existentes
   const handleModuleData = useCallback((newData) => {
@@ -416,13 +432,7 @@ const onSubmit = async (data) => {
                     // Si estás usando React Hook Form, puedes registrarlo para que su valor sea enviado
                     {...register('metodoPago', { value: 'efectivo' })}
                   />
-                  {/* El manejo de errores ya no sería necesario para un campo fijo,
-                      pero lo dejo comentado por si hay alguna validación en el formulario completo */}
-                  {/* {errors.metodoPago && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {errors.metodoPago.message}
-                    </p>
-                  )} */}
+
                 </div>
               </div>
               <div className="flex justify-end">

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../partials/SideBar';
-import Header from '../../partials/Header';
+import Sidebar from '../../partials/SideBar.jsx';
+import Header from '../../partials/Header.jsx';
 import DateSelect from '../../components/modules/DateSelectPayment.jsx';
-import FilterButton from '../../components/DropdownFilter';
-import AguaTable from '../../components/modules/tablas/aguaTable.jsx';
-import { Link } from 'react-router-dom';
+import FilterButton from '../../components/DropdownFilter.jsx';
+import DynamicTable from '../../components/modules/tablas/DynamicTable.jsx';
+import { Link, useParams } from 'react-router-dom';
 
-function AguaMenu() {
+function DynamicMenu() {
+  const { moduleName } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filters, setFilters] = useState({});
   const filterOptions = [
@@ -16,31 +17,29 @@ function AguaMenu() {
     { label: 'Yhonda', value: 'yhonda' },
     { label: 'Tepetate', value: 'tepetate' },
     { label: 'Buena vista', value: 'buenavista' },
-    { label: 'Inactivos', value: 'pendiente' } 
+    { label: 'Pendientes', value: 'pendiente' } 
   ];
 
-  const handleDateFilterChange = (dateValue) => {
-    const year = dateValue ? '20' + dateValue.slice(1) : null;
+  const handleDateFilterChange = (year) => {
     setFilters(prev => {
       const newFilters = { ...prev };
+      // Eliminar cualquier clave que sea un número (año)
       Object.keys(newFilters).forEach(key => {
-        if (key.startsWith('Y')) {
+        if (/^\d{4}$/.test(key)) {
           delete newFilters[key];
         }
       });
-      if (dateValue) {
-        newFilters[dateValue] = true;
+      if (year) {
+        newFilters[year] = true; // La clave es el año (número) y el valor true
       }
       return newFilters;
     });
   };
-
-  // Efecto para establecer el año actual como filtro por defecto al montar el componente
+    // Efecto para establecer el año actual como filtro por defecto al montar el componente
   useEffect(() => {
     const currentYear = new Date().getFullYear();
-    const shortYear = currentYear.toString().slice(-2);
-    const yearValue = `Y${shortYear}`;
-    handleDateFilterChange(yearValue);
+    // MODIFICADO: Envía el año actual (número) en lugar de la cadena "YXX"
+    handleDateFilterChange(currentYear);
   }, []);
 
   // Limpiar búsqueda al cambiar de vista
@@ -84,7 +83,7 @@ function AguaMenu() {
             <div className="sm:flex sm:justify-between sm:items-center mb-8">
               {/* Left: Title */}
               <div className="mb-4 sm:mb-0">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">Pagos de Agua </h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">Pagos de {moduleName} </h1>
               </div>
 
               {/* Right: Actions */}
@@ -108,7 +107,7 @@ function AguaMenu() {
 
                 {/* Add button */}
                 <Link
-                  to="/modulos/crear_pago/agua"
+                  to={`/modulos/crear_pago/${moduleName}`}
                   className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 >
                   <span className="flex items-center">
@@ -118,7 +117,7 @@ function AguaMenu() {
                 </Link>
 
                 <Link
-                  to="/personas/registro"
+                  to={`/modulos/generar_reporte/${moduleName}`}
                   className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 >
                   <span className="flex items-center">
@@ -131,8 +130,9 @@ function AguaMenu() {
 
             {/* Table */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border border-gray-200 dark:border-gray-700">
-              <AguaTable
+              <DynamicTable 
                 filters={filters}
+                serviceName={moduleName}
               />
             </div>
 
@@ -147,4 +147,4 @@ function AguaMenu() {
   );
 }
 
-export default AguaMenu;
+export default DynamicMenu;
