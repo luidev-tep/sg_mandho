@@ -119,7 +119,8 @@ function FinishPayment({onClose, onUpdate, props }) {
         amount: amountTotal,
         AnioPago: dim_date,
         movementName: "ingreso",
-        FactAmount: data.cantidadRecibida
+        FactAmount: data.cantidadRecibida,
+        entrada: '' //Se deja vacio ya que las validaciones solo se aplican a crear pagp
       };
 
       const response = await crearRegistroPago(payload);

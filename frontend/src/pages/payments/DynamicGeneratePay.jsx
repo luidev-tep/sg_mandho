@@ -190,7 +190,8 @@ const DynamicGeneratePay = () => {
         amount: moduleData.amount,
         AnioPago: data.anioPago,
         movementName: "ingreso",
-        FactAmount: data.cantidadRecibida
+        FactAmount: data.cantidadRecibida,
+        entrada: 'crear_pago'
       };
 
       const response = await crearRegistroPago(payload);

@@ -1,7 +1,7 @@
 import sqlite3
 from src.utils.conexion import Conexion
 from src.utils.build_filters import BuildFilters
-
+from typing import Any
 from src.payments.model.vista_model import VistaModel
 
 handler_vista = VistaModel()
@@ -114,6 +114,8 @@ class ReadPayment:
                 # Si el servicio no es reconocido, retornamos un código 400 (Bad Request)
                 return 400, []
             
+            query = query.replace("[filtros]", "")
+            
             # Ejecutamos la consulta
             hanlder_conexion.cursor.execute(query)
             rows = hanlder_conexion.cursor.fetchall()
@@ -209,8 +211,59 @@ class ReadPayment:
             # Aseguramos que la conexión se cierre
             object_conection.close_conexion()
     
+    def get_validation_payment(self, service_name: str, filters: str, values: tuple) -> None | list[Any]:
+        """
+        Valida si un pago ya ha sido realizado para un servicio específico en algún año.
+        
+        Esta función ejecuta una consulta SQL personalizada según el servicio proporcionado
+        y aplica los filtros especificados para verificar la existencia de pagos previos.
+        
+        Args:
+            service_name (str): Nombre del servicio para determinar la vista a consultar (ej: 'agua', 'panteon').
+            filters (str): Condiciones WHERE de la consulta SQL para filtrar los resultados.
+            values (tuple): Valores parámetros para la consulta parametrizada.
+            
+        Returns:
+            None | list[Any]: 
+                - Lista de registros encontrados que coinciden con los criterios de búsqueda.
+                - None si no se encuentran registros o ocurre un error.
+                
+        Raises:
+            Exception: Captura y muestra errores durante la ejecución de la consulta SQL.
+            
+        Example:
+            >>> resultado = obj.get_validation_payment(
+            ...     service_name='agua',
+            ...     filters='anio_pago = ? AND customer_id = ?',
+            ...     values=(2025, 'customer_123')
+            ... )
+        """
+        hanlder_conexion = Conexion()
+        
+        try:
+            # Obtenemos la consulta SQL base
+            query = self._obtener_query(service_name)
 
-"""
-            if 'DIM_CustomerId' in filters and filters['DIM_CustomerId']:
-                query_filtros += " AND  vw.DIM_CustomerId = ?"
-                values.append(filters['DIM_CustomerId'])"""
+            if not query:
+                # Si el servicio no es reconocido, retornamos un código 400 (Bad Request)
+                return None
+            query = query.replace("[filtros]", filters)
+            # Ejecutamos la consulta
+            hanlder_conexion.cursor.execute(query, values)
+
+            registros = hanlder_conexion.cursor.fetchall()
+
+            if registros is None:
+                print("No se encontraron registros con los filtros proporcionados")
+                return None
+
+            # Crear los objetos con los resultados obtenidos
+            # print("#"*100)
+            # print([registro for registro in registros if registro])
+            # print("#"*100)
+            print('Se encontraron registro en el servicio: ', service_name, ' con estos filtros: ', filters, 'y estos valores: ', values)
+            return registros
+        except Exception as e:
+            print(f"Error al construir los filtros: {e}")
+            return None
+        

@@ -1,8 +1,7 @@
 from src.utils.conexion import Conexion
 from src.payments.model.vista_model import VistaModel
 import sqlite3
-#e deberia hacer igual por tipo de servicio ya qu epodria haver servicios donde se puedan pagar los 2, 
-# y se veria como un buf que se esten mostrando ambos servicios en una sola interfaz
+
 def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, service_type: str) -> tuple[int, list[dict]]:
     """
     Funcion para obtener los pagos que se realizaron en un solo anio para una persona, basado en el tipo de s
