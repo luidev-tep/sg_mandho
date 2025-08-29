@@ -126,7 +126,7 @@ def get_amount_by_service_and_date(serviceType: str, date: str) -> float:
     Parameters:
         serviceType (str): The type of service to search for.
         date (str): The target date in 'YYYY-MM-DD' format for which the amount 
-                   should be retrieved. The function uses the fiscal year from this date.
+                    should be retrieved. The function uses the fiscal year from this date.
     
     Returns:
         float: The amount of the service for the specified date. Returns 0.0 if 
@@ -155,5 +155,50 @@ def get_amount_by_service_and_date(serviceType: str, date: str) -> float:
     except Exception as e:
         print(f"Error retrieving amount by service and date: {str(e)}")
         return 0.0
+    finally:
+        object_conecttion.close_conexion()
+
+
+def get_count_servicetypes_by_service(ServiceId: str, starDate: str, endDate: str) -> int:
+    """
+    Counts the number of service types associated with a specific service ID within a date range.
+
+    This function is designed to count how many distinct service types are linked 
+    to a given service ID within a specified period defined by start and end dates. 
+    It's useful for scenarios like counting the number of services billed for a 
+    specific module (e.g., "water") within a given year.
+
+    Parameters:
+        ServiceId (str): The unique identifier of the service.
+        starDate (str): The start date of the period in 'YYYY-MM-DD' format.
+        endDate (str): The end date of the period in 'YYYY-MM-DD' format.
+
+    Returns:
+        int: The number of service types found. Returns 0 if no records are found 
+             or if an error occurs during the database operation.
+    
+    Example:
+        >>> get_count_servicetypes_by_service("water_module_1", "2023-01-01", "2023-12-31")
+        5
+    """
+    object_conecttion = Conexion()
+    try:
+        query = """
+        SELECT COUNT(ServiceDetailesType) FROM DIM_ServiceDetails 
+        WHERE DIM_ServiceId = ? 
+        AND StartDate <= ? 
+        AND EndDate >= ?
+        """
+        object_conecttion.cursor.execute(query, (ServiceId, starDate, endDate))
+        result = object_conecttion.cursor.fetchone()
+        
+        if result is not None:
+            return result[0]
+        else:
+            return 0
+            
+    except Exception as e:
+        print(f"Error retrieving service types count by service: {str(e)}")
+        return 0
     finally:
         object_conecttion.close_conexion()

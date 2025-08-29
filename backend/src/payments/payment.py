@@ -24,6 +24,11 @@ from src.payments.repository.read_payments import ReadPayment
 from src.payments.repository.get_fact_revenues_customer import get_fact_revenues_by_customer_id
 payments_handler = ReadPayment()
 
+#Importaciones de validaciones de pagos Pendiente
+from src.payments.services.validate_payment import ValidatePayment
+
+validate_payment = ValidatePayment()
+
 class PaymentCrud:
     """Clase para manejar las operaciones CRUD de pagos."""
 
@@ -47,10 +52,16 @@ class PaymentCrud:
         #SE DEBEN AGREGAR MULTIPLES VALIDACIONES se agregan en la funcionb para crear EL FACT REVENUE PARA QUE NO SE CREEN PAGOS PARA ETX ETX
         data_json['amount'] = float(data_json['amount'])
         data_json['FactAmount'] = float(data_json['FactAmount'])
-        fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'amount', 'AnioPago', 'FactAmount','movementName']
-        type_fields = [str, str, str, str, str, float, int, float, str]
+        fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'amount', 'AnioPago', 'FactAmount','movementName', 'entrada']
+        type_fields = [str, str, str, str, str, float, int, float, str, str]
 
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
+
+        if not is_valid:
+            return 400, message
+        
+        #Validar si no existe otro pago pendiente 
+        is_valid, message = validate_payment.is_another_payment_in_year(data_json['DIM_CustomerId'], data_json['AnioPago'], data_json['ServiceName'], data_json['entrada'], data_json['serviceDetailsType'])
 
         if not is_valid:
             return 400, message

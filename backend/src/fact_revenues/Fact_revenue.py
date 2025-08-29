@@ -53,7 +53,7 @@ class factRevenueCrud():
         #Validar como se debe guardar el pago
         print(f"Datos del diccionario json", data_json)
         data_format = {
-            'FACT_RevenueId': create_id([statusName, data_json['DIM_AccountId'], data_json['FactAmount'], dim_date_data.dateId]), #Asi se evita que el id se repita
+            'FACT_RevenueId': create_id([statusName, data_json['DIM_AccountId'], dim_date_data.dateId]), #Asi se evita que el id se repita
             'DIM_DateId': dim_date_data.dateId,
             'DIM_AccountId': data_json['DIM_AccountId'],
             'DIM_ServiceDetailsId': data_json['DIM_ServiceDetailsId'],
