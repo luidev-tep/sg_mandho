@@ -1,5 +1,19 @@
 from src.dim_servicedetails.repository.show import get_amount_by_id
 
+#Importacion de la funcion para actualizar una seria de registros, (Ver si convertir a una clase apra que solamente se acceda a sus metodos)
+from src.fact_revenues.repository.edit import EditFactRevenue
+handler_edit = EditFactRevenue()
+
+#Obtener la funcion que recibe todos los pagos sociados a un solo cliente
+from src.payments.repository.get_fact_revenues_customer import get_fact_revenues_by_customer_id
+
+#importacion para obtener el estado del pago
+from src.dim_status.status import DIM_status
+hanlder_status = DIM_status()
+
+
+from src.payments.repository.read_payments import ReadPayment
+hanlder_querys = ReadPayment()
 def get_status_payment(cost_service: float, amount: float) -> str:
     """Determina el estado de pago de un servicio.
 
@@ -45,3 +59,52 @@ def valide_amount(amount: float, id_amount: str) -> bool:
         return False
     
     return amount_table == amount
+
+
+def get_status_payment_for_registers(cost_service: float, cantidad_recibida: float, dim_customer_id: str, servicedetails: str, service_name: str, year_pay: str) -> str:
+    """Determina el estado de pago de un servicio y actualiza los registros asociados.
+
+    Compara el costo total del servicio con la suma de todos los montos pagados
+    para definir el estado. Si la suma total de pagos es igual o mayor al costo,
+    el estado es "pagado" y se actualizan los registros correspondientes en la
+    base de datos. Si la suma es menor, el estado es "pendiente".
+
+    Args:
+        cost_service (float): El costo total del servicio.
+        cantidad_recibida (float): El monto del pago actual.
+        dim_customer_id (str): El ID del cliente.
+        servicedetails (str): Detalles del servicio.
+        service_name (str): El nombre del servicio.
+        year_pay (str): El año del pago.
+
+    Returns:
+        str: Retorna "pagado" si el monto total coincide o lo supera, o "pendiente" si es menor.
+    """
+    #Obtener primero la suma de los pagos que lleva hasta ahora le cliente
+    #Se actualizaran todos los pagos asociados a esta cuenta para que se marquen como pagados,
+    status,registros_cliente = get_fact_revenues_by_customer_id(dim_customer_id, service_name, servicedetails, year_pay )
+
+    if status != 200:
+        print(f"Error al leer los pagos: {registros_cliente}")
+        return ""
+    print("Se obtuvieron los pagos", len(registros_cliente))
+
+    amount = cantidad_recibida
+    for registro in registros_cliente:
+        amount += registro['amount']
+        
+    estado = cost_service - amount
+    if estado == 0:
+        data = "pagado"
+        
+        
+        #Obtenemos el id de cada cuenta obtenida
+        id_registros = [registro['FACT_RevenueId'] for registro in registros_cliente]
+        #Para esto ya se debe saber el nombre de la columna que se quiere actualizar
+        DIM_StatusId = hanlder_status.get_status_id(data, 'fact_revenues')
+        handler_edit.update_many_registers(id_registros, 'DIM_StatusId', DIM_StatusId )
+
+    elif estado > 0:
+        data = "pendiente"
+
+    return data

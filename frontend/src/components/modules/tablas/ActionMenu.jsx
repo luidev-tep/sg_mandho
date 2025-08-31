@@ -80,6 +80,7 @@ function ActionMenu({ onUpdate, id_user, serviceName, props }) {
           serviceName={serviceName}
           onClose={() => setEditModalOpen(false)}
           service_type={props.service_type}
+          Year={props.dim_date}
           onUpdate={onUpdate}
           
         />

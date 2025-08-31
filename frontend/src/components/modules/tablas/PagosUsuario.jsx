@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MostrarPagos } from '../../../api/pagos/api_mostrar_pago';
 import PaymentItem from './PagosUsuarioItem';
 
-function PaymentsTableModal({ id_user, serviceName, onClose , service_type}) {
+function PaymentsTableModal({ id_user, serviceName, onClose , service_type, Year}) {
   const [pagos, setPagos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,7 +20,8 @@ function PaymentsTableModal({ id_user, serviceName, onClose , service_type}) {
       const filters = {
         "DIM_CustomerId": id_user,
         "serviceName": serviceName,
-        "service_type": service_type
+        "service_type": service_type,
+        'Year': Year
       };
       
       console.log('Filtros para pagos:', filters);

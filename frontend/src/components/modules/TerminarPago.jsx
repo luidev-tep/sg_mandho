@@ -6,6 +6,7 @@ import * as yup from 'yup';
 import { crearRegistroPago } from '../../api/pagos/api_crear_pago.js';
 import { getAmount } from '../../api/pagos/api_get_costo_servicio.js';
 import { useAuth } from "../../utils/AuthContext.jsx";
+import { data } from "react-router-dom";
 
 // Esquema de validación
 const editSchema = yup.object().shape({
@@ -62,19 +63,27 @@ function FinishPayment({onClose, onUpdate, props }) {
   } = useForm({
     resolver: yupResolver(editSchema)
   });
+  //Se debe enviar un objeto con esta infromacion dentro 
+useEffect(() => {
+  const empaquetadorXD = {
+  service_type: service_type,
+  Year: dim_date
+  };
+  const data = {
+    costoservicio: empaquetadorXD
+  }
 
-  useEffect(() => {
-    getAmount(service_name, service_type, dim_date)
-      .then((amount) => {
-        setAmountTotal(amount);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error obteniendo el monto total:', error);
-        setError('Error al obtener el monto total del servicio');
-        setIsLoading(false);
-      });
-  }, [service_name, service_type, dim_date]);
+  getAmount(data)
+    .then((amount) => {
+      setAmountTotal(amount);
+      setIsLoading(false);
+    })
+    .catch((error) => {
+      console.error('Error obteniendo el monto total:', error);
+      setError('Error al obtener el monto total del servicio');
+      setIsLoading(false);
+    });
+  }, [ service_type, dim_date]);
 
   const validateAmount = (value) => {
     if (value > cantidadFaltante) {

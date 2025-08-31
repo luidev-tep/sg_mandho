@@ -21,6 +21,7 @@ from src.dim_servicedetails.repository.show import get_service_detailsId_by_Serv
 #importaciones de mostrar pagos
 from src.payments.repository.read_payments import ReadPayment
 
+#Aqui
 from src.payments.repository.get_fact_revenues_customer import get_fact_revenues_by_customer_id
 payments_handler = ReadPayment()
 
@@ -28,6 +29,9 @@ payments_handler = ReadPayment()
 from src.payments.services.validate_payment import ValidatePayment
 
 validate_payment = ValidatePayment()
+
+#Importacion para saber le costo de un servicio en especidico en un anio especifico
+from src.dim_servicedetails.repository.show import get_amount_by_service_and_date
 
 class PaymentCrud:
     """Clase para manejar las operaciones CRUD de pagos."""
@@ -66,6 +70,12 @@ class PaymentCrud:
         if not is_valid:
             return 400, message
         
+        #Validar que Amount sea una cantidad positiva
+        is_valid = data_json['amount'] > 0
+
+        if not is_valid:
+            return 400, "La cantidad ingeresada debe ser mayor a 0 Pesos"
+
         try:
             # Obtener el ID del detalle del servicio
             dim_service_detail_id = get_service_detailsIS_by_ServiceType(data_json['serviceDetailsType'])
@@ -225,8 +235,8 @@ class PaymentCrud:
                              - (200, data): Datos de pagos encontrados.
         """
         
-        fields_required = ['DIM_CustomerId', 'serviceName', 'service_type']
-        type_fields = [str, str, str]
+        fields_required = ['DIM_CustomerId', 'serviceName', 'service_type', 'Year']
+        type_fields = [str, str, str, int]
         is_valid, message = validate_data(filters, fields_required, type_fields, "payment")
 
         if not is_valid:
@@ -246,3 +256,53 @@ class PaymentCrud:
             print(e)
             # Capturar cualquier excepción inesperada y devolver un error del servidor
             return 500, f"Error leyendo los pagos: {str(e)}", []
+        
+
+    def get_cost_by_payment_year(self, data_json: dict) -> tuple[int, Any, list]:
+        """Obtiene el costo de un servicio o producto basado en los datos proporcionados.
+
+        Esta función valida los datos de entrada, Ademas debera buscar cuales son los pagos que ese cliente en especifico puede pagar, 
+        para lograr eso se deben hacer peticiones, de que cuentas ya pagaron, ya que recordemos que cada cliente puede tener ciertas cuentas
+        ademas se debe ir haciendo esto verificando por anio,  una vez hecho esto, se deberan devolver las cuentas que el 
+        cliente aun no ha pagado para poder realizar el pago,
+
+        Args:
+            data_json (dict): Un diccionario con los datos necesarios para calcular el costo.
+
+        Returns:
+            tuple[int, str, list]: Una tupla con el código de estado HTTP y los datos o un mensaje.
+                             - (400, "message"): Datos faltantes o inválidos.
+                             - (500, "message"): Error interno del servidor.
+                             - (200, data): Costo calculado.
+                             - list: Una lista de dict los cuales contienen la ifnormacin
+                             de pagos que el cliente puede realizar.
+        """
+        fields_required = ['service_type', 'Year']
+        type_fields = [ str, int]
+        is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
+
+        if not is_valid:
+            return 400, message, []
+        
+        try:
+            year =  data_json['Year']
+
+            # Obtener los últimos 2 dígitos del año usando módulo 100
+            last_two_digits = year % 100
+
+            #Cuando no se proporcionan filtros solo se devuelven todos los registros del servicio
+            amount = get_amount_by_service_and_date(data_json['service_type'], f"Y{last_two_digits}")
+
+            #print(f"Se imprimieran todos los datsos obtenidos emepzando desde los datos de json \n {data_json['service_type']} \n {data_json['Year']} \n {amount} \n {year} \n Y{last_two_digits}")
+            if  not amount:
+                print(f"Error al leer la cantidad: {amount}")
+                return 400, f"No se encontraron costos de Servicos registrados en {year}", []
+            
+            return 200, "Datos obtenidos satisfactoriamente", amount
+        except Exception as e:
+            print(e)
+            # Capturar cualquier excepción inesperada y devolver un error del servidor
+            return 500, f"Error leyendo los pagos: {str(e)}", []
+"""
+
+"""

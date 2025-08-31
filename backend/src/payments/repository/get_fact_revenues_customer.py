@@ -2,15 +2,19 @@ from src.utils.conexion import Conexion
 from src.payments.model.vista_model import VistaModel
 import sqlite3
 
-def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, service_type: str) -> tuple[int, list[dict]]:
+def get_query_base() -> str:
     """
-    Funcion para obtener los pagos que se realizaron en un solo anio para una persona, basado en el tipo de s
-    servicio que se esta ingresando. se tienen que ingresar tanto su service name el nombre del servicio y tambien
-    el tipo de servicio
+    Construye la consulta SQL base para la vista de pagos.
+
+    Esta función retorna una cadena de texto que contiene una consulta SELECT
+    estándar para la vista de pagos, utilizando un placeholder `[tabla]`
+    para ser reemplazado posteriormente con el nombre de servicio
+    correspondiente.
+
+    Returns:
+        str: La cadena de consulta SQL base.
     """
-    handler_conexion = Conexion()
-    handler_vista = VistaModel()
-    query_base = f"""
+    return f"""
         SELECT
         vw.CustomerName,
         vw.CustomerMiddleName,
@@ -19,15 +23,48 @@ def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, serv
         vw.StatusFactura,
         vw.amount,
         vw.FACT_RevenueId,
-		vw.DIM_DateId,
+        vw.DIM_DateId,
         DIM_AccountId
-		from VISTA_PAGOS_[tabla] as vw
-		where DIM_CustomerId = ? AND
-        vw.ServiceDetailesType = ?
+        from VISTA_PAGOS_[tabla] as vw
+        """
+
+def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, service_type: str, Year: str) -> tuple[int, list[dict]]:
+    """
+    Obtiene los pagos realizados por un cliente para un tipo de servicio específico.
+
+    Esta función realiza una consulta a la base de datos para recuperar los
+    detalles de los pagos (facturas) de un cliente, filtrando por su ID de
+    cliente y el tipo de servicio. La tabla de la base de datos se determina
+    dinámicamente a partir del nombre del servicio.
+
+    Args:
+        DIM_CustomerId (str): El ID único del cliente.
+        serviceName (str): El nombre del servicio, utilizado para construir el
+                           nombre de la tabla en la base de datos.
+        service_type (str): El tipo de servicio (por ejemplo, 'mensual', 'anual').
+
+    Returns:
+        tuple[int, list[dict]]: Una tupla que contiene:
+                                - Un código de estado (200 para éxito, 500 para error).
+                                - Una lista de diccionarios, donde cada diccionario
+                                  representa los datos de una factura. La lista
+                                  estará vacía si no se encuentran resultados
+                                  o si ocurre un error.
+
+    Raises:
+        sqlite3.Error: Si ocurre un error al interactuar con la base de datos SQLite.
+    """
+    handler_conexion = Conexion()
+    handler_vista = VistaModel()
+    query_base = get_query_base()
+    query_base += f"""
+        where DIM_CustomerId = ? AND
+        vw.ServiceDetailesType = ? AND
+        vw.YearPay = ?
         """
     try:
         quwery_base = query_base.replace("[tabla]", serviceName.upper())
-        values = (DIM_CustomerId, service_type, )
+        values = (DIM_CustomerId, service_type, Year)
 
         print(quwery_base , values)
         handler_conexion.cursor.execute(quwery_base, values)
@@ -48,4 +85,3 @@ def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, serv
     finally:
         # Aseguramos que la conexión se cierre
         handler_conexion.close_conexion()
-

@@ -133,7 +133,7 @@ def get_amount_by_service_and_date(serviceType: str, date: str) -> float:
                no matching record is found or if an error occurs.
     
     Example:
-        >>> get_amount_by_service_and_date("Ranchero", "2023-05-15")
+        >>> get_amount_by_service_and_date("Ranchero", "Y25")
         1200.0
     """
     object_conecttion = Conexion()
