@@ -50,5 +50,46 @@ export const GetCostoServicio = async (DIM_CustomerId, moduleName) => {
 };
 
 export const getAmount = async (data) => {
-    return 360.00
+    try {
+        // Validación de datos requeridos
+        if (!data) {
+            throw new Error('Faltan datos requeridos para obtener el monto');
+        }
+        console.log("Los datos llegaron correctamente a Api.js en getAmount", data);
+        const response = await api.post('get_any_data/', data);
+
+        // Verificar si la respuesta tiene el formato esperado
+        if (!response.data) {
+            throw new Error('No se recibieron datos del servidor');
+        }
+
+        // Extraer el amount de la respuesta
+        const amount = parseFloat(response.data.body || response.data);
+
+        // Validar que el amount sea un número válido
+        if (isNaN(amount)) {
+            throw new Error('El monto recibido no es un número válido');
+        }
+
+        return amount;
+
+    } catch (error) {
+        let errorMessage;
+
+        if (error.response) {
+            // El servidor respondió con un status fuera del rango 2xx
+            console.error("Error de respuesta:", error.response.data);
+            errorMessage = error.response.data?.message || 
+                          error.response.data?.error || 
+                          `Error ${error.response.status}: ${error.response.statusText}`;
+        } else if (error.request) {
+            // La petición fue hecha pero no se recibió respuesta
+            errorMessage = 'No se recibió respuesta del servidor';
+        } else {
+            // Error en la configuración de la petición
+            errorMessage = error.message || 'Error al configurar la petición';
+        }
+        
+        throw new Error(errorMessage);
+    }
 };
