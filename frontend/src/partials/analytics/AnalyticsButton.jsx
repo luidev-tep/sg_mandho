@@ -1,114 +1,78 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import ModuleButton from './ModuleBoton';
 
-function AnalyticsButton() {
-  return (
-    <div className="col-span-full bg-white dark:bg-gray-800 shadow-xs rounded-xl">
-      <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100">Módulos del Sistema</h2>
-      </header>
-      <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Botón Módulo Panteón */}
-        <Link 
-          to="/modulo-panteon" 
-          className="
-            flex-1 px-4 py-3 md:px-6 md:py-4
-            bg-gradient-to-r from-gray-800 to-gray-900
-            dark:from-gray-100 dark:to-gray-200
-            text-white dark:text-gray-900
-            font-medium rounded-lg
-            shadow-lg
-            transition-all duration-300
-            transform hover:scale-[1.02]
-            hover:shadow-xl
-            active:scale-95
-            focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50
-            relative overflow-hidden
-            group
-            text-center
-          "
-        >
-          <span className="relative z-10 flex items-center justify-center">
-            Módulo Panteón <span className="ml-1">-&gt;</span>
-          </span>
-          <span className="
-            absolute inset-0
-            bg-gradient-to-r from-violet-600 to-blue-500
-            dark:from-violet-400 dark:to-blue-300
-            opacity-0
-            group-hover:opacity-100
-            transition-opacity duration-300
-          "></span>
-        </Link>
+function AnalyticsButton({ comitiva }) {
+ const moduleOptionsMap = {
+   panteon: [
+     { path: "/modulos/generar_reporte/panteon", label: "Generar Reporte", isReport: true },
+     { path: "/modulos/panteon", label: "Ver Registros" },
+     { path: "/modulos/crear_pago/panteon", label: "Generar Registro" },
+     { path: "/modulos/usuarios/panteon", label: "Ver Personas" }
+   ], 
+   personas: [
+     { path: "/modulos/generar_reporte/personas", label: "Generar Reporte", isReport: true },
+     { path: "/personas/usuarios", label: "Lista de personas" },
+     { path: "/cuentas/cuenta", label: "Crear cuenta" },
+     { path: "/personas/registro", label: "Agregar persona" }
+   ],
+   agua: [
+     { path: "/modulos/generar_reporte/agua", label: "Generar Reporte", isReport: true },
+     { path: "/modulos/agua", label: "Ver pagos" },
+     { path: "/modulos/crear_pago/agua", label: "Generar recibo" },
+     { path: "/modulos/usuarios/agua", label: "Ver Personas" }
+   ],
+   delegacion: [
+     { path: "/modulos/generar_reporte/delegacion", label: "Generar Reporte", isReport: true },
+     { path: "/modulos/delegacion", label: "Ver registros" },
+     { path: "/modulos/crear_pago/delegacion", label: "Generar recibo" },
+     { path: "/modulos/usuarios/delegacion", label: "Ver Personas" }
+   ],
+   feria: [
+     { path: "/modulos/generar_reporte/feria", label: "Generar Reporte", isReport: true },
+     { path: "/modulos/feria", label: "Ver registros" },
+     { path: "/modulos/crear_pago/feria", label: "Generar recibo" },
+     { path: "/modulos/usuarios/feria", label: "Ver Personas" }
+   ]
+ };
 
-        {/* Botón Módulo Pago Agua */}
-        <Link 
-          to="/modulo-pago-agua" 
-          className="
-            flex-1 px-4 py-3 md:px-6 md:py-4
-            bg-gradient-to-r from-gray-800 to-gray-900
-            dark:from-gray-100 dark:to-gray-200
-            text-white dark:text-gray-900
-            font-medium rounded-lg
-            shadow-lg
-            transition-all duration-300
-            transform hover:scale-[1.02]
-            hover:shadow-xl
-            active:scale-95
-            focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50
-            relative overflow-hidden
-            group
-            text-center
-          "
-        >
-          <span className="relative z-10 flex items-center justify-center">
-            Módulo Pago Agua <span className="ml-1">-&gt;</span>
-          </span>
-          <span className="
-            absolute inset-0
-            bg-gradient-to-r from-violet-600 to-blue-500
-            dark:from-violet-400 dark:to-blue-300
-            opacity-0
-            group-hover:opacity-100
-            transition-opacity duration-300
-          "></span>
-        </Link>
+ // Si no hay comitiva especificada, mostrar los módulos generales
+ const defaultModules = [
+   { path: "/modulos/panteon", label: "Módulo Panteón" },
+   { path: "/modulos/agua", label: "Módulo Pago Agua" },
+   { path: "/modulos/delegacion", label: "Módulo Delegación" },
+   { path: "/personas/usuarios", label: "Módulo de Personas" },
+   { path: "/modulos/feria", label: "Módulo Feria" }
+ ];
 
-        {/* Botón Módulo Delegación */}
-        <Link 
-          to="/modulo-delegacion" 
-          className="
-            flex-1 px-4 py-3 md:px-6 md:py-4
-            bg-gradient-to-r from-gray-800 to-gray-900
-            dark:from-gray-100 dark:to-gray-200
-            text-white dark:text-gray-900
-            font-medium rounded-lg
-            shadow-lg
-            transition-all duration-300
-            transform hover:scale-[1.02]
-            hover:shadow-xl
-            active:scale-95
-            focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50
-            relative overflow-hidden
-            group
-            text-center
-          "
-        >
-          <span className="relative z-10 flex items-center justify-center">
-            Módulo Delegación <span className="ml-1">-&gt;</span>
-          </span>
-          <span className="
-            absolute inset-0
-            bg-gradient-to-r from-violet-600 to-blue-500
-            dark:from-violet-400 dark:to-blue-300
-            opacity-0
-            group-hover:opacity-100
-            transition-opacity duration-300
-          "></span>
-        </Link>
-      </div>
-    </div>
-  );
+ const modulesToRender = comitiva ? moduleOptionsMap[comitiva] || [] : defaultModules;
+
+ return (
+   <div className="col-span-full bg-white dark:bg-gray-800 shadow-xs rounded-xl">
+     <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
+       <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+         {comitiva ? `Módulo ${comitiva.charAt(0).toUpperCase() + comitiva.slice(1)}` : 'Comitivas  del Pueblo'}
+       </h2>
+     </header>
+     <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+       {modulesToRender.map((module, index) => (
+         module.isReport ? (
+           <Link
+             key={index}
+             to={module.path}
+             className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+           >
+             {module.label}
+           </Link>
+         ) : (
+           <ModuleButton key={index} to={module.path}>
+             {module.label}
+           </ModuleButton>
+         )
+       ))}
+     </div>
+   </div>
+ );
 }
 
 export default AnalyticsButton;

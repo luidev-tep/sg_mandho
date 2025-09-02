@@ -126,11 +126,16 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
         p.CustomerNumberExt
      FROM DIM_Customer AS p
      INNER JOIN DIM_Date AS d ON p.DIM_DateId = d.DIM_DateId
+     I
      WHERE 1 = 1 """
 
     valores = []
     
     try:
+        if 'moduloPago' in filters and filters['moduloPago']:
+            #query += f" AND "
+            pass
+
         # Construcción de condiciones (se mantiene igual)
         if 'CustomerFraction' in filters and filters['CustomerFraction']:
             manzana_cond, manzana_values = handler_filters.build_manzana_condition(filters['CustomerFraction'])

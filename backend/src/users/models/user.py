@@ -38,6 +38,21 @@ class User:
         self.CustomerAddress = CustomerAdress
         self.CustomerNumberExt = CustomerNumberExt
 
+    def Schema_for_payments_dict(self, Rolename: str, DIM_accountId: str) -> dict[str, str]:
+        return {
+            "DIM_CustomerId": self.DIM_CustomerId,
+            "DIM_DateId": self.DIM_DateId,
+            "CustomerName": self.CustomerName,
+            "CustomerMiddleName": self.CustomerMiddleName,
+            "CustomerLastName": self.CustomerLastName,
+            "CustomerSecondLastName": self.CustomerSecondLastName,
+            "CustomerDateBirth": self.CustomerDateBirth,
+            "CustomerFraction": self.CustomerFraction,
+            "CustomerAddress": self.CustomerAddress,
+            "CustomerNumberExt": self.CustomerNumberExt,
+            "Rolename": Rolename,
+            "DIM_accountId": DIM_accountId
+        }
     def __str__(self) -> str:
         """
         Representación legible del usuario. Útil para depuración rápida o impresión simple.

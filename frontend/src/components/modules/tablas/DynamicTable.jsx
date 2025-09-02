@@ -116,16 +116,16 @@ function DynamicTable({ filters, serviceName }) {
     
     rows.forEach(row => {
       // Eliminar cualquier resaltado previo
-      row.classList.remove('bg-yellow-100', 'border-l-4', 'border-yellow-500');
+      //row.classList.remove('bg-yellow-100', 'border-l-4', 'border-yellow-500');
       
       // Resaltar si coincide con la búsqueda
-      if (searchTerm.length >= 3) {
-        const rowText = row.textContent.toLowerCase();
-        if (rowText.includes(searchTerm)) {
-          row.classList.add('bg-yellow-100', 'border-l-4', 'border-yellow-500');
-          if (!firstMatch) firstMatch = row;
-        }
-      }
+      // if (searchTerm.length >= 3) {
+      //   const rowText = row.textContent.toLowerCase();
+      //   if (rowText.includes(searchTerm)) {
+      //     row.classList.add('bg-yellow-100', 'border-l-4', 'border-yellow-500');
+      //     if (!firstMatch) firstMatch = row;
+      //   }
+      // }
     });
 
     // Scroll al primer resultado si existe

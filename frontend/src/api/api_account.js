@@ -112,7 +112,8 @@ export const MostrarCuentas = async (filters) => {
         data: { body: [] }
       };
     }
-
+    console.log("Desde api account, mostrar cuentas")
+    console.log(id_user)
     const response = await api.post('read/', { id_user });
     
     // Si la respuesta es un array vacío o no tiene body

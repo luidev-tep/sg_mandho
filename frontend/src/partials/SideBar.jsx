@@ -17,34 +17,38 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
   const [activeModule, setActiveModule] = useState(null);
   const [moduleOptions, setModuleOptions] = useState([]);
 
-  // Definir las opciones para cada módulo
-  const moduleOptionsMap = {
-    panteon: [
-      { path: "/modulos/generar_reporte/panteon", label: "Generar Reporte" },
-      { path: "/modulos/panteon", label: "Ver Registros" },
-      { path: "/modulos/crear_pago/panteon", label: "Generar Registro" }
-    ], 
-    personas: [
-      { path: "/personas/usuarios", label: "lista de personas" },
-      { path: "/cuentas/cuenta", label: "crear cuenta" },
-      { path: "/personas/registro", label: "Agregar persona" }
-    ],
-    agua: [
-      { path: "/modulos/agua", label: "Ver pagos" },
-      { path: "/modulos/crear_pago/agua", label: "Generar recibo" },
-      { path: "/modulos/generar_reporte/agua", label: "Generar Reportes" }
-    ],
-    delegacion: [
-      { path: "/modulos/delegacion", label: "ver registros" },
-      { path: "/modulos/crear_pago/delegacion", label: "Generar recibo" },
-      { path: "/modulos/generar_reporte/delegacion", label: "Generar Reporte" }
-    ],
-    feria: [
-      { path: "/modulos/feria", label: "ver registros" },
-      { path: "/modulos/crear_pago/feria", label: "Generar recibo" },
-      { path: "/modulos/generar_reporte/feria", label: "Generar Reportes" }
-    ]
-  };
+  // Definir las opciones para cada módulo /modulos/usuarios/
+const moduleOptionsMap = {
+  panteon: [
+    { path: "/Analytics/panteon", label: "Panel de Control" },
+    { path: "/modulos/panteon", label: "Ver Registros" },
+    { path: "/modulos/crear_pago/panteon", label: "Generar Registro" },
+    { path: "/modulos/usuarios/panteon", label: "Ver Personas" }
+  ], 
+  personas: [
+    { path: "/personas/usuarios", label: "lista de personas" },
+    { path: "/cuentas/cuenta", label: "crear cuenta" },
+    { path: "/personas/registro", label: "Agregar persona" }
+  ],
+  agua: [
+    { path: "/Analytics/agua", label: "Panel de Control" },
+    { path: "/modulos/agua", label: "Ver pagos" },
+    { path: "/modulos/crear_pago/agua", label: "Generar recibo" },
+    { path: "/modulos/usuarios/agua", label: "Ver Personas" }
+  ],
+  delegacion: [
+    { path: "/Analytics/delegacion", label: "Panel de Control" },
+    { path: "/modulos/delegacion", label: "ver registros" },
+    { path: "/modulos/crear_pago/delegacion", label: "Generar recibo" },
+    { path: "/modulos/usuarios/delegacion", label: "Ver Personas" }
+  ],
+  feria: [
+    { path: "/Analytics/feria", label: "Panel de Control" },
+    { path: "/modulos/feria", label: "ver registros" },
+    { path: "/modulos/crear_pago/feria", label: "Generar recibo" },
+    { path: "/modulos/usuarios/feria", label: "Ver Personas" }
+  ]
+};
 
   // Efecto para determinar el módulo activo basado en la ruta
   useEffect(() => {
