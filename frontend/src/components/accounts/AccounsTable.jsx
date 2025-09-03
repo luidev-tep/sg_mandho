@@ -8,6 +8,7 @@ function AccountsTableModal({ id_user, onClose }) {
   const [error, setError] = useState(null);
   const [selectAll, setSelectAll] = useState(false);
   const [isCheck, setIsCheck] = useState([]);
+  const [customerName, setCustomerName] = useState('');
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -16,44 +17,36 @@ function AccountsTableModal({ id_user, onClose }) {
         setError(null);
         
         const filters = { 'id_user': id_user };
-        console.log('Filtros:', filters, 'Persona ingresada', id_user);
         const response = await MostrarCuentas(filters);
         
-        //console.log('Respuesta del backend:', response);
-        
         if (response?.success) {
-          // Manejo más seguro de los datos
           const accountsData = Array.isArray(response.data?.body) 
             ? response.data.body.map(item => ({
-                DIM_AccountId: item.id || item.DIM_AccountId || item.accountId || '',
-                customer_id: item.customer || item.customer_id || item.cliente || '',
-                DIM_RoleId: item.role || item.DIM_RoleId || item.rol || '',
-                DIM_StatusId: item.status || item.DIM_StatusId || item.estado || '',
-                startDate: item.startDate || item.fechaInicio || '',
-                endDate: item.endDate || item.fechaFin || 's/n'
+                DIM_AccountId: item.DIM_AccountId || '',
+                DIM_CustomerId: item.DIM_CustomerId || '',
+                DIM_RoleId: item.DIM_RoleId || '',
+                DIM_StatusId: item.DIM_StatusId || '',
+                startDate: item.startDate || '',
+                endDate: item.endDate || 's/n'
               }))
             : [];
           
           setAccounts(accountsData);
           
-          // Si no hay cuentas pero la respuesta fue exitosa
-          if (accountsData.length === 0) {
-            //console.log('Usuario sin cuentas (respuesta exitosa)');
+          // Establecer el nombre del cliente si hay cuentas
+          if (accountsData.length > 0 && accountsData[0].DIM_CustomerId) {
+            setCustomerName(accountsData[0].DIM_CustomerId);
+          } else {
+            setCustomerName('Nombre no disponible');
           }
         } else {
-          // Solo establecer error si realmente hay un problema
-          if (response?.message && !response.success) {
-            throw new Error(response.message);
-          }
-          setAccounts([]); // Estado vacío válido
+          setAccounts([]);
+          setCustomerName('Nombre no disponible');
         }
       } catch (err) {
         console.error("Error fetching accounts:", err);
-        // Solo mostramos error si es un error real de conexión/API
-        if (!err.message.includes("No se encontraron cuentas")) {
-          setError(err.message);
-        }
         setAccounts([]);
+        setCustomerName('Nombre no disponible');
       } finally {
         setIsLoading(false);
       }
@@ -64,6 +57,7 @@ function AccountsTableModal({ id_user, onClose }) {
     } else {
       setIsLoading(false);
       setAccounts([]);
+      setCustomerName('Nombre no disponible');
     }
   }, [id_user]);
 
@@ -81,7 +75,6 @@ function AccountsTableModal({ id_user, onClose }) {
     );
   };
 
-  // Renderizado condicional simplificado
   const renderContent = () => {
     if (isLoading) {
       return <div className="text-center py-8">Cargando cuentas...</div>;
@@ -146,7 +139,7 @@ function AccountsTableModal({ id_user, onClose }) {
                 <AccountTableItem
                   key={account.DIM_AccountId}
                   id={account.DIM_AccountId}
-                  customer={account.customer_id}
+                  customer={account.DIM_CustomerId}
                   role={account.DIM_RoleId}
                   status={account.DIM_StatusId}
                   startDate={account.startDate}
@@ -173,11 +166,14 @@ function AccountsTableModal({ id_user, onClose }) {
       <div className="bg-white dark:bg-gray-800 shadow-xs rounded-xl relative max-w-6xl w-full max-h-[80vh] overflow-y-auto">
         <header className="px-5 py-4 sticky top-0 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">
-            <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-              Cuentas del Usuario <span className="text-gray-400 dark:text-gray-500 font-medium">
-                ({accounts.length})
-              </span>
-            </h2>
+            <div>
+              <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+                Cuentas del Usuario 
+                <span className="text-gray-400 dark:text-gray-500 font-medium">
+                  ({accounts.length})
+                </span>
+              </h2>
+            </div>
             <button 
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"

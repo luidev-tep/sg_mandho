@@ -29,7 +29,8 @@ import DynamicMenu from './pages/payments/DynamicMenu.jsx'; // Agua menu
 //Cuentas modulo
 import Cuenta from './pages/cuentas/Cuenta.jsx';
 
-
+//Usuarios para ver por cada modulo
+import DynamicMostrarUsuarios from './pages/payments/DynamicMostrarUsuarios.jsx';
 //import Navigation from './components/Navigation.jsx';
 
 /**
@@ -66,7 +67,6 @@ function App() {
           <Route path='/' element={<CompanyProfile />} />
           <Route path="/Signup" element={<Signup />} />
           <Route path="/CompanyProfile" element={<CompanyProfile />} />
-          <Route path="/Analytics" element={<Analytics />} />
           <Route path="/ModalPage" element={<ModalPage />} />
           <Route path="/modulo/:moduleName" element={<DynamicModule />} />
 
@@ -80,6 +80,9 @@ function App() {
           <Route path="/modulos/crear_pago/:moduleName" element={<DynamicGeneratePay />} />
           <Route path="/modulos/estado_pago" element={<PaymentStatus />} />
           <Route path="/modulos/:moduleName" element={<DynamicMenu />} />
+          <Route path="/Analytics/:comitiva" element={<Analytics />} /> 
+
+          <Route path="/modulos/usuarios/:moduleName" element={<DynamicMostrarUsuarios />} />
           {/* Rutas adicionales */}
         </Routes>
     </>

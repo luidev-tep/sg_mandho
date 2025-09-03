@@ -179,6 +179,7 @@ class AccountCrud():
                 if datos:
                     # Aquí se transformarían los IDs a información legible
                     datos_legibles = convertir_a_formato_legible(datos)
+                    print("datos legibles", datos_legibles)
                     return 200, "Cuenta obtenida correctamente", datos_legibles
                 else:
                     mensaje = "No se encontró la cuenta especificada"
