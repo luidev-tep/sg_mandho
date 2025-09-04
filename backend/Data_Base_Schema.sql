@@ -259,7 +259,7 @@ SELECT
     estado_factura.StatusName AS StatusFactura,
     DetalleServicio.ServiceDetailesType,
     factura.amount,
-    factura.YearPay, 
+    strftime('%Y', DetalleServicio.StartDate) as YearPay, , 
     factura.DIM_DateId,
     factura.FACT_RevenueId,
 	cuenta.DIM_AccountId,

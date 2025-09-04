@@ -11,7 +11,7 @@ def test_validate_Is_payment_in_year():
     serviceDetailsType = 'faenap'
     DIM_CustomerId = '319e42c1-148c-552b'
 
-    result = validate_payment.is_another_payment_in_year(DIM_CustomerId, AnioPago, ServiceName, input, serviceDetailsType)
+    result = validate_payment.is_payment_active(DIM_CustomerId, AnioPago, ServiceName, input, serviceDetailsType)
     print("*"*50)
     print(result)
     print("*"*50)
