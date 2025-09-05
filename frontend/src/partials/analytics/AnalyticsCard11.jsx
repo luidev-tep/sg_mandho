@@ -10,7 +10,7 @@ import Image07 from '../../images/user-28-07.jpg';
 import Image09 from '../../images/user-28-09.jpg';
 import Image11 from '../../images/user-28-11.jpg';
 
-function AnalyticsCard11() {
+function AnalyticsCard11({ comitiva }) {
   return (
     <div className="col-span-full bg-white dark:bg-gray-800 shadow-xs rounded-xl">
       <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">

@@ -18,9 +18,9 @@ def insert_fact_revenue(data_revenue: FACT_Revenue) -> bool:
     """
     object_conetion = Conexion()
     try:
-        query = """INSERT INTO FACT_Revenue (FACT_RevenueId, DIM_DateId, DIM_AccountId, DIM_ServiceDetailsId, DIM_MovementId, DIM_StatusId, amount, YearPay)
+        query = """INSERT INTO FACT_Revenue (FACT_RevenueId, DIM_DateId, DIM_AccountId, DIM_ServiceDetailsId, DIM_MovementId, DIM_StatusId, amount)
             VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?)"""
+        (?, ?, ?, ?, ?, ?, ?)"""
         
         valores = (
             data_revenue.Fact_RevenueId,
@@ -30,7 +30,6 @@ def insert_fact_revenue(data_revenue: FACT_Revenue) -> bool:
             data_revenue.DIM_MovementId,
             data_revenue.DIM_StatusId,
             data_revenue.amount,
-            data_revenue.YearPay
         )
         object_conetion.cursor.execute(query, valores)
         object_conetion.save_changes()

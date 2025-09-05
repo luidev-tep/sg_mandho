@@ -19,7 +19,7 @@ export default function DatePickerWithRange({
           <path d="M5 4a1 1 0 0 0 0 2h6a1 1 0 1 0 0-2H5Z"></path>
           <path d="M4 0a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4V4a4 4 0 0 0-4-4H4ZM2 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4Z"></path>
         </svg>
-        {format(currentDate, "yyyy-MMM-dd:HH")}
+        {format(currentDate, "yyyy-MMM-dd")}
       </div>
     </div>
   )

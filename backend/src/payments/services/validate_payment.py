@@ -15,7 +15,7 @@ class ValidatePayment():
     escenarios como pagos pendientes y el origen de la solicitud.
     """
 
-    def is_another_payment_in_year(self, DIM_CustomerId, AnioPago, ServiceName, input, serviceDetailstype) -> tuple[Literal[True], Literal['']] | tuple[Literal[False], LiteralString]:
+    def is_payment_active(self, DIM_CustomerId, AnioPago, ServiceName, input, serviceDetailstype) -> tuple[Literal[True], Literal['']] | tuple[Literal[False], LiteralString]:
         """
             Valida si un cliente ya tiene un pago registrado para un servicio en un año específico.
     
@@ -69,3 +69,24 @@ class ValidatePayment():
             return False, 'El cliente ya tiene un pago pendiente para este servicio en este anio'
         else:
             return True, ''
+        
+    def is_account_active(self, DIM_accountId) -> bool: 
+        """
+        Verifica que la cuenta no sea de tipo estudiante o de tipo inactiva, ya que los estudiantes no pueden 
+        realizar pagos y las cuentas inactivas no pueden realizar pagos.
+        """
+        handler_coneccion = Conexion()
+        query = """
+            SELECT d.RoleName from DIM_Account as a, DIM_Role as d
+            WHERE a.DIM_RoleId = d.DIM_RoleId
+            and DIM_AccountId = ?
+        """
+
+        handler_coneccion.cursor.execute(query, (DIM_accountId,))
+        result = handler_coneccion.cursor.fetchone()
+        if result is None:
+            return False
+        elif result[0] == 'estudiante' or result[0] == 'inactiva':
+            return False
+        else:
+            return True

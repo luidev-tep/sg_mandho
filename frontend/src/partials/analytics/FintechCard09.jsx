@@ -4,7 +4,7 @@ import PieChart from '../../charts/PieChart';
 // Import utilities
 import { getCssVariable } from '../../utils/Utils';
 
-function FintechCard09() {
+function FintechCard09({ comitiva }) {
 
  const chartData = {
    labels: ['Centro', 'Tepetetate', 'Yhonda', 'Buenavista', 'Garambullo', 'Cerritos'],

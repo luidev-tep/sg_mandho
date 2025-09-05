@@ -64,7 +64,6 @@ class factRevenueCrud():
             'DIM_MovementId': handler_movement.get_movement_id(data_json['movementName']),
             'DIM_StatusId': estatus_id,
             'amount': data_json['FactAmount'],
-            'YearPay': data_json['AnioPago'],
         }
         
         fact_register = FACT_Revenue(**data_format)

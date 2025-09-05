@@ -170,7 +170,7 @@ class ReadPayment:
                     ON vw.DIM_DateId = d.DIM_DateId
                 WHERE vw.YearPay =  ?  """  # Se agrega la tabla para buscar por filtros de manzana también
         
-        values = [filters.get("DIM_Date")]
+        values = [str(filters.get("DIM_Date"))]
 
         try:
             # Construcción de condiciones adicionales basadas en los filtros proporcionados

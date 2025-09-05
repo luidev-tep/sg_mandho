@@ -1,6 +1,6 @@
 import sqlite3
 from src.utils.conexion import Conexion
-
+from src.dim_service.DIM_Service import DIM_Service
 
 def get_amount_by_id(serviceDetails_id: str) -> float:
     """
@@ -39,13 +39,10 @@ def get_amount_by_id(serviceDetails_id: str) -> float:
         object_conecttion.close_conexion()
 
 
-def get_service_detailsIS_by_ServiceType(serviceType: str) -> str:
+def get_service_detailsID(serviceType: str, Year: int, service : str) -> str:
     """
-    Retrieves the Service Details ID based on the service type.
-    
-    This function searches for a service details identifier in the database 
-    that matches the specified service type. If no matching record is found 
-    or an error occurs during the database operation, an empty string is returned.
+    Regresea el id del servicio basado en ciertos parametros como lo son, el aio el tipo de servicio y tambien el tipo de servicio
+    ya es completamente funcional 
     
     Parameters:
         serviceType (str): The type of service to search for.
@@ -59,9 +56,18 @@ def get_service_detailsIS_by_ServiceType(serviceType: str) -> str:
         "4942db5a-04b2-57b2"
     """
     object_conecttion = Conexion()
+    handler_serve = DIM_Service()
     try:
-        query = "SELECT DIM_ServiceDetailsId FROM DIM_ServiceDetails WHERE ServiceDetailesType = ?"
-        object_conecttion.cursor.execute(query, (serviceType,))
+        serviceId = handler_serve.get_service_id(service)
+        endDate = f"{Year}-12-31"
+        stardDate =  f"{Year}-01-01"
+        query = """
+            SELECT DIM_ServiceDetailsId FROM DIM_ServiceDetails
+            WHERE ServiceDetailesType = ? AND 
+            DIM_ServiceId = ?
+            and StartDate = ? and EndDate = ?
+            """
+        object_conecttion.cursor.execute(query, (serviceType, serviceId, stardDate , endDate))
         result = object_conecttion.cursor.fetchone()
         
         if result is not None:
@@ -114,7 +120,7 @@ def get_service_detailsId_by_ServiceId(ServiceId: str) -> list:
         object_conecttion.close_conexion()
 
 
-def get_amount_by_service_and_date(serviceType: str, date: str) -> float:
+def get_amount_by_service_and_date(serviceType: str, date: str, ServiceId: str) -> float:
     """
     Retrieves the cost of a service for a specific date.
     
@@ -139,12 +145,12 @@ def get_amount_by_service_and_date(serviceType: str, date: str) -> float:
     object_conecttion = Conexion()
     try:
         query = """
-        SELECT ds.amount
+		SELECT ds.amount
         FROM DIM_ServiceDetails AS ds
         JOIN DIM_Date AS dd ON ds.DIM_DateId = dd.DIM_DateId
-        WHERE ds.ServiceDetailesType = ? AND dd.FiscalYear = ?
+        WHERE ds.ServiceDetailesType = ? AND dd.FiscalYear = ? AND ds.DIM_ServiceId = ?
         """
-        object_conecttion.cursor.execute(query, (serviceType, date))
+        object_conecttion.cursor.execute(query, (serviceType, date, ServiceId))
         result = object_conecttion.cursor.fetchone()
         
         if result is not None:
