@@ -67,7 +67,8 @@ function FinishPayment({onClose, onUpdate, props }) {
 useEffect(() => {
   const empaquetadorXD = {
   service_type: service_type,
-  Year: dim_date
+  Year: dim_date,
+  ServiceName: service_name
   };
   const data = {
     costoservicio: empaquetadorXD

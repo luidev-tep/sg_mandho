@@ -52,16 +52,17 @@ class PaymentCrud:
                              - (500, "message"): Error interno del servidor.
                              - (201, "message"): Pago creado exitosamente.
         """
-        print('Mostrando desde create payments')
-        for dato in data_json:
-            print(dato)
+        # print('Mostrando desde create payments')
+        # for dato in data_json:
+        #     print(f'El dato es: {dato} con el valor de: {type(dato)}')
+
         #Hacer validaciones para que no pasen cuentas de tipo estudiante o inactivas
         #pasar amount a float
         #SE DEBEN AGREGAR MULTIPLES VALIDACIONES se agregan en la funcionb para crear EL FACT REVENUE PARA QUE NO SE CREEN PAGOS PARA ETX ETX
         data_json['amount'] = float(data_json['amount'])
         data_json['FactAmount'] = float(data_json['FactAmount'])
         fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'amount', 'AnioPago', 'FactAmount','movementName', 'entrada']
-        type_fields = [str, str, str, str, str, float, int, float, str, str]
+        type_fields = [str, str, str, str, str, float, str, float, str, str]
 
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 
@@ -282,10 +283,11 @@ class PaymentCrud:
                              - list: Una lista de dict los cuales contienen la ifnormacin
                              de pagos que el cliente puede realizar.
         """
+        handler_service = DIM_Service()
         for dato in data_json:
             print(f"El dato es: {dato} con el valor de: {type(dato)}")
-        fields_required = ['service_type', 'Year']
-        type_fields = [ str, str]
+        fields_required = ['service_type', 'Year', 'ServiceName']
+        type_fields = [ str, str, str]
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 
         if not is_valid:
@@ -294,13 +296,15 @@ class PaymentCrud:
         try:
             last_two_digits = data_json['Year'][-2:]
 
+            serviceId = handler_service.get_service_id(data_json['ServiceName'])
+
             #Cuando no se proporcionan filtros solo se devuelven todos los registros del servicio
-            amount = get_amount_by_service_and_date(data_json['service_type'], f"Y{last_two_digits}")
+            amount = get_amount_by_service_and_date(data_json['service_type'], f"Y{last_two_digits}", serviceId)
 
             #print(f"Se imprimieran todos los datsos obtenidos emepzando desde los datos de json \n {data_json['service_type']} \n {data_json['Year']} \n {amount} \n {year} \n Y{last_two_digits}")
             if  not amount:
                 print(f"Error al leer la cantidad: {amount}")
-                return 400, f"No se encontraron costos de Servicos registrados en {year}", []
+                return 400, f"No se encontraron costos de Servicos registrados en {data_json['Year']}", []
             
             return 200, "Datos obtenidos satisfactoriamente", amount
         except Exception as e:

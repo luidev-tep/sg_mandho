@@ -30,23 +30,40 @@ class ServiceDetailsCrud:
             service_id = handler_service.get_service_id(service_details_json['ServiceName'])
 
             if not service_id:
-                return 404, "Service not found"
+                return 404, "Service no encontrado"
             
+            #servicio, detalle[0], starDate[1:7]
+            startDate = str(handler_date.dateId)
             data_format = {
-                "DIM_ServiceDetailsId": create_id([service_details_json.get('serviceDetailsType'), service_details_json['amount']]),
+                "DIM_ServiceDetailsId": create_id([service_details_json['ServiceName'], service_details_json['serviceDetailsType'], startDate[2:7]]), #Testeado para que no de error
                 "DIM_DateId": handler_date.dateId,
                 "DIM_ServiceId": service_id,
                 "ServiceDetailsType": service_details_json["serviceDetailsType"],
-                "amount": service_details_json["amount"] 
+                "amount": service_details_json["amount"] ,
+                "StartDate": service_details_json['StartDate'], # Estos aun no existen
+                "EndDate": service_details_json['EndDate'] # ni este sajsvnfk
             }
             print(f"Data format for service details: {data_format}")
             service_details = DIM_Details(**data_format)
             
+
             return 201, data_format["DIM_ServiceDetailsId"]
         
         except Exception as e:
             return 500, f"Error creating service details: {e}"
     
+
+    """
+    serviciosdetalles = {
+    "agua": [("tomas", 360), ("consumo", 360)], # Service Id = '1fbd9d83-7a85-50ec'
+    "feria": [("cooperacion", 400), ("faena", 300), ("comida", 500)], # Service Id = '17259752-21dd-5d83'
+    "panteon": [("cooperacion", 300), ("faena", 500)], # Service Id = 'e2d33355-5186-597c'
+    "delegacion": [("cooperacion", 100), ("faena", 250)] # Service Id = 'acf85e49-6bce-5a8b'
+}
+Para el anio 2020 el start date es 2020-01-01 y el end date es 2020-12-31
+
+para el dim_dateid hazlo en este formato 20200101
+    """
     def get_amount_by_date_servicetype(self,  service_type: str, year: int,) -> tuple:
         """
         Retrieve service details based on date ID and service type.

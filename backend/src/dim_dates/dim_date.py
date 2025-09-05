@@ -307,12 +307,18 @@ def generar_anio_real(id_anio: int) -> List[tuple]:
     
     print(f"Total registros generados: {len(registros)}")
     return registros
+
+
 if __name__ == "__main__":
     #ejecutar el script para que genere un anio completo en la tabla
     dim_date = DIM_DATE()
-    id = 2025
-    anio2025 = generar_anio_real(id)
-
-    print(dim_date._insert_year_dates(anio2025))
+    for i in range(5):
+        year = '202'
+        year += str(i)
+        year = int(year)
+        anio2025 = generar_anio_real(year)
+        print(dim_date._insert_year_dates(anio2025))
+        year = str(year)
+        year = year[2:]
 
 

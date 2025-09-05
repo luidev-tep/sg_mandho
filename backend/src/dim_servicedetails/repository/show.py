@@ -120,7 +120,7 @@ def get_service_detailsId_by_ServiceId(ServiceId: str) -> list:
         object_conecttion.close_conexion()
 
 
-def get_amount_by_service_and_date(serviceType: str, date: str) -> float:
+def get_amount_by_service_and_date(serviceType: str, date: str, ServiceId: str) -> float:
     """
     Retrieves the cost of a service for a specific date.
     
@@ -145,12 +145,12 @@ def get_amount_by_service_and_date(serviceType: str, date: str) -> float:
     object_conecttion = Conexion()
     try:
         query = """
-        SELECT ds.amount
+		SELECT ds.amount
         FROM DIM_ServiceDetails AS ds
         JOIN DIM_Date AS dd ON ds.DIM_DateId = dd.DIM_DateId
-        WHERE ds.ServiceDetailesType = ? AND dd.FiscalYear = ?
+        WHERE ds.ServiceDetailesType = ? AND dd.FiscalYear = ? AND ds.DIM_ServiceId = ?
         """
-        object_conecttion.cursor.execute(query, (serviceType, date))
+        object_conecttion.cursor.execute(query, (serviceType, date, ServiceId))
         result = object_conecttion.cursor.fetchone()
         
         if result is not None:
