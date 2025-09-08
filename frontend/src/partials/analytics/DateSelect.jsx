@@ -92,33 +92,43 @@ const generateMonthOptions = () => {
       if (!trigger.current || !dropdown.current) return;
       
       // Verificar si el clic fue fuera del componente
-      if (!trigger.current.contains(event.target) && !dropdown.current.contains(event.target)) {
+      const isClickOutside = !trigger.current.contains(event.target) && 
+                           !dropdown.current.contains(event.target);
+      
+      if (isClickOutside) {
         setDropdownOpen(false);
       }
     };
     
+    // Agregar el event listener al documento
     document.addEventListener('mousedown', clickHandler);
-    return () => document.removeEventListener('mousedown', clickHandler);
-  }, [dropdownOpen]);
-
-  // Cerrar con ESC
-  useEffect(() => {
-    const keyHandler = ({ keyCode }) => {
-      if (!dropdownOpen || keyCode !== 27) return;
-      setDropdownOpen(false);
-    };
-    document.addEventListener('keydown', keyHandler);
-    return () => document.removeEventListener('keydown', keyHandler);
-  }, [dropdownOpen]);
-
-  const handleSelection = (id) => {
-    const selectedOption = options.find(option => option.id === id);
-    if (!selectedOption) return;
     
+    // Limpiar el event listener al desmontar el componente
+    return () => {
+      document.removeEventListener('mousedown', clickHandler);
+    };
+  }, [dropdownOpen]); // Solo se vuelve a ejecutar cuando cambia dropdownOpen
+
+  // Cerrar al presionar la tecla Escape
+  useEffect(() => {
+    const keyHandler = (event) => {
+      if (event.key === 'Escape' && dropdownOpen) {
+        setDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('keydown', keyHandler);
+    
+    return () => {
+      document.removeEventListener('keydown', keyHandler);
+    };
+  }, [dropdownOpen]);
+
+  const handleSelection = (id, value) => {
     setSelected(id);
-    setDropdownOpen(false);
+    setDropdownOpen(false); // Cerrar el menú después de seleccionar
     if (onFilterChange) {
-      onFilterChange(selectedOption.value);
+      onFilterChange(value);
     }
   };
 
@@ -163,7 +173,7 @@ const generateMonthOptions = () => {
             <button
               key={option.id}
               className={`flex items-center w-full px-4 py-2 text-sm text-left ${option.id === selected ? 'bg-indigo-100 dark:bg-gray-700 text-indigo-700 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-              onClick={() => handleSelection(option.id)}
+              onClick={() => handleSelection(option.id, option.value)}
             >
               {option.period}
               {option.id === selected && (

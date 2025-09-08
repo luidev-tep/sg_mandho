@@ -1,3 +1,5 @@
+//Codigo 1
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -11,11 +13,26 @@ import FintechCard09 from '../partials/analytics/FintechCard09';
 import DashboardCard07 from '../partials/analytics/DashboardCard07';
 import FintechIntro from '../partials/analytics/FintechIntro';
 import DashboardCard10 from '../partials/analytics/DashboardCard10';
+import { GetAnalytics } from '../api/api_analiticas';
+import { useAuth } from '../utils/AuthContext';
 
 function Analytics() {
  const [sidebarOpen, setSidebarOpen] = useState(false);
  const { comitiva } = useParams();
  const [mes, setMes] = useState('');
+ const [loading, setLoading] = useState(true);
+ const [error, setError] = useState(null);
+ 
+ // Estados para los datos de los componentes
+ const [dashboardData, setDashboardData] = useState({
+   dataIncomes: null,
+   dataFractions: null,
+   dataUserBills: null,
+   dataCountUsers: null,
+   dataServiceMembers: null
+ });
+
+ const { state: authState } = useAuth();
 
  // Función para obtener el título dinámico
  const getPageTitle = (comitiva) => {
@@ -37,23 +54,83 @@ function Analytics() {
    setMes(selectedMonth); // selectedMonth ya viene en formato 'M01', 'M02', etc.
  };
 
+ // Función para formatear el mes de 'M01' a 'Enero', 'M02' a 'Febrero', etc.
+ const formatMonth = (monthCode) => {
+   if (!monthCode) return '';
+   
+   const months = [
+     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+   ];
+   
+   // Extraer el número del mes (eliminar la 'M' y convertir a número)
+   const monthNumber = parseInt(monthCode.substring(1), 10) - 1;
+   
+   // Validar que el número de mes sea válido
+   if (monthNumber >= 0 && monthNumber < months.length) {
+     return months[monthNumber];
+   }
+   
+   return monthCode; // Retornar el código original si no es un mes válido
+ };
+
+ // Obtener el mes formateado
+ const mesFormateado = formatMonth(mes);
+
  // Efecto para establecer el mes anterior como filtro por defecto al montar el componente
  useEffect(() => {
    const today = new Date();
    const currentMonth = today.getMonth(); // 0-11
    
    // Calcular el mes anterior
-   let previousMonth = currentMonth; // Como currentMonth es 0-11, ya representa el mes anterior al actual
+   let previousMonth = currentMonth;
    if (previousMonth === 0) {
-     previousMonth = 11; // Si estamos en enero, el mes anterior es diciembre
+     previousMonth = 11;
    } else {
      previousMonth = currentMonth - 1;
    }
    
-   // Formatear como 'M01', 'M02', etc.
    const defaultMonth = `M${String(previousMonth + 1).padStart(2, '0')}`;
    setMes(defaultMonth);
  }, []);
+
+ // Efecto para cargar datos cuando cambia el mes o la comitiva
+ useEffect(() => {
+   const fetchAnalyticsData = async () => {
+     if (!mes || !comitiva || !authState.usuario) return;
+     
+     setLoading(true);
+     setError(null);
+     
+    //  console.log("Los datos llegaron correctamente a Api.js en getAmount", authState.usuario.DIM_AccountId);
+    //  console.log("Los datos llegaron correctamente a Api.js en getAmount", mes);
+    //  console.log("Los datos llegaron correctamente a Api.js en getAmount", comitiva);
+     try {
+       const data = await GetAnalytics({
+         comitiva,
+         mes,
+         usuario: authState.usuario.DIM_AccountId
+       });
+       
+       // Actualizar el estado con los datos recibidos
+       setDashboardData({
+         dataIncomes: data.incomes || [],
+         dataFractions: data.fractions || [],
+         dataUserBills: data.userBills || [],
+         dataCountUsers: data.countUsers || 0,
+         dataServiceMembers: data.serviceMembers || []
+       });
+       
+     } catch (err) {
+       console.error('Error al cargar datos analíticos:', err);
+       setError('Error al cargar los datos. Por favor, intente de nuevo.');
+     } finally {
+       setLoading(false);
+     }
+   };
+   
+   fetchAnalyticsData();
+ }, [mes, comitiva, authState.usuario]);
 
  return (
    <div className="flex h-[100dvh] overflow-hidden">
@@ -92,33 +169,63 @@ function Analytics() {
           
            {/* DashboardCard09 en pantalla completa */}
            <div className="w-full mb-6">
-            {/* \Dar la bienvenida al ususario dependiendo de el que se introduzca */}
-             <FintechIntro comitiva={comitiva} mes={mes} mes_format={mes_format}/>
+             {error && (
+               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                 {error}
+               </div>
+             )}
+            
+             <FintechIntro comitiva={comitiva} mes_format={mesFormateado}/>
              <br />
              <br />
-             {/* Estos en pantalla completa - Pasar la comitiva como prop */}
-             <AnaliticsButton comitiva={comitiva} mes={mes} mes_format= {mes_format}/>
+             
+             <AnaliticsButton comitiva={comitiva} mes_format={mesFormateado}/>
              <br />
-             {/* Mostrar los ingresos que hubieron cada mes  */}
-             <DashboardCard09 comitiva={comitiva} mes={mes} mes_format = {mes_format}/>
+             
+             <DashboardCard09 
+               comitiva={comitiva} 
+               mes_format={mesFormateado} 
+               data={dashboardData.dataIncomes}
+               loading={loading}
+             />
               
              <br />
              <br />
-              {/* Mostrar los ingresos que hubieron cada manzana mensual  */}
-             <DashboardCard10 comitiva={comitiva} mes={mes} mes_format = {mes_format} />
+             
+             <DashboardCard10 
+               comitiva={comitiva} 
+               mes_format={mesFormateado} 
+               data={dashboardData.dataFractions}
+               loading={loading}
+             />
              <br />
              <br />
-             {/* Report card (Top Channels)  Mostrar un combinado de. EL numero de personas que hay en esa manza, el numero de clientes que deben el que ya pagaron y un porcentage
-             asi como el 55% no pagaron y el 45% si pagaron*/}
-              <DashboardCard07 comitiva={comitiva} mes={mes}  mes_format = {mes_format} />
+             
+             <DashboardCard07 
+               comitiva={comitiva} 
+               mes_format={mesFormateado} 
+               data={dashboardData.dataUserBills}
+               loading={loading}
+             />
              <br />
              <br />
-               <FintechCard09 comitiva={comitiva} mes={mes} mes_format = {mes_format} />
+             
+             <FintechCard09 
+               comitiva={comitiva} 
+               mes_format={mesFormateado} 
+               data={dashboardData.dataCountUsers}
+               loading={loading}
+             />
            </div>
           
            {/* Cards en grid normal */}
            <div className="grid grid-cols-12 gap-6">
-             <AnalyticsCard11 comitiva={comitiva} mes={mes} mes_format = {mes_format}/>
+             <AnalyticsCard11 
+               comitiva={comitiva} 
+               mes_format={mesFormateado} 
+               data={dashboardData.dataServiceMembers}
+               loading={loading}
+             />
            </div>
          </div>
        </main>
