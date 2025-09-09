@@ -23,7 +23,7 @@ class DIM_ServiceOnwersCrud:
         handler_service = DIM_Service()
         service_id = handler_service.get_service_id(service_owner_json['ServiceName'])
         if not service_id:
-            return 404, "Service not found"
+            return 404, "Servicio no encontrado"
         try:
             data_format = {
                 "DIM_ServiceOnwersId": create_id([service_owner_json['DIM_OnwerCustomerId'], service_id]),
@@ -35,6 +35,6 @@ class DIM_ServiceOnwersCrud:
             }
             service_owner = DIM_ServiceOnwers(**data_format)
             print(service_owner)
-            return 201, "Service owner created successfully"
+            return 201, "Propietario del servicio creado exitosamente"    
         except Exception as e:
-            return 500, f"Error creating service owner: {str(e)}"
+            return 500, f"Error al crear el propietario del servicio: {str(e)}"
