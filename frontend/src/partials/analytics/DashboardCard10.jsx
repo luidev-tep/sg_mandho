@@ -1,86 +1,105 @@
+// DashboardCard10 - Versión final
 import React, { useEffect, useState } from 'react';
-import BarChart from '../../charts/BarChart02'; 
-import Tooltip  from '../../components/Tooltip';
+import BarChartFraction from '../../charts/BarchartFraction';
+import Tooltip from '../../components/Tooltip';
 import { getCssVariable } from '../../utils/Utils';
 
 function DashboardCard10({ comitiva, mes_format, data, loading }) {
   const [chartData, setChartData] = useState({
     labels: [],
-    datasets: [{
-      label: 'Ingresos por Manzana',
-      data: [],
-      backgroundColor: getCssVariable('--color-indigo-500'),
-      hoverBackgroundColor: getCssVariable('--color-indigo-600'),
-      barPercentage: 0.8,
-      categoryPercentage: 0.9,
-      borderRadius: 4,
-    }]
+    datasets: [
+      {
+        label: 'Ingresos',
+        data: [],
+        backgroundColor: getCssVariable('--color-indigo-500'),
+        hoverBackgroundColor: getCssVariable('--color-indigo-600'),
+        barPercentage: 0.7,
+        categoryPercentage: 0.7,
+        borderRadius: 4,
+      },
+    ],
   });
 
-  // Formatear los datos cuando cambian los props
+  //console.log("Datos recibidos en el componente hijo: ", data);
+  const [chartKey, setChartKey] = useState(0);
+
+  // Efecto para actualizar chartData cuando cambian los datos
   useEffect(() => {
-    if (data && Array.isArray(data)) {
-      // Ordenar las manzanas alfabéticamente
-      const sortedData = [...data].sort((a, b) => a.manzana.localeCompare(b.manzana));
+    if (data && Array.isArray(data) && data.length > 0) {
+      // Ordenar datos alfabéticamente por fraction
+      const sortedData = [...data].sort((a, b) => a.fraction.localeCompare(b.fraction));
 
-      setChartData({
-        labels: sortedData.map(item => item.manzana),
-        datasets: [{
-          ...chartData.datasets[0],
-          data: sortedData.map(item => item.ingresos)
-        }]
-      });
+      const labels = sortedData.map(item => item.fraction);
+      const amounts = sortedData.map(item => item.revenue || 0);
+
+      const newChartData = {
+        labels,
+        datasets: [
+          {
+            label: 'Ingresos',
+            data: amounts,
+            backgroundColor: getCssVariable('--color-indigo-500'),
+            hoverBackgroundColor: getCssVariable('--color-indigo-600'),
+            barPercentage: 0.7,
+            categoryPercentage: 0.7,
+            borderRadius: 4,
+          },
+        ],
+      };
+
+      setChartData(newChartData);
+      setChartKey(prevKey => prevKey + 1); // Incrementar la clave para forzar re-render
+    } else {
+      // Resetear datos
+      const emptyChartData = {
+        labels: [],
+        datasets: [
+          {
+            label: 'Ingresos',
+            data: [],
+            backgroundColor: getCssVariable('--color-indigo-500'),
+            hoverBackgroundColor: getCssVariable('--color-indigo-600'),
+            barPercentage: 0.7,
+            categoryPercentage: 0.7,
+            borderRadius: 4,
+          },
+        ],
+      };
+      setChartData(emptyChartData);
+      setChartKey(prevKey => prevKey + 1);
     }
-  }, [data]);
+  }, [data, mes_format]); // Se ejecuta cuando data o mes_format cambian
 
-  // Opciones del gráfico
-  const options = {
-    indexAxis: 'y', // Hace que las barras sean horizontales
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            return `$${context.raw.toLocaleString()}`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        beginAtZero: true,
-        grid: {
-          borderDash: [4, 4],
-        },
-        ticks: {
-          callback: (value) => `$${value.toLocaleString()}`,
-        },
-      },
-      y: {
-        grid: {
-          display: false,
-        },
-      },
-    },
+  // Calcular el total de ingresos
+  const totalIngresos = data?.reduce((sum, item) => sum + (item.revenue || 0), 0) || 0;
+
+  // Encontrar la manzana con mayor ingreso
+  const findManzanaMayorIngreso = () => {
+    if (!data || data.length === 0) return 'N/A';
+    
+    const maxItem = data.reduce((max, item) => 
+      (item.revenue > max.revenue) ? item : max, data[0]);
+    
+    return maxItem.fraction || 'N/A';
   };
 
-  // Calcular total
-  const totalIngresos = chartData.datasets[0].data.reduce((sum, value) => sum + value, 0);
-  const manzanaMayorIngreso = chartData.labels[
-    chartData.datasets[0].data.indexOf(Math.max(...chartData.datasets[0].data))
-  ] || 'N/A';
+  const manzanaMayorIngreso = findManzanaMayorIngreso();
 
   if (loading) {
     return (
-      <div className="flex flex-col col-span-full sm:col-span-6 bg-white dark:bg-gray-800 shadow-xs rounded-xl p-5">
-        <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="flex flex-col col-span-full sm:col-span-6 bg-white dark:bg-gray-800 shadow-xs rounded-xl">
+        <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center">
+          <h2 className="font-semibold text-gray-800 dark:text-gray-100">Ingresos por Manzana {comitiva ? `de ${comitiva}` : 'de la comunidad'}</h2>
+        </header>
+        <div className="px-5 py-3">
+          <div className="flex items-start">
+            <div className="text-3xl font-bold text-gray-800 dark:text-gray-100 mr-2">Cargando...</div>
+          </div>
+        </div>
+        <div className="grow">
+          <div className="h-60 w-full flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          </div>
         </div>
       </div>
     );
@@ -88,42 +107,36 @@ function DashboardCard10({ comitiva, mes_format, data, loading }) {
 
   return (
     <div className="flex flex-col col-span-full sm:col-span-6 bg-white dark:bg-gray-800 shadow-xs rounded-xl">
-  <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center">
-    <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-      Ingresos por Manzana - {comitiva} - {mes_format}
-    </h2>
-    <Tooltip className="ml-2" size="lg">
-      <div className="text-sm">
-        Distribución de ingresos por manzana en {mes_format}
-      </div>
-    </Tooltip>
-  </header>
+      <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+          Ingresos por Manzana {comitiva && `- ${comitiva}`} {mes_format && `- ${mes_format}`}
+        </h2>
+        <Tooltip className="ml-2" size="lg">
+          <div className="text-sm">
+            Distribución de ingresos por manzana {mes_format ? `en ${mes_format}` : ''}
+          </div>
+        </Tooltip>
+      </header>
       
       <div className="px-5 py-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Total Recaudado</div>
-            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              ${totalIngresos.toLocaleString()}
-            </div>
+        <div className="flex items-start">
+          <div className="text-3xl font-bold text-gray-800 dark:text-gray-100 mr-2">
+            ${totalIngresos.toLocaleString()}
           </div>
-          <div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Mayor Ingreso</div>
-            <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              {manzanaMayorIngreso}
-            </div>
+          <div className="text-sm font-medium px-1.5 rounded-full text-indigo-700 bg-indigo-500/20">
+            Mayor: {manzanaMayorIngreso}
           </div>
         </div>
       </div>
 
-      <div className="grow px-5 pb-5">
-        <div style={{ height: `${Math.max(200, data?.length * 30 || 200)}px` }}>
-        <BarChart 
-          data={chartData} 
-          width={595} 
-          height={248} 
-        />
-        </div>
+      <div className="grow">
+        {data && data.length > 0 ? (
+          <BarChartFraction key={chartKey} data={chartData} width={595} height={248} />
+        ) : (
+          <div className="h-60 w-full flex items-center justify-center">
+            <div className="text-gray-500 dark:text-gray-400">No hay datos disponibles</div>
+          </div>
+        )}
       </div>
     </div>
   );
