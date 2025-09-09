@@ -1,25 +1,41 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/analitycs_route/'
+    baseURL: 'http://127.0.0.1:5000/api/analitycs/'
 });
 
 
 export const GetAnalytics = async (data) => {
     try {
         // Validación de datos requeridos
-        if (!data.comitiva || !data.mes || !data.usuario) {
-            throw new Error('Faltan datos requeridos para obtener el monto');
+        if (!data.comitiva || !data.mes || !data.usuario || !data.anio) {
+            throw new Error('Faltan datos requeridos para obtener los datos analíticos');
         }
-        console.log("Los datos llegaron correctamente a Api.js en getAmount", data);
-        const response = await api.post('get_analytics/', data);
+                // Convertir el año al formato 'Y25' (últimos 2 dígitos del año)
+                const formattedYear = `Y${data.anio.slice(-2)}`;
+                
+                console.log("Datos para la petición de analytics:", { ...data, anio: formattedYear });
+                
+                // Enviar los datos en el cuerpo de la petición POST
+                const response = await api.post('get_analytics/', {
+                    comitiva: data.comitiva,
+                    mes: data.mes,
+                    usuario: data.usuario,
+                    anio: formattedYear, 
+                });
 
         // Verificar si la respuesta tiene el formato esperado
         if (!response.data) {
             throw new Error('No se recibieron datos del servidor');
         }
-
-        return response.data.body;
+        const data_response = {
+            dataIncomes: response.data.body.dataIncomes,
+            dataFractions: response.data.body.dataFractions,
+            dataUserBills: response.data.body.dataUserBills,
+            dataCountUsers: response.data.body.dataCountUsers,
+            dataServiceMembers: response.data.body.dataServiceMembers
+        }
+        return data_response;
 
     } catch (error) {
         let errorMessage;

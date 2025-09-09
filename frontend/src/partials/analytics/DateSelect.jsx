@@ -38,46 +38,47 @@ import Transition from '../../utils/Transition';
 
 function DateSelect({ onFilterChange }) {
   // Función para generar opciones de meses dinámicamente
-  // FRAGMENTO MODIFICADO - Función generateMonthOptions (aproximadamente línea 35-75)
-const generateMonthOptions = () => {
-  const options = [];
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth(); // 0-11
-  
-  const monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
-  
-  let id = 0;
-  
-  // Generar opciones desde el mes anterior hasta 12 meses atrás
-  for (let i = 1; i <= 12; i++) {
-    let targetMonth = currentMonth - i;
-    let targetYear = currentYear;
+  const generateMonthOptions = () => {
+    const options = [];
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-11
     
-    // Ajustar año si el mes es negativo
-    if (targetMonth < 0) {
-      targetMonth += 12;
-      targetYear--;
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    
+    let id = 0;
+    
+    // Generar opciones desde el mes anterior hasta 12 meses atrás
+    for (let i = 1; i <= 12; i++) {
+      let targetMonth = currentMonth - i;
+      let targetYear = currentYear;
+      
+      // Ajustar año si el mes es negativo
+      if (targetMonth < 0) {
+        targetMonth += 12;
+        targetYear--;
+      }
+      
+      const monthName = monthNames[targetMonth];
+      const period = `${monthName} ${targetYear}`;
+      const value = `M${String(targetMonth + 1).padStart(2, '0')}`;
+      const year = targetYear.toString();
+      
+      options.push({
+        id,
+        period,
+        value,
+        year
+      });
+      
+      id++;
     }
     
-    const monthName = monthNames[targetMonth];
-    const period = `${monthName} ${targetYear}`;
-    const value = `M${String(targetMonth + 1).padStart(2, '0')}`; // LÍNEA MODIFICADA
-    
-    options.push({
-      id,
-      period,
-      value
-    });
-    
-    id++;
-  }
-  
-  return options;
-};
+    return options;
+  };
 
   const options = generateMonthOptions();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -124,11 +125,18 @@ const generateMonthOptions = () => {
     };
   }, [dropdownOpen]);
 
-  const handleSelection = (id, value) => {
+  const handleSelection = (id) => {
+    const option = options.find(opt => opt.id === id);
+    if (!option) return;
+    
     setSelected(id);
-    setDropdownOpen(false); // Cerrar el menú después de seleccionar
+    setDropdownOpen(false);
+    
     if (onFilterChange) {
-      onFilterChange(value);
+      onFilterChange({
+        month: option.value,
+        year: option.year
+      });
     }
   };
 
@@ -173,7 +181,7 @@ const generateMonthOptions = () => {
             <button
               key={option.id}
               className={`flex items-center w-full px-4 py-2 text-sm text-left ${option.id === selected ? 'bg-indigo-100 dark:bg-gray-700 text-indigo-700 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-              onClick={() => handleSelection(option.id, option.value)}
+              onClick={() => handleSelection(option.id)}
             >
               {option.period}
               {option.id === selected && (
