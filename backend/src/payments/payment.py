@@ -311,6 +311,3 @@ class PaymentCrud:
             print(e)
             # Capturar cualquier excepción inesperada y devolver un error del servidor
             return 500, f"Error leyendo los pagos: {str(e)}", []
-"""
-
-"""
