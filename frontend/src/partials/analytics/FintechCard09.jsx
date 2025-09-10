@@ -2,45 +2,58 @@ import React from 'react';
 import PieChart from '../../charts/PieChart'; 
 import { getCssVariable } from '../../utils/Utils';
 
-function FintechCard09({ comitiva, mes_format, data, loading }) {
-  // Datos iniciales vacíos
-  const [chartData, setChartData] = React.useState({
-    labels: [],
-    datasets: [{
-      label: 'Población por Manzana',
-      data: [],
-      backgroundColor: [],
-      hoverBackgroundColor: [],
-      borderWidth: 0,
-    }]
-  });
+function FintechCard09({ comitiva, data, loading }) {
+  
+  // Paleta de colores predefinida
+  const colorPalette = [
+    '--color-green-400', 
+    '--color-yellow-400', 
+    '--color-sky-500',
+    '--color-violet-500', 
+    '--color-red-400', 
+    '--color-orange-400',
+    '--color-blue-400',
+    '--color-indigo-400',
+    '--color-purple-400',
+    '--color-pink-400'
+  ];
+
+  const hoverColorPalette = [
+    '--color-green-500', 
+    '--color-yellow-500', 
+    '--color-sky-600',
+    '--color-violet-600', 
+    '--color-red-500', 
+    '--color-orange-500',
+    '--color-blue-500',
+    '--color-indigo-500',
+    '--color-purple-500',
+    '--color-pink-500'
+  ];
+
+  // Preparar datos para el gráfico
+  const chartData = {
+    labels: data?.manzanas ? data.manzanas.map(m => m.nombre) : [],
+    datasets: [
+      {
+        label: 'Población por Manzana',
+        data: data?.manzanas ? data.manzanas.map(m => m.personas) : [],
+        backgroundColor: data?.manzanas ? 
+          data.manzanas.map((_, index) => 
+            getCssVariable(colorPalette[index % colorPalette.length])
+          ) : [],
+        hoverBackgroundColor: data?.manzanas ? 
+          data.manzanas.map((_, index) => 
+            getCssVariable(hoverColorPalette[index % hoverColorPalette.length])
+          ) : [],
+        borderWidth: 0,
+      },
+    ],
+  };
 
   // Calcular total de personas
-  const totalPersonas = React.useMemo(() => {
-    if (!data?.manzanas) return 0;
-    return data.manzanas.reduce((sum, manzana) => sum + manzana.personas, 0);
-  }, [data]);
-
-  // Actualizar datos del gráfico cuando cambian los datos
-  React.useEffect(() => {
-    if (data?.manzanas) {
-      const colors = [
-        '--color-green-400', '--color-yellow-400', '--color-sky-500',
-        '--color-violet-500', '--color-red-400', '--color-orange-400'
-      ];
-      const hoverColors = colors.map(c => c.replace('400', '500').replace('500', '600'));
-
-      setChartData({
-        labels: data.manzanas.map(m => m.nombre),
-        datasets: [{
-          ...chartData.datasets[0],
-          data: data.manzanas.map(m => m.personas),
-          backgroundColor: colors.map(c => getCssVariable(c)),
-          hoverBackgroundColor: hoverColors.map(c => getCssVariable(c))
-        }]
-      });
-    }
-  }, [data]);
+  const totalPersonas = data?.manzanas ? 
+    data.manzanas.reduce((sum, manzana) => sum + manzana.personas, 0) : 0;
 
   if (loading) {
     return (
@@ -58,7 +71,7 @@ function FintechCard09({ comitiva, mes_format, data, loading }) {
     <div className="flex flex-col col-span-full sm:col-span-6 xl:col-span-4 bg-white dark:bg-gray-800 shadow-xs rounded-xl">
       <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center">
         <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-          Población por Manzana - {comitiva}
+          Población por Manzana {comitiva && `- ${comitiva}`}
         </h2>
       </header>
       <div className="px-5 py-3">
@@ -67,11 +80,9 @@ function FintechCard09({ comitiva, mes_format, data, loading }) {
           {totalPersonas.toLocaleString()} personas
         </div>
       </div>
-      <div className="grow px-5 pb-5">
-        <div style={{ height: '300px' }}>
-          <PieChart data={chartData} width={400} height={300} />
-        </div>
-      </div>
+      {/* Chart built with Chart.js 3 */}
+      {/* Change the height attribute to adjust the chart height */}
+      <PieChart data={chartData} width={389} height={220} />
     </div>
   );
 }

@@ -17,8 +17,8 @@ function BarChartFraction({
   height
 }) {
   
-  console.log("BarChartFraction recibiendo data:", data);
-  console.log("BarChartFraction width/height:", width, height);
+  //console.log("BarChartFraction recibiendo data:", data);
+  //console.log("BarChartFraction width/height:", width, height);
 
   const [chart, setChart] = useState(null)
   const canvas = useRef(null);

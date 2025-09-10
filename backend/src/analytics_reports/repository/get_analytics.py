@@ -229,7 +229,7 @@ class GetAnalytics:
         """
         pass
     
-    def get_population_by_manzana(self, mes, comitiva):
+    def get_population_by_manzana(self) -> list[dict] | list:
         """
         Obtiene el total de personas por manzana para un mes y comitiva específicos.
 
@@ -238,13 +238,25 @@ class GetAnalytics:
         manzana y el total de personas asociadas.
 
         Args:
-            mes (str): El mes de referencia.
-            comitiva (str): La comitiva de la cual se obtendrán los datos.
 
         Returns:
             list: Una lista de diccionarios con la población por manzana.
         """
-        pass
+        query = """
+        SELECT CustomerFraction , count(DIM_CustomerId) as n_customers from DIM_Customer
+        where CustomerEndDate = 's/n'
+        GROUP BY CustomerFraction
+        """
+        try:
+            handler_conexion = Conexion()
+            handler_conexion.cursor.execute(query)
+            result = handler_conexion.cursor.fetchall()
+            return [handler_model.model_get_population(*row) for row in result]
+        except Exception as e:
+            print(f"Error al obtener la informacion de la comitiva: {e}")
+            return []
+        finally:
+            handler_conexion.close_conexion()
     
     def get_admins_data(self, comitiva):
         """
