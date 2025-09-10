@@ -35,6 +35,7 @@ export const GetAnalytics = async (data) => {
             dataCountUsers: response.data.body.dataCountUsers,
             dataServiceMembers: response.data.body.dataServiceMembers
         }
+        console.log("Datos recibidos en la respuesta:", data_response);
         return data_response;
 
     } catch (error) {

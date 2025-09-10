@@ -41,3 +41,20 @@ class AnalythicsModels:
             'fraction': CustomerFraction,
             'revenue': revenue
         }
+    
+    def model_get_population(self, CustomerFraction, n_customers) -> dict:
+        """
+        Modela los datos de población por fracción para su presentación en el frontend.
+
+        Args:
+            CustomerFraction (str): El nombre de la fracción o manzana del cliente.
+            n_customers (int): La cantidad de clientes en esa fracción.
+
+        Returns:
+            dict: Un diccionario con las claves 'fraction' (nombre de la fracción)
+                  y 'population' (población).
+        """
+        return {
+            'fraction': CustomerFraction,
+            'population': n_customers
+        }

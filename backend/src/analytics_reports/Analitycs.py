@@ -55,6 +55,8 @@ class Analitycs:
             # Obtiene las facturas por mes y comitiva
             data_analythics['dataFractions'] = self.get_analytics.get_bills_by_month(data_json['mes'], data_json['comitiva'], data_json['anio'])
 
+            data_analythics['dataCountUsers'] = {'manzanas': self.get_analytics.get_population_by_manzana()}
+            
             return 200, 'Datos obtenidos correctamente', data_analythics
         except Exception as e:
             print(f"Error al obtener la informacion de la comitiva: {e}")

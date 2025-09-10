@@ -61,8 +61,11 @@ class PaymentCrud:
         #SE DEBEN AGREGAR MULTIPLES VALIDACIONES se agregan en la funcionb para crear EL FACT REVENUE PARA QUE NO SE CREEN PAGOS PARA ETX ETX
         data_json['amount'] = float(data_json['amount'])
         data_json['FactAmount'] = float(data_json['FactAmount'])
-        fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'amount', 'AnioPago', 'FactAmount','movementName', 'entrada']
-        type_fields = [str, str, str, str, str, float, str, float, str, str]
+        data_json['AnioPago'] = str(data_json['AnioPago'])
+        fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
+        for dato in data_json:
+            print(f"El dato es: {dato} con el valor de: {type(dato)}")
+        type_fields = [str, str, str, str, str,  str, str, str, float, float]
 
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 
