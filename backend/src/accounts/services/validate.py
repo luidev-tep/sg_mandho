@@ -7,7 +7,8 @@ from src.utils.conexion import Conexion
 from src.users.repository.show import get_user
 from src.dim_roles.repository.show import get_role
 from src.dim_status.status import DIM_status
-
+#Importacion del modelo
+from src.accounts.models.DIM_account import DIM_Account
 #importacion de roles
 from src.dim_roles.role import Role
 
@@ -45,7 +46,7 @@ def validate_account(user_id: str) -> bool:
 
 
 
-def convertir_a_formato_legible(datos_crudos: list) -> list:
+def convertir_a_formato_legible(datos_crudos: list[DIM_Account]) -> list:
     """
     Función interna para convertir IDs a información legible para el usuario.
     
@@ -94,7 +95,7 @@ def descativar_otra_cuenta(Customer_id):
         query = """UPDATE DIM_account
         SET EndDate = ?,
         DIM_StatusId = ?
-        WHERE DIM_CustomerId = ? AND (EndDate IS NULL OR EndDate = '');"""
+        WHERE DIM_CustomerId = ? AND (EndDate IS NULL OR EndDate = '' or EndDate = 's/n');"""
         endate =  dim_date.get_end_date()
 
         estado = handler_status.get_status_id("inactivo", "account")
@@ -148,3 +149,24 @@ def validate_status(type_status) -> tuple[Literal[False], int, str] | tuple[Lite
         return False, estaus_id, endDate
     else:
         return True, "", ""
+    
+
+def has_active_account(user_id: str) -> bool:
+    """
+    Verifica si el usuario tiene una cuenta activa.
+    
+    Args:
+        user_id (str): ID del usuario.
+    
+    Returns:
+        bool: True si el usuario tiene una cuenta activa, False en caso contrario.
+    """
+    query = """
+        SELECT count(DIM_AccountId) from DIM_Account
+        WHERE DIM_CustomerId = ?
+        AND DIM_StatusId = 'status1'
+        """
+    object_connection = Conexion()
+    object_connection.cursor.execute(query, (user_id,))
+    result = object_connection.cursor.fetchone()
+    return result[0] > 0

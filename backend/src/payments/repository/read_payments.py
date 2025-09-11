@@ -85,7 +85,7 @@ class ReadPayment:
         else:
             return ""
 
-    def get_payments_by_service(self, service: str) -> tuple[int, list[dict]]:
+    def get_payments_by_service(self, service: str, filters: dict) -> tuple[int, list[dict]]:
         """
         Obtiene los pagos de un servicio específico.
 
@@ -114,10 +114,24 @@ class ReadPayment:
                 # Si el servicio no es reconocido, retornamos un código 400 (Bad Request)
                 return 400, []
             
-            query = query.replace("[filtros]", "")
+            if filters:
+                values = list()
+                query_filtros = """
+                	WHERE DIM_CustomerId = ?
+		            and YearPay = ?"""
+                
+                values.append(filters['DIM_CustomerId'])
+                values.append(filters['YearPay'])
+                query = query.replace("[filtros]", query_filtros)
+
+                            # Ejecutamos la consulta
+                print(query)
+                print(values)
+                hanlder_conexion.cursor.execute(query, tuple(values))
+            else:
+                query = query.replace("[filtros]", "")
+                hanlder_conexion.cursor.execute(query)
             
-            # Ejecutamos la consulta
-            hanlder_conexion.cursor.execute(query)
             rows = hanlder_conexion.cursor.fetchall()
 
             # Construimos los datos utilizando el modelo de vista
@@ -182,7 +196,6 @@ class ReadPayment:
             # Filtro específico para el estado de la factura pendiente
             if 'DIM_StatusId' in filters and filters['DIM_StatusId']:
                 query_filtros += " AND  vw.StatusFactura = 'pendiente'"
-            
             
             
             query_base = query_base.replace("[filtros]", query_filtros)
@@ -267,3 +280,21 @@ class ReadPayment:
             print(f"Error al construir los filtros: {e}")
             return None
         
+
+    def update_payment_view(self, service_name: str, customer_id: str, year_payment: str) -> tuple[int, list[dict]] | None:
+        """
+        documentar correctamnete
+        """
+        filters = {
+            'DIM_CustomerId': customer_id,
+            'YearPay': year_payment
+        }
+        try:
+            status , datos_factura = self.get_payments_by_service(service_name,filters)
+            if status != 200:
+                return 404, []
+            
+            return status, datos_factura
+        except Exception as e:
+            print(f"Error al obtener el pago: {e}")
+            return 500, []
