@@ -203,8 +203,9 @@ export const EditarUsuario = async (data) => {
         } else {
             console.log("No se requiere actualización de cuenta");
         }
-
+        console.log("Data de la cuenta", updateResponse.data.body);
         return {
+            
             data: normalizeUserData(updateResponse.data.body),
             success: true
         };

@@ -62,7 +62,9 @@ function DynamicTableItem(props) {
             </td>
             
             <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                <div className="text-center text-base">{props.amount.toFixed(2)}</div>
+                <div className="text-center text-base">
+                    {typeof props.amount === 'number' ? props.amount.toFixed(2) : '0.00'}
+                </div>
             </td>
             
             <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">

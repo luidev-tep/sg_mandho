@@ -134,26 +134,27 @@ function DynamicTable({ filters, serviceName }) {
     }
   }, [searchTerm, allCustomers]);
 
-  const handleUpdateCustomer = (updatedCustomer) => {
-    setAllCustomers(prev => 
-      prev.map(customer => 
-        customer.DIM_AccountId === updatedCustomer.DIM_AccountId && 
-        customer.ServiceDetailesType === updatedCustomer.ServiceDetailesType 
-          ? updatedCustomer 
-          : customer
-      )
-    );
-    
-    setFilteredCustomers(prev => 
-      prev.map(customer => 
-        customer.DIM_AccountId === updatedCustomer.DIM_AccountId && 
-        customer.ServiceDetailesType === updatedCustomer.ServiceDetailesType 
-          ? updatedCustomer 
-          : customer
-      )
-    );
+  // Función para crear una clave única para cada registro de pago
+  const getUniqueKey = (record) => {
+    const key = `${record.DIM_AccountId}-${record.ServiceDetailesType || 'default'}`;
+    return key;
   };
-
+  const handleUpdateRecord = (updatedRecord) => {
+    const updatedKey = getUniqueKey(updatedRecord);
+  
+    const updateFunction = (prevList) =>
+      prevList.map(record => {
+        const currentKey = getUniqueKey(record);
+        if (currentKey === updatedKey) {
+          return { ...record, ...updatedRecord };
+        }
+        return record;
+      });
+  
+    setAllCustomers(updateFunction);
+    setFilteredCustomers(updateFunction);
+  };
+  
   const handleClick = (e) => {
     const { id, checked, dataset } = e.target;
     const serviceType = dataset.serviceType || 'default';
@@ -229,7 +230,7 @@ function DynamicTable({ filters, serviceName }) {
             <tbody className="text-sm divide-y divide-gray-100 dark:divide-gray-700/60">
               {filteredCustomers.map(customer => {
                 // Crear clave única combinando ID de cuenta y tipo de servicio
-                const uniqueKey = `${customer.DIM_AccountId}-${customer.ServiceDetailesType || 'default'}`;
+                const uniqueKey = getUniqueKey(customer);
                 
                 return (
                   <Customer
@@ -239,7 +240,7 @@ function DynamicTable({ filters, serviceName }) {
                     full_name={`${customer.CustomerName} ${customer.CustomerMiddleName || ''} ${customer.CustomerLastName} ${customer.CustomerSecondLastName || ''}`}
                     role_name={customer.RoleName}
                     status_factura={customer.StatusFactura}
-                    service_type={customer.ServiceDetailesType}
+                    service_type={customer.ServiceDetailesType || 'N/A'}
                     amount={customer.amount}
                     status_account={customer.StatusCuenta}
                     dim_date={customer.YearPay}
@@ -247,7 +248,7 @@ function DynamicTable({ filters, serviceName }) {
                     service_name ={serviceName}
                     dim_customer_id={customer.DIM_CustomerId}
                     isChecked={isCheck.includes(uniqueKey)}
-                    onEditSuccess={handleUpdateCustomer}
+                    onEditSuccess={handleUpdateRecord}
                   />
                 );
               })}
