@@ -190,14 +190,15 @@ class UserCrud:
         
         if not defuncion_validation(data_edit["DIM_CustomerId"]): #Para verificar si el usuario ya esta marcado como defuncion
             return 403, "No se pueden editar los datos de un usuario fallecido", {}
-        #Obtener el nuevo ususario para regresarlo en la respuesta
-        new_user = get_user(data_edit["DIM_CustomerId"])
         
         #Se movio la edicion de ususario hasta que pase todas las validaciones
         isvalid = edit_user(format_data)
-        
         if not isvalid:
             return 400, "No se pudo actualizar el registro", {}
+        
+        #Obtener el nuevo ususario para regresarlo en la respuesta
+        new_user = get_user(data_edit["DIM_CustomerId"])
+        
         
 
         return 201, "El usuario se ha actualizado correctamente", new_user

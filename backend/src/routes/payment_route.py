@@ -26,10 +26,10 @@ def create_payment() -> Response:
         if not payment_json:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
         
-        estado, mensaje = payment_options.create_payment(payment_json)
+        estado, mensaje, datos = payment_options.create_payment(payment_json)
 
         if 200 <= estado <= 205:
-            return send_success(mensaje, None, estado)
+            return send_success(mensaje, datos, estado)
         else:
             return send_error(mensaje, estado)
             

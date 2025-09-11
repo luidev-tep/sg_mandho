@@ -70,28 +70,28 @@ class PaymentCrud:
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 
         if not is_valid:
-            return 400, message
+            return 400, message, []
         
         #Validar si no existe otro pago pendiente 
         is_valid, message = validate_payment.is_payment_active(data_json['DIM_CustomerId'], data_json['AnioPago'], data_json['ServiceName'], data_json['entrada'], data_json['serviceDetailsType'])
         if not is_valid:
-            return 400, message
+            return 400, message, []
         
         #Validar que Amount sea una cantidad positiva
         is_valid = data_json['amount'] >= 0
         if not is_valid:
-            return 400, "La cantidad ingeresada debe ser mayor a 0 Pesos"
+            return 400, "La cantidad ingeresada debe ser mayor a 0 Pesos", []
         
         is_valid = validate_payment.is_account_active(data_json['DIM_AccountId'])
         if not is_valid:
-            return 400, "Las personas registradas como inactivas o estudiantes no puede realizar pagos"
+            return 400, "Las personas registradas como inactivas o estudiantes no puede realizar pagos", []
         try:
             # Obtener el ID del detalle del servicio
             dim_service_detail_id = get_service_detailsID(data_json['serviceDetailsType'], data_json["AnioPago"], data_json['ServiceName'])
             
             # Si el ID no existe, devolver un error
             if not dim_service_detail_id:
-                return 400, f"serviceDetailsType '{data_json['serviceDetailsType']}' no se encontró."
+                return 400, f"serviceDetailsType '{data_json['serviceDetailsType']}' no se encontró.", []
 
             data_json['DIM_ServiceDetailsId'] = dim_service_detail_id
 
@@ -99,13 +99,22 @@ class PaymentCrud:
             code, message = fact_revenue_handler.create_fact_revenue(data_json)
             
             if code != 201:
-                return code, message
+                return code, message, []
+            
+            # AQUI SE APLICA LA LOGICA DE ACTUALIZACION DEL PAGO PENDIENTE 
+            if data_json['entrada'] == "":
+                data = self.update_payment_view(data_json)
+                if not data:
+                    return 400, "No se pudo actualizar el pago pendiente", []
+                
+                return 201, "Pago creado satisfactoriamente", data
 
-            return 201, "Pago creado satisfactoriamente"
+
+            return 201, "Pago creado satisfactoriamente", []
         
         except Exception as e:
             # Capturar cualquier excepción inesperada y devolver un error del servidor
-            return 500, f"Error creando el pago: {str(e)}"
+            return 500, f"Error creando el pago: {str(e)}", []
         
 
     def read_payments(self, filters: dict) -> tuple[int, Any, list]:
@@ -116,6 +125,11 @@ class PaymentCrud:
 
         Args:
             filters (dict): Un diccionario con los filtros para la búsqueda de pagos.
+            {
+            manzana: list[str],
+            dim_date: str,
+            dim_status: str
+            }
 
         Returns:
             tuple[int, Any]: Una tupla con el código de estado HTTP y los datos o un mensaje.
@@ -134,7 +148,7 @@ class PaymentCrud:
         try:
             if filters['filters'] == {}:
                 #Cuando no se proporcionan filtros solo se devuelven todos los registros del servicio
-                code, data = payments_handler.get_payments_by_service(filters['serviceName'])
+                code, data = payments_handler.get_payments_by_service(filters['serviceName'], {})
 
                 if code != 200:
                     print(f"Error al leer los pagos: {data}")
@@ -314,3 +328,17 @@ class PaymentCrud:
             print(e)
             # Capturar cualquier excepción inesperada y devolver un error del servidor
             return 500, f"Error leyendo los pagos: {str(e)}", []
+        
+    def update_payment_view(self, data_json: dict) -> tuple[int, Any, list]:
+        """
+        documentar correctamnete
+        """
+        try:
+            status, datos = payments_handler.update_payment_view(data_json['ServiceName'], data_json['DIM_CustomerId'], data_json['AnioPago'])
+            if status != 200:
+                print(f"Error al leer los pagos: {status}")
+                return []
+            return datos
+        except Exception as e:
+            print(e)
+            return []

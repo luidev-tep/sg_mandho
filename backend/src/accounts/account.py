@@ -11,7 +11,7 @@ from src.dim_status.status import DIM_status
 
 #Importaciones de mostrar o leer ceuntas
 from src.accounts.repository.show import show_account
-from src.accounts.services.validate import convertir_a_formato_legible, validate_status, descativar_otra_cuenta
+from src.accounts.services.validate import convertir_a_formato_legible, validate_status, descativar_otra_cuenta, has_active_account
 
 #importacion de roles
 from src.dim_roles.role import Role
@@ -58,7 +58,10 @@ class AccountCrud():
             if not defuncion_validation(account_json["customer_id"]): #Para verificar si el usuario ya esta marcado como defuncion
                 return 403, "No se pueden editar los datos de un usuario fallecido"
             
-            #Obtener el nuevo ususario para regresarlo en la respuesta
+            #asi se desactivan las cuentas anteriores correctamente 
+            if has_active_account(account_json["customer_id"]):
+                self.desactivate_account(account_json["customer_id"])
+
             #Creamos la instancia de clases que se ingresaran a la bd
             dim_date = DIM_DATE()
             
@@ -193,7 +196,7 @@ class AccountCrud():
         Esta función desactiva una cuenta en la base de datos.
 
         Args:
-            persona_id (str): El id de la cuenta que se desea desactivar.
+            persona_id (str): El id de la persona que se desea desactivar.
 
         Returns:
             None (NoneType): No responde nada solo hace una accion
