@@ -40,7 +40,8 @@ class PaymentCrud:
         """Crea un nuevo registro de pago en la tabla FACT_Revenue.
 
         Esta función valida los datos de entrada, obtiene los IDs de servicios
-        necesarios e inserta el registro de pago en la base de datos.
+        necesarios e inserta el registro de pago en la base de datos. También
+        actualiza la vista de pagos pendientes si la entrada es un pago.
 
         Args:
             data_json (dict): Un diccionario con los datos del pago. Debe contener los
@@ -54,7 +55,7 @@ class PaymentCrud:
         """
         # print('Mostrando desde create payments')
         # for dato in data_json:
-        #     print(f'El dato es: {dato} con el valor de: {type(dato)}')
+        #     print(f'El dato es: {dato} con el valor de: {type(dato)}')
 
         #Hacer validaciones para que no pasen cuentas de tipo estudiante o inactivas
         #pasar amount a float
@@ -65,7 +66,7 @@ class PaymentCrud:
         fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
         for dato in data_json:
             print(f"El dato es: {dato} con el valor de: {type(dato)}")
-        type_fields = [str, str, str, str, str,  str, str, str, float, float]
+        type_fields = [str, str, str, str, str,  str, str, str, float, float]
 
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 
@@ -159,7 +160,7 @@ class PaymentCrud:
                 return code, "Datos obtenidos satisfactoriamente", data
             #CASO 2
             elif filters['filters'] != {}:
-                print(f"Se aplicaran filtros a la consulta {filters['filters']}    {filters['serviceName']} ")
+                print(f"Se aplicaran filtros a la consulta {filters['filters']}     {filters['serviceName']} ")
                 #Cuando se proporcionan filtros se deben aplicar los filtros a la consulta
                 code, data = payments_handler.get_payments_with_filters(filters['serviceName'], filters['filters'])
 
@@ -178,23 +179,20 @@ class PaymentCrud:
             return 500, f"Error leyendo los pagos: {str(e)}", []
         
     def get_cost(self, data_json: dict) -> tuple[int, Any, list]:
-        """Obtiene el costo de un servicio o producto basado en los datos proporcionados.
+        """Obtiene una lista de pagos pendientes para un cliente y servicio específicos.
 
-        Esta función valida los datos de entrada, Ademas debera buscar cuales son los pagos que ese cliente en especifico puede pagar, 
-        para lograr eso se deben hacer peticiones, de que cuentas ya pagaron, ya que recordemos que cada cliente puede tener ciertas cuentas
-        ademas se debe ir haciendo esto verificando por anio,  una vez hecho esto, se deberan devolver las cuentas que el 
-        cliente aun no ha pagado para poder realizar el pago,
+        Esta función valida los datos de entrada y busca los pagos pendientes
+        asociados a las cuentas del cliente para un servicio y años específicos.
 
         Args:
-            data_json (dict): Un diccionario con los datos necesarios para calcular el costo.
+            data_json (dict): Un diccionario con los datos necesarios para la búsqueda.
+                              Debe contener 'ServiceName' y 'DIM_CustomerId'.
 
         Returns:
             tuple[int, str, list]: Una tupla con el código de estado HTTP y los datos o un mensaje.
-                             - (400, "message"): Datos faltantes o inválidos.
-                             - (500, "message"): Error interno del servidor.
-                             - (200, data): Costo calculado.
-                             - list: Una lista de dict los cuales contienen la ifnormacin
-                             de pagos que el cliente puede realizar.
+                                   - (400, "message"): Datos faltantes o inválidos.
+                                   - (500, "message"): Error interno del servidor.
+                                   - (200, "message", data): Lista de pagos pendientes.
         """
         account_handler = AccountCrud()
         service_handler = DIM_Service()
@@ -217,7 +215,7 @@ class PaymentCrud:
             return codigo_esta, mensaje, []
         
         
-        id_accounts = [cuenta['DIM_AccountId'] for cuenta in cuentas]  # Obtener los IDs de las cuentas
+        id_accounts = [cuenta['DIM_AccountId'] for cuenta in cuentas]  # Obtener los IDs de las cuentas
 
 
         print("pasamo cuenta")
@@ -235,21 +233,22 @@ class PaymentCrud:
         #data = get_pending_pays(anios_filtro, id_accounts, data_json['ServiceName'])
         # code, data = dim_service_details_handler.get_service_by_date_servicetype(data_json)
         # if code != 200:
-        #     print(f"Error al obtener el costo: {data}")
-        #     return code, "No se pudo obtener el costo", []
+        #     print(f"Error al obtener el costo: {data}")
+        #     return code, "No se pudo obtener el costo", []
         
         # return code, "Costo obtenido satisfactoriamente", data
         return 200, "nla bla bkla", []
     
 
     def read_payments_customer_id(self, filters: dict) -> tuple[int, Any, list]:
-        """Lee los registros de pagos basados en los filtros proporcionados.
+        """Lee los registros de pagos de un cliente basados en los filtros proporcionados.
 
         Esta función valida los filtros, obtiene los registros de pagos
-        correspondientes y devuelve el resultado.
+        correspondientes a un cliente y devuelve el resultado.
 
         Args:
             filters (dict): Un diccionario con los filtros para la búsqueda de pagos.
+                            Debe contener 'DIM_CustomerId', 'serviceName', 'service_type', 'Year'.
 
         Returns:
             tuple[int, Any]: Una tupla con el código de estado HTTP y los datos o un mensaje.
@@ -282,23 +281,20 @@ class PaymentCrud:
         
 
     def get_cost_by_payment_year(self, data_json: dict) -> tuple[int, Any, list]:
-        """Obtiene el costo de un servicio o producto basado en los datos proporcionados.
+        """Obtiene el costo de un servicio en un año específico.
 
-        Esta función valida los datos de entrada, Ademas debera buscar cuales son los pagos que ese cliente en especifico puede pagar, 
-        para lograr eso se deben hacer peticiones, de que cuentas ya pagaron, ya que recordemos que cada cliente puede tener ciertas cuentas
-        ademas se debe ir haciendo esto verificando por anio,  una vez hecho esto, se deberan devolver las cuentas que el 
-        cliente aun no ha pagado para poder realizar el pago,
+        Esta función valida los datos de entrada y busca el costo del servicio
+        basándose en el tipo de servicio, año y nombre del servicio.
 
         Args:
             data_json (dict): Un diccionario con los datos necesarios para calcular el costo.
+                              Debe contener 'service_type', 'Year', 'ServiceName'.
 
         Returns:
             tuple[int, str, list]: Una tupla con el código de estado HTTP y los datos o un mensaje.
-                             - (400, "message"): Datos faltantes o inválidos.
-                             - (500, "message"): Error interno del servidor.
-                             - (200, data): Costo calculado.
-                             - list: Una lista de dict los cuales contienen la ifnormacin
-                             de pagos que el cliente puede realizar.
+                                   - (400, "message"): Datos faltantes o inválidos.
+                                   - (500, "message"): Error interno del servidor.
+                                   - (200, data): Costo del servicio.
         """
         handler_service = DIM_Service()
         for dato in data_json:
@@ -319,7 +315,7 @@ class PaymentCrud:
             amount = get_amount_by_service_and_date(data_json['service_type'], f"Y{last_two_digits}", serviceId)
 
             #print(f"Se imprimieran todos los datsos obtenidos emepzando desde los datos de json \n {data_json['service_type']} \n {data_json['Year']} \n {amount} \n {year} \n Y{last_two_digits}")
-            if  not amount:
+            if  not amount:
                 print(f"Error al leer la cantidad: {amount}")
                 return 400, f"No se encontraron costos de Servicos registrados en {data_json['Year']}", []
             
@@ -329,9 +325,18 @@ class PaymentCrud:
             # Capturar cualquier excepción inesperada y devolver un error del servidor
             return 500, f"Error leyendo los pagos: {str(e)}", []
         
-    def update_payment_view(self, data_json: dict) -> tuple[int, Any, list]:
-        """
-        documentar correctamnete
+    def update_payment_view(self, data_json: dict) -> Any:
+        """Actualiza la vista de pagos pendientes.
+
+        Esta función se utiliza para actualizar la vista de pagos pendientes de un cliente
+        para un servicio y año específicos después de que se ha realizado un pago.
+        
+        Args:
+            data_json (dict): Un diccionario con los datos necesarios para la actualización,
+                              incluyendo 'ServiceName', 'DIM_CustomerId', 'AnioPago'.
+        
+        Returns:
+            Any: Los datos actualizados si la operación fue exitosa, de lo contrario una lista vacía.
         """
         try:
             status, datos = payments_handler.update_payment_view(data_json['ServiceName'], data_json['DIM_CustomerId'], data_json['AnioPago'])

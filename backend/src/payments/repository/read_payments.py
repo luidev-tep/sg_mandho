@@ -96,13 +96,14 @@ class ReadPayment:
         Args:
             service (str): El nombre del servicio (por ejemplo, 'agua', 'feria', etc.)
                            para el cual se quieren obtener los pagos.
+            filters (dict): Un diccionario opcional con filtros, como 'DIM_CustomerId' y 'YearPay'.
 
         Returns:
             tuple[int, list[dict]]: Una tupla que contiene:
-                                     - Un código de estado HTTP (200, 400, 500).
-                                     - Una lista de diccionarios, donde cada diccionario representa
-                                       un registro de pago. La lista estará vacía si ocurre un error
-                                       o no se encuentra el servicio.
+                                    - Un código de estado HTTP (200, 400, 500).
+                                    - Una lista de diccionarios, donde cada diccionario representa
+                                      un registro de pago. La lista estará vacía si ocurre un error
+                                      o no se encuentra el servicio.
         """
         hanlder_conexion = Conexion()
         
@@ -117,14 +118,14 @@ class ReadPayment:
             if filters:
                 values = list()
                 query_filtros = """
-                	WHERE DIM_CustomerId = ?
-		            and YearPay = ?"""
+                    WHERE DIM_CustomerId = ?
+                    and YearPay = ?"""
                 
                 values.append(filters['DIM_CustomerId'])
                 values.append(filters['YearPay'])
                 query = query.replace("[filtros]", query_filtros)
 
-                            # Ejecutamos la consulta
+                                 # Ejecutamos la consulta
                 print(query)
                 print(values)
                 hanlder_conexion.cursor.execute(query, tuple(values))
@@ -162,10 +163,10 @@ class ReadPayment:
 
         Returns:
             tuple[int, list[dict]]: Una tupla que contiene:
-                                     - Un código de estado HTTP (200, 400, 500).
-                                     - Una lista de diccionarios, donde cada diccionario representa
-                                       un registro de pago filtrado. La lista estará vacía si ocurre
-                                       un error o no se encuentran resultados.
+                                    - Un código de estado HTTP (200, 400, 500).
+                                    - Una lista de diccionarios, donde cada diccionario representa
+                                      un registro de pago filtrado. La lista estará vacía si ocurre
+                                      un error o no se encuentran resultados.
         """
         object_conection = Conexion()
         handler_filters = BuildFilters()
@@ -226,7 +227,7 @@ class ReadPayment:
     
     def get_validation_payment(self, service_name: str, filters: str, values: tuple) -> None | list[Any]:
         """
-        Valida si un pago ya ha sido realizado para un servicio específico en algún año.
+        Valida si un pago ya ha sido realizado para un servicio específico.
         
         Esta función ejecuta una consulta SQL personalizada según el servicio proporcionado
         y aplica los filtros especificados para verificar la existencia de pagos previos.
@@ -279,11 +280,29 @@ class ReadPayment:
         except Exception as e:
             print(f"Error al construir los filtros: {e}")
             return None
-        
+        finally:
+            # La conexión no se cierra aqui por que se vuelve a utilizar en el servicio que la llama
+            # hanlder_conexion.close_conexion()
+            pass
+            
 
     def update_payment_view(self, service_name: str, customer_id: str, year_payment: str) -> tuple[int, list[dict]] | None:
         """
-        documentar correctamnete
+        Actualiza la vista de pagos pendientes de un cliente.
+
+        Esta función se utiliza para obtener los datos de pagos de un cliente
+        específico para un servicio y año determinados, generalmente después
+        de una actualización.
+
+        Args:
+            service_name (str): Nombre del servicio para el que se busca la información.
+            customer_id (str): ID del cliente.
+            year_payment (str): Año del pago.
+
+        Returns:
+            tuple[int, list[dict]] | None: 
+                - Una tupla con un código de estado y una lista de diccionarios con los datos de pago.
+                - None si no se encuentran los pagos o hay un error.
         """
         filters = {
             'DIM_CustomerId': customer_id,

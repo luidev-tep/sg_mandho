@@ -137,8 +137,18 @@ useEffect(() => {
       if (response && response.message === "Pago creado satisfactoriamente") {
         setSuccess(true);
         setTimeout(() => {
+          // Extraer el objeto si la respuesta es un array como [{...}]
+          const updatedData = Array.isArray(response.data) && response.data.length > 0
+            ? response.data[0]
+            : response.data;
+
+          // Fusionar los datos originales (props) con los datos actualizados del backend
+          const completeUpdatedRecord = { ...props, ...updatedData };
+
+          if (onUpdate) {
+            onUpdate(completeUpdatedRecord);
+          }
           onClose();
-          if (onUpdate) onUpdate(response.data);
         }, 2000);
         return;
       }

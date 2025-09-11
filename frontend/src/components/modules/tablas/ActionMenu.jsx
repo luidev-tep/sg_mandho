@@ -90,7 +90,7 @@ function ActionMenu({ onUpdate, id_user, serviceName, props }) {
       {desactivateUserOpen && (
         <FinishPayment 
           onClose={() => setDesactivateUserOpen(false)}
-          onUpdate={onUpdate} // Pasamos la prop onSuccess al modal
+          onUpdate={onUpdate} // Pasamos la prop onUpdate al modal
           props={props}
         />
       )}

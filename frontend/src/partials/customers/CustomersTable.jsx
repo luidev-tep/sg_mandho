@@ -124,16 +124,35 @@ function CustomersTable({ filters }) {
     }
   }, [searchTerm, allCustomers]);
 
+  // Función optimizada para actualizar cliente
   const handleUpdateCustomer = (updatedCustomer) => {
+    //console.log("Datos del usuario actualizado:", updatedCustomer);
+    
+    // Actualizar allCustomers
     setAllCustomers(prev => 
       prev.map(customer => 
-        customer.id_user === updatedCustomer.id_user ? updatedCustomer : customer
+        customer.id_user === updatedCustomer.id_user 
+          ? { ...customer, 
+              street: updatedCustomer.street || customer.street,
+              number_ext: updatedCustomer.number_ext || customer.number_ext,
+              manzana: updatedCustomer.manzana || customer.manzana,
+              date_user_end: updatedCustomer.date_user_end || customer.date_user_end
+            }
+          : customer
       )
     );
     
+    // Actualizar filteredCustomers
     setFilteredCustomers(prev => 
       prev.map(customer => 
-        customer.id_user === updatedCustomer.id_user ? updatedCustomer : customer
+        customer.id_user === updatedCustomer.id_user 
+          ? { ...customer, 
+              street: updatedCustomer.street || customer.street,
+              number_ext: updatedCustomer.number_ext || customer.number_ext,
+              manzana: updatedCustomer.manzana || customer.manzana,
+              date_user_end: updatedCustomer.date_user_end || customer.date_user_end
+            }
+          : customer
       )
     );
   };
