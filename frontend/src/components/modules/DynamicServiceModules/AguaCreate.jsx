@@ -1,14 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData }) => {
-  const CURRENT_WATER_COST = 360; // Costo actual
+const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData, paymentData }) => {
   
   const { register, handleSubmit, watch, setValue, formState: { errors, isValid } } = useForm({
     mode: 'onChange',
     defaultValues: {
       serviceType: '',
-      amount: CURRENT_WATER_COST,
+      amount: 0,
       serviceName: 'agua',
       description: ''
     }
@@ -17,6 +16,7 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData }) => {
   const serviceType = watch('serviceType');
   const amount = watch('amount');
   const description = watch('description');
+  const [selectedServiceInfo, setSelectedServiceInfo] = useState(null);
 
   useEffect(() => {
     onValidityChange?.(isValid);
@@ -34,16 +34,21 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData }) => {
   }, [serviceType, amount, description, isValid, onModuleData]);
 
   useEffect(() => {
-    if (serviceType === 'tomas' || serviceType === 'consumo') {
-      setValue('amount', CURRENT_WATER_COST);
+    if (serviceType && paymentData) {
+      const selected = paymentData.find(p => p.serviceType === serviceType);
+      if (selected) {
+        setValue('amount', selected.amount, { shouldValidate: true });
+        const newDescription = `Pago por ${selected.serviceType.replace('_', ' ')} del año seleccionado.`;
+        setValue('description', newDescription);
+        setSelectedServiceInfo(selected);
+      }
+    } else {
+      setValue('amount', 0);
+      setValue('description', '');
+      setSelectedServiceInfo(null);
       setValue('serviceName', 'agua');
-      
-      const description = serviceType === 'tomas' 
-        ? 'Pago por toma de agua' 
-        : 'Pago por consumo de agua';
-      setValue('description', description);
     }
-  }, [serviceType, setValue]);
+  }, [serviceType, paymentData, setValue]);
 
   return (
     <div className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -55,12 +60,15 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData }) => {
           </label>
           <select
             {...register('serviceType', { required: true })}
-            className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+            className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            disabled={!paymentData || paymentData.length === 0}
           >
-            <option value="">Seleccione un tipo</option>
-            <option value="tomas">Tomas de agua</option>
-            <option value="consumo">Consumo de agua</option>
-            <option value="agregar_toma">Agregar toma</option>
+            <option value="">-- Seleccione un servicio --</option>
+            {paymentData?.map(service => (
+              <option key={service.serviceType} value={service.serviceType}>
+                {`${service.serviceType.charAt(0).toUpperCase() + service.serviceType.slice(1)} - $${service.amount}`}
+              </option>
+            ))}
           </select>
           {errors.serviceType && (
             <p className="text-red-500 text-sm mt-1">Este campo es requerido</p>
@@ -70,21 +78,18 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData }) => {
         {/* Campo: Cantidad */}
         <div className="mb-4">
           <label className="block text-gray-700 dark:text-gray-300 mb-2">
-            {(serviceType === 'tomas' || serviceType === 'consumo') 
-              ? `El costo del servicio es de`
-              : 'Monto ($)'}
+            Costo del servicio
           </label>
-          {(serviceType === 'tomas' || serviceType === 'consumo') && (
-            <div className="relative">
-              <input
-                type="number"
-                {...register('amount')}
-                value={CURRENT_WATER_COST}
-                readOnly
-                className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 cursor-not-allowed dark:border-gray-600 dark:text-gray-300"
-              />
-            </div>
-          )}
+          <div className="relative">
+            <input
+              type="number"
+              {...register('amount')}
+              readOnly
+              className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 cursor-not-allowed dark:border-gray-600 dark:text-gray-300"
+              placeholder="Costo se asigna al seleccionar"
+            />
+          </div>
+
           {errors.amount && (
             <p className="text-red-500 text-sm mt-1">Este campo es requerido</p>
           )}
@@ -92,9 +97,9 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData }) => {
 
         {/* Mensaje para "Agregar toma" */}
         {serviceType === 'agregar_toma' && (
-          <div className="md:col-span-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 p-3 rounded-lg">
-            Esta opción aún no está implementada.
-          </div>
+        <div className="md:col-span-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 p-3 rounded-lg">
+          Esta opción aún no está implementada.
+        </div>
         )}
 
         {/* Campo oculto: serviceName */}
@@ -111,11 +116,6 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData }) => {
             rows={2}
           />
         </div>
-{/* 
-        {/* Nota sobre el costo 
-        <div className="md:col-span-2 text-sm text-gray-500 dark:text-gray-400 italic">
-          Costo actual del servicio: ${CURRENT_WATER_COST}
-        </div> */}
       </div>
     </div>
   );

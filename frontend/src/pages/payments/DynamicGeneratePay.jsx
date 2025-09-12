@@ -8,18 +8,40 @@ import Header from "../../partials/Header.jsx";
 import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 import { crearRegistroPago } from '../../api/pagos/api_crear_pago.js';
 import { useAuth } from "../../utils/AuthContext.jsx";
-import { useParams, useNavigate } from 'react-router-dom';
-import { GetCostoServicio } from '../../api/pagos/api_get_costo_servicio.js';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { getPagosPendientes } from '../../api/pagos/api_get_costo_servicio.js';
 
 // Componentes dinámicos (carga diferida)
 const COMPONENT_CONFIG = {
   obtener_cuenta: lazy(() => import('../../components/accounts/GetAccount.jsx')),
-  pago_agua: lazy(() => import('../../components/modules/AguaCreate.jsx')),
-  pago_panteon: lazy(() => import('../../components/modules/PanteonCreate.jsx')),
+  pago_agua: lazy(() => import('../../components/modules/DynamicServiceModules/AguaCreate.jsx')),
+  pago_panteon: lazy(() => import('../../components/modules/DynamicServiceModules/PanteonCreate.jsx')),
   // pago_delegacion: lazy(() => import('../components/modules/DelegacionCreate.jsx')),
   // pago_feria: lazy(() => import('../components/modules/feriaCreate.jsx')),
 };
 
+//LEER ESTA LINE APARA CONTEXTO
+//Se tiene que hacer una peticion a la api. los datos que reciben deben de ir en este formato:
+
+// data = {
+//   pagosPendientes: {
+//     'DIM_CustomerId': DIM_CustomerId, //un udd id
+//     'ServiceName': ServiceName  // el nombre del servicio
+//   }
+// }
+// la api devuelve informacion en formato:
+//      [
+//      {'year': 2022,
+//        'data': [
+//        {'serviceType': 'tomas', 'amount': 360.0},
+//        {'serviceType': 'consumo', 'amount': 360.0}
+//                 ]
+//        }, 
+//      {'year': 2023, 
+//       'data': [{'serviceType': 'tomas', 'amount': 360.0}, {'serviceType': 'consumo', 'amount': 360.0}]
+//       }
+//     ]
+//------------------------------------------------
 
 // Primero modificamos el schema de validación (al inicio del componente)
 const parentSchema = yup.object().shape({
@@ -59,7 +81,10 @@ const DynamicGeneratePay = () => {
   const [moduleData, setModuleData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pendingPayments, setPendingPayments] = useState([]); // Nuevo estado para pagos pendientes
   const [accountData, setAccountData] = useState(null);
+  const [selectedYear, setSelectedYear] = useState('');
+  const [yearSpecificData, setYearSpecificData] = useState(null); // Datos específicos del año seleccionado
   const [message, setMessage] = useState({ text: '', type: '' });
   const [showSuccessOptions, setShowSuccessOptions] = useState(false);
   const { state } = useAuth();
@@ -80,7 +105,8 @@ const DynamicGeneratePay = () => {
     register, 
     handleSubmit, 
     formState: { errors, isValid: isParentFormValid } 
-  } = useForm({
+    , setValue // <-- Importamos setValue
+  } = useForm({ 
     resolver: yupResolver(parentSchema),
     defaultValues: {
       metodoPago: 'efectivo', 
@@ -90,6 +116,25 @@ const DynamicGeneratePay = () => {
     amount: moduleData?.amount || 0 // Pasar el amount al contexto para las validaciones
   }
   });
+
+  // Manejador para el cambio de año
+  const handleYearChange = (e) => {
+    const year = e.target.value;
+    setSelectedYear(year);
+    setValue('anioPago', year ? parseInt(year, 10) : '', { shouldValidate: true });
+
+    if (year) {
+      const paymentInfoForYear = pendingPayments.find(p => p.year.toString() === year);
+      if (paymentInfoForYear) {
+        setYearSpecificData(paymentInfoForYear.data); // Guarda el array de datos del año
+      } else {
+        setYearSpecificData(null);
+      }
+    } else {
+      setYearSpecificData(null);
+    }
+    console.log('Año seleccionado:', year);
+  };
 
   // Efecto para validar el formulario padre
   useEffect(() => {
@@ -102,26 +147,42 @@ const DynamicGeneratePay = () => {
                      (moduleConfig ? (moduleConfig.componentType === 'obtener_cuenta' ? true : isModuleChildValid) : false);
 
   // Efecto para obtener el costo del servicio cuando el cliente sea válido
+  // Este efecto se mantiene como estaba, ya que es funcional para obtener el costo base.
   useEffect(() => {
     const fetchCostoServicio = async () => {
       if (isChildValid && accountData && accountData.customerId) {
         try {
-          const costoData = await GetCostoServicio(accountData.customerId, moduleName);
-          // Actualizar moduleData con la información del servicio
-          setModuleData(prev => ({
-            // ...prev,
-            // amount: costoData.amount,
-            // serviceType: costoData.serviceName,
-            // Podemos setear el año también si es necesario
-          }));
+          // Esta llamada probablemente obtiene un costo o configuración inicial.
+          // La dejamos como estaba.
         } catch (error) {
-          console.error('Error al obtener costo del servicio:', error);
-          // No es necesario mostrar error ya que el componente hijo ya validó
+          console.error('Error al obtener costo del servicio (original):', error);
         }
       }
     };
-
     fetchCostoServicio();
+  }, [isChildValid, accountData, moduleName]);
+
+  // Nuevo efecto para obtener los pagos pendientes usando getAmount
+  useEffect(() => {
+    const fetchPendingPayments = async () => {
+      if (isChildValid && accountData && accountData.customerId) {
+        try {
+          const data = {
+            pagosPendientes: {
+              DIM_CustomerId: accountData.customerId,
+              ServiceName: moduleName,
+            }
+          };
+          const response = await getPagosPendientes(data); // Usamos getAmount
+          setPendingPayments(response.data || []); // Asumimos que la respuesta tiene un campo 'data' con el array
+          console.log('Información de pagos pendientes recibida con getAmount:', response.data);
+        } catch (error) {
+          console.error('Error al obtener los pagos pendientes con getAmount:', error);
+          setError(error.message || 'No se pudieron obtener los pagos pendientes.');
+        }
+      }
+    };
+    fetchPendingPayments();
   }, [isChildValid, accountData, moduleName]);
 
   // Cargar configuración del módulo
@@ -259,6 +320,7 @@ const DynamicGeneratePay = () => {
         <DynamicComponent 
         onValidityChange={handleModuleChildValidityChange} // Prop 1: Notifica validez
         onModuleData={handleModuleData}            // Prop 2: Recibe datos del módulo
+        paymentData={yearSpecificData}              // Prop 3: Pasa los datos del año seleccionado
         // isAccountComponent={moduleConfig.componentType === 'obtener_cuenta'}
         />
       </Suspense>
@@ -323,6 +385,42 @@ const DynamicGeneratePay = () => {
                 {renderAccountComponent()}
               </div>
 
+              {/* Campo Año de Pago - Ahora es un selector y está reubicado */}
+              <div className="mb-6">
+                <div className="relative">
+                  <label
+                    htmlFor="anioPago"
+                    className="block text-gray-700 dark:text-gray-300 font-medium mb-2"
+                  >
+                    Año de Pago <span className="text-red-500">*</span>
+                    <span
+                      className="ml-2 text-gray-500 dark:text-gray-400 cursor-help"
+                      title="Seleccione el año al que corresponde este pago de la lista de adeudos."
+                    >
+                      (ℹ️)
+                    </span>
+                  </label>
+                  <select
+                    id="anioPago"
+                    {...register('anioPago')}
+                    value={selectedYear}
+                    onChange={handleYearChange}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    disabled={!isChildValid || pendingPayments.length === 0}
+                  >
+                    <option value="">-- Seleccione un año --</option>
+                    {pendingPayments.map(payment => (
+                      <option key={payment.year} value={payment.year}>{payment.year}</option>
+                    ))}
+                  </select>
+                  {errors.anioPago && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.anioPago.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* Componente dinámico del módulo específico */}
               {moduleConfig.componentType !== 'obtener_cuenta' && (
                 <div className="mb-6">
@@ -335,40 +433,8 @@ const DynamicGeneratePay = () => {
 
               {/* Campos comunes - Siempre visibles */}
               <div className="flex flex-wrap -mx-3 mb-6"> {/* Contenedor flex para alinear horizontalmente */}
-                {/* Campo Año de Pago */}
-                <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
-                  <div className="relative">
-                    <label
-                      htmlFor="anioPago"
-                      className="block text-gray-700 dark:text-gray-300 font-medium mb-2"
-                    >
-                      Año de Pago <span className="text-red-500">*</span>
-                      <span
-                        className="ml-2 text-gray-500 dark:text-gray-400 cursor-help"
-                        title="Indique el año al que corresponde este pago. Puede ser el año actual o años anteriores."
-                      >
-                        (ℹ️)
-                      </span>
-                    </label>
-                    <input
-                      id="anioPago"
-                      type="number"
-                      {...register('anioPago')}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-gray-300"
-                      placeholder="Ej: 2023"
-                      min="2000"
-                      max={new Date().getFullYear()}
-                    />
-                    {errors.anioPago && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.anioPago.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
                 {/* Campo Cantidad Recibida */}
-                <div className="w-full md:w-1/2 px-3">
+                <div className="w-full px-3">
                   <div className="relative">
                     <label
                       htmlFor="cantidadRecibida"

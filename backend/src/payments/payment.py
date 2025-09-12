@@ -66,7 +66,7 @@ class PaymentCrud:
         fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
         for dato in data_json:
             print(f"El dato es: {dato} con el valor de: {type(dato)}")
-        type_fields = [str, str, str, str, str,  str, str, str, float, float]
+        type_fields = [str, str, str, str, str, str, str, str, float, float]
 
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 
@@ -181,65 +181,47 @@ class PaymentCrud:
     def get_cost(self, data_json: dict) -> tuple[int, Any, list]:
         """Obtiene una lista de pagos pendientes para un cliente y servicio específicos.
 
-        Esta función valida los datos de entrada y busca los pagos pendientes
-        asociados a las cuentas del cliente para un servicio y años específicos.
+            Esta función valida los datos de entrada y busca los pagos pendientes
+            asociados a las cuentas del cliente para un servicio y años específicos.
 
-        Args:
-            data_json (dict): Un diccionario con los datos necesarios para la búsqueda.
-                              Debe contener 'ServiceName' y 'DIM_CustomerId'.
+            Args:
+                data_json (dict): Un diccionario con los datos necesarios para la búsqueda.
+                                Debe contener 'ServiceName' y 'DIM_CustomerId'.
 
-        Returns:
-            tuple[int, str, list]: Una tupla con el código de estado HTTP y los datos o un mensaje.
-                                   - (400, "message"): Datos faltantes o inválidos.
-                                   - (500, "message"): Error interno del servidor.
-                                   - (200, "message", data): Lista de pagos pendientes.
-        """
-        account_handler = AccountCrud()
-        service_handler = DIM_Service()
-
+            Returns:
+                tuple[int, str, list]: Una tupla con el código de estado HTTP y los datos o un mensaje.
+                                        - (400, "message"): Datos faltantes o inválidos.
+                                        - (500, "message"): Error interno del servidor.
+                                        - (200, "message", data): Lista de pagos pendientes.
+            """
+        # Define los campos requeridos y sus tipos para la validación de los datos de entrada.
         fields_required = ['ServiceName', 'DIM_CustomerId']
         type_fields = [str, str]
 
+        # Llama a una función de utilidad para validar si los datos de entrada son correctos.
+        # 'is_valid' será un booleano y 'message' contendrá el error si los datos no son válidos.
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 
+        # Si los datos no son válidos, retorna un código de error 400.
         if not is_valid:
             return 400, message, []
         
-        data_format = {
-            "id_user": data_json['DIM_CustomerId'],
-        }
-        #oBTENER PRIMERO TODAS LA CUENTAS ASOCIADAS AL CLIENTE
-        codigo_esta, mensaje, cuentas = account_handler.read_account(data_format)
-        print("pasamo obquiero cuentas")
-        if codigo_esta != 200:
-            return codigo_esta, mensaje, []
-        
-        
-        id_accounts = [cuenta['DIM_AccountId'] for cuenta in cuentas]  # Obtener los IDs de las cuentas
-
-
-        print("pasamo cuenta")
-        #Se generaran los anios desde los que se va a buscar \
-        anios_filtro = [anio for anio in range(2020, datetime.now().year + 1)]
-
-        service_id = service_handler.get_service_id(data_json['ServiceName'])
-        service_details_ids = get_service_detailsId_by_ServiceId(service_id)
-
-        print(id_accounts)
-        print(anios_filtro)
-        print(service_details_ids)
-
-
-        #data = get_pending_pays(anios_filtro, id_accounts, data_json['ServiceName'])
-        # code, data = dim_service_details_handler.get_service_by_date_servicetype(data_json)
-        # if code != 200:
-        #     print(f"Error al obtener el costo: {data}")
-        #     return code, "No se pudo obtener el costo", []
-        
-        # return code, "Costo obtenido satisfactoriamente", data
-        return 200, "nla bla bkla", []
-    
-
+        try:
+            # Intenta obtener los pagos pendientes usando los datos del JSON.
+            data = get_pending_pays(data_json['DIM_CustomerId'], data_json['ServiceName'])
+            
+            # Si la función get_pending_pays retorna None, significa que no se encontraron
+            # pagos pendientes. Se imprime un mensaje y se retorna un código 400.
+            if data is None:
+                print(f"Error al obtener los pagos pendientes: {data}")
+                return 400, "No se encontraron pagos pendientes", []
+            
+            # Si todo es correcto, retorna un código 200 con la lista de pagos.
+            return 200, "Datos obtenidos satisfactoriamente", data
+        except Exception as e:
+            # Captura cualquier excepción que ocurra durante el proceso, imprime el error
+            # en la consola y retorna un código de error 500 para indicar un fallo interno.
+            print(e)
     def read_payments_customer_id(self, filters: dict) -> tuple[int, Any, list]:
         """Lee los registros de pagos de un cliente basados en los filtros proporcionados.
 
@@ -315,7 +297,7 @@ class PaymentCrud:
             amount = get_amount_by_service_and_date(data_json['service_type'], f"Y{last_two_digits}", serviceId)
 
             #print(f"Se imprimieran todos los datsos obtenidos emepzando desde los datos de json \n {data_json['service_type']} \n {data_json['Year']} \n {amount} \n {year} \n Y{last_two_digits}")
-            if  not amount:
+            if not amount:
                 print(f"Error al leer la cantidad: {amount}")
                 return 400, f"No se encontraron costos de Servicos registrados en {data_json['Year']}", []
             
