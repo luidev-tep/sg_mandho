@@ -161,6 +161,8 @@ def get_any_data() -> Response:
         if 'costoservicio' in data_json and data_json['costoservicio']:
             estado, mensaje, datos = payment_options.get_cost_by_payment_year(data_json['costoservicio'])
         
+        if 'pagosPendientes' in data_json and data_json['pagosPendientes']:
+            estado, mensaje, datos = payment_options.get_cost(data_json['pagosPendientes'])
         # Aquí se pueden agregar más condiciones para otros tipos de servicios en el futuro
         # Ejemplo:
         # elif 'otro_servicio' in data_json:
@@ -180,3 +182,4 @@ def get_any_data() -> Response:
         error_msg = f"Error interno al procesar la solicitud: {e}"
         print(f"Error al obtener el costo: {error_msg}")
         return send_error(error_msg, 500)
+    

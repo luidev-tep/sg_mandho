@@ -93,3 +93,48 @@ export const getAmount = async (data) => {
         throw new Error(errorMessage);
     }
 };
+
+
+
+export const getPagosPendientes = async (data) => {
+    try {
+        // Validación de datos requeridos
+        if (!data || !data.pagosPendientes || !data.pagosPendientes.DIM_CustomerId || !data.pagosPendientes.ServiceName) {
+            throw new Error('Faltan datos requeridos para obtener los pagos pendientes');
+        }
+        console.log("Datos enviados a getPAgosPendientes:", data);
+        const response = await api.post('get_any_data/', data);
+
+        // Verificar si la respuesta tiene el formato esperado
+        if (!response.data || !response.data.body) {
+            throw new Error('No se recibieron datos del servidor');
+        }
+
+        // La respuesta es un JSON, no un número.
+        const pendingPayments = response.data.body;
+        console.log('Pagos pendientes recibidos de la API:', pendingPayments); // Log para verificar
+
+        return {
+            data: pendingPayments
+        };
+
+    } catch (error) {
+        let errorMessage;
+
+        if (error.response) {
+            // El servidor respondió con un status fuera del rango 2xx
+            console.error("Error de respuesta:", error.response.data);
+            errorMessage = error.response.data?.message || 
+                          error.response.data?.error || 
+                          `Error ${error.response.status}: ${error.response.statusText}`;
+        } else if (error.request) {
+            // La petición fue hecha pero no se recibió respuesta
+            errorMessage = 'No se recibió respuesta del servidor';
+        } else {
+            // Error en la configuración de la petición
+            errorMessage = error.message || 'Error al configurar la petición';
+        }
+        
+        throw new Error(errorMessage);
+    }
+};
