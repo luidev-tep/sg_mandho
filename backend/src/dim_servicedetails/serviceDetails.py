@@ -8,6 +8,13 @@ from src.utils.id_generator import create_id
 
 from src.dim_servicedetails.repository.show import get_amount_by_service_and_date
 
+from src.utils.validate_data import validate_data
+
+from src.dim_servicedetails.services.validate_servicedatil import valide_service_details
+
+from src.dim_servicedetails.repository.create import insertar_registro
+
+
 #Si esta clase se hace predefinida, se esta logica no sera tan utils hasta que la clase sea creada
 # y se cree en la interfaz un metodo para poder interactusl con ella
 class ServiceDetailsCrud:
@@ -24,29 +31,55 @@ class ServiceDetailsCrud:
         Returns:
             tuple: A tuple containing the status code and a message.
         """
+        float(service_details_json["amount"])
+        campos = ["ServiceName", "serviceDetailesType", "amount", "year"]
+        tipo_campos = [str, str, float, int]
+        is_valid = validate_data(service_details_json, campos, tipo_campos, "service details")
+        if not is_valid:
+            return 400, "Datos invalidos"
+        
         handler_date = DIM_DATE()
         handler_service = DIM_Service()
         try:
             service_id = handler_service.get_service_id(service_details_json['ServiceName'])
 
             if not service_id:
-                return 404, "Service no encontrado"
+                return 404, "Servicio no encontrado"
+            
+            #validar si el anio es el actual
+            year , month, day = handler_date.full_date
+            
+            if not year == service_details_json["year"]:
+                return 400, "Esta mal la fecha proporcionada"
+            
+
+            StartDate = f'{service_details_json["year"]}-01-01'
+            EndDate = f'{service_details_json["year"]}-12-31'
+
+            #validar que el tipo de serviicio no este repetido
+            has_Similar_service = valide_service_details(service_details_json)
+            if has_Similar_service:
+                return 400, "Ya existe un servicio similar en el anio actual"
+
             
             #servicio, detalle[0], starDate[1:7]
             startDate = str(handler_date.dateId)
             data_format = {
-                "DIM_ServiceDetailsId": create_id([service_details_json['ServiceName'], service_details_json['serviceDetailsType'], startDate[2:7]]), #Testeado para que no de error
+                "DIM_ServiceDetailsId": create_id([service_details_json['ServiceName'], service_details_json['serviceDetailesType'], startDate[2:7]]), #Testeado para que no de error
                 "DIM_DateId": handler_date.dateId,
                 "DIM_ServiceId": service_id,
-                "ServiceDetailsType": service_details_json["serviceDetailsType"],
+                "serviceDetailesType": service_details_json["serviceDetailesType"],
                 "amount": service_details_json["amount"] ,
-                "StartDate": service_details_json['StartDate'], # Estos aun no existen
-                "EndDate": service_details_json['EndDate'] # ni este sajsvnfk
+                #Modificar desde aquiiii
+                "StartDate": StartDate, # Estos aun no existen
+                "EndDate": EndDate # ni este sajsvnfk
             }
             print(f"Data format for service details: {data_format}")
             service_details = DIM_Details(**data_format)
             
 
+            #insertar_registro(service_details)
+            
             return 201, data_format["DIM_ServiceDetailsId"]
         
         except Exception as e:

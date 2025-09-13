@@ -3,12 +3,12 @@ class DIM_Details:
     Clase encargada de manejar los detalles del servicio.
     """
     
-    def __init__(self, DIM_ServiceDetailsId, DIM_DateId, DIM_ServiceId, ServiceDetailsType, amount, StartDate, EndDate) -> None:
+    def __init__(self, DIM_ServiceDetailsId, DIM_DateId, DIM_ServiceId, serviceDetailesType, amount, StartDate, EndDate) -> None:
         """Constructor de la clase DIM_ServiceDetails."""
         self.DIM_ServiceDetailsId = DIM_ServiceDetailsId
         self.DIM_DateId = DIM_DateId
         self.DIM_ServiceId = DIM_ServiceId        
-        self.ServiceDetailsType = ServiceDetailsType
+        self.serviceDetailesType = serviceDetailesType
         self.amount = amount
         self.StartDate = StartDate
         self.EndDate = EndDate
@@ -19,7 +19,7 @@ class DIM_Details:
             "DIM_ServiceDetailsId": self.DIM_ServiceDetailsId,
             "DIM_DateId": self.DIM_DateId,
             "DIM_ServiceId": self.DIM_ServiceId,
-            "ServiceDetailsType": self.ServiceDetailsType,
+            "serviceDetailesType": self.serviceDetailesType,
             "amount": self.amount,
             "StartDate": self.StartDate,
             "EndDate": self.EndDate

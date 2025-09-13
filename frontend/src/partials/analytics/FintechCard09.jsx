@@ -2,7 +2,7 @@ import React from 'react';
 import PieChart from '../../charts/PieChart'; 
 import { getCssVariable } from '../../utils/Utils';
 
-function FintechCard09({ comitiva, data, loading }) {
+function FintechCard09({ comitiva, mes_format, data, loading }) {
   
   // Paleta de colores predefinida
   const colorPalette = [
@@ -31,29 +31,29 @@ function FintechCard09({ comitiva, data, loading }) {
     '--color-pink-500'
   ];
 
-  // Preparar datos para el gráfico
+  // Verificar si data es null o undefined antes de acceder a sus propiedades
+  const manzanas = data && data.manzanas ? data.manzanas : [];
+
+  // Preparar datos para el gráfico - CORREGIDO: usar 'fraction' y 'population'
   const chartData = {
-    labels: data?.manzanas ? data.manzanas.map(m => m.nombre) : [],
+    labels: manzanas.map(m => m.fraction),
     datasets: [
       {
         label: 'Población por Manzana',
-        data: data?.manzanas ? data.manzanas.map(m => m.personas) : [],
-        backgroundColor: data?.manzanas ? 
-          data.manzanas.map((_, index) => 
-            getCssVariable(colorPalette[index % colorPalette.length])
-          ) : [],
-        hoverBackgroundColor: data?.manzanas ? 
-          data.manzanas.map((_, index) => 
-            getCssVariable(hoverColorPalette[index % hoverColorPalette.length])
-          ) : [],
+        data: manzanas.map(m => m.population),
+        backgroundColor: manzanas.map((_, index) => 
+          getCssVariable(colorPalette[index % colorPalette.length])
+        ),
+        hoverBackgroundColor: manzanas.map((_, index) => 
+          getCssVariable(hoverColorPalette[index % hoverColorPalette.length])
+        ),
         borderWidth: 0,
       },
     ],
   };
 
-  // Calcular total de personas
-  const totalPersonas = data?.manzanas ? 
-    data.manzanas.reduce((sum, manzana) => sum + manzana.personas, 0) : 0;
+  // Calcular total de personas - CORREGIDO: usar 'population'
+  const totalPersonas = manzanas.reduce((sum, manzana) => sum + manzana.population, 0);
 
   if (loading) {
     return (
@@ -71,7 +71,7 @@ function FintechCard09({ comitiva, data, loading }) {
     <div className="flex flex-col col-span-full sm:col-span-6 xl:col-span-4 bg-white dark:bg-gray-800 shadow-xs rounded-xl">
       <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center">
         <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-          Población por Manzana {comitiva && `- ${comitiva}`}
+          Población por Manzana {comitiva && `- ${comitiva}`} {mes_format && `- ${mes_format}`}
         </h2>
       </header>
       <div className="px-5 py-3">
@@ -82,7 +82,13 @@ function FintechCard09({ comitiva, data, loading }) {
       </div>
       {/* Chart built with Chart.js 3 */}
       {/* Change the height attribute to adjust the chart height */}
-      <PieChart data={chartData} width={389} height={220} />
+      {manzanas.length > 0 ? (
+        <PieChart data={chartData} width={389} height={220} />
+      ) : (
+        <div className="flex justify-center items-center h-60">
+          <p className="text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
+        </div>
+      )}
     </div>
   );
 }

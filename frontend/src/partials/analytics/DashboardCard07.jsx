@@ -1,93 +1,134 @@
 import React from 'react';
 
-// Agrega esta función al inicio del componente, antes del return:
-const getTrimestreYMes = (fecha) => {
-  const meses = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
+function DashboardCard07({ comitiva, anio, data, loading }) {
   
-  const [mes, anio] = fecha.split(' ');
-  const mesIndex = meses.findIndex(m => m.toLowerCase() === mes.toLowerCase());
-  const trimestre = Math.floor(mesIndex / 3) + 1;
-  
-  return `Año ${anio} - Trimestre ${trimestre} (${mes})`;
-};
+  // Función para formatear el porcentaje sin decimales
+  const formatPercentage = (value) => {
+    return Math.round(Number(value));
+  };
 
-function DashboardCard07({ comitiva, mes_format, data, loading }) {
- return (
-   <div className="col-span-full xl:col-span-8 bg-white dark:bg-gray-800 shadow-xs rounded-xl">
-     <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
-       <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-         {comitiva} - {getTrimestreYMes(mes_format)}
-       </h2>
-     </header>
-     <div className="p-3">
-       {/* Table */}
-       <div className="overflow-x-auto">
-         <table className="table-auto w-full dark:text-gray-300">
-           {/* Table header */}
-           <thead className="text-xs uppercase text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/50 rounded-xs">
-             <tr>
-               <th className="p-2">
-                 <div className="font-semibold text-left">Manzanas</div>
-               </th>
-               <th className="p-2">
-                 <div className="font-semibold text-center">Personas</div>
-               </th>
-               <th className="p-2">
-                 <div className="font-semibold text-center">Pagados</div>
-               </th>
-               <th className="p-2">
-                 <div className="font-semibold text-center">Pendientes</div>
-               </th>
-               <th className="p-2">
-                 <div className="font-semibold text-center">Porcentaje</div>
-               </th>
-             </tr>
-           </thead>
-           {/* Table body */}
-           <tbody className="text-sm font-medium divide-y divide-gray-100 dark:divide-gray-700/60">
-             {data && data.manzanas ? data.manzanas.map((manzana) => (
-               <tr key={manzana.id}>
-                 <td className="p-2">
-                   <div className="flex items-center">
-                     <svg className="shrink-0 mr-2 sm:mr-3" width="36" height="36" viewBox="0 0 36 36">
-                       <circle fill={manzana.color} cx="18" cy="18" r="18" />
-                       <path
-                         d="M14.232 12.818V23H11.77V12.818h2.46zM15.772 23V12.818h2.462v4.087h4.012v-4.087h2.456V23h-2.456v-4.092h-4.012V23h-2.461z"
-                         fill="#E6ECF4"
-                       />
-                     </svg>
-                     <div className="text-gray-800 dark:text-gray-100">{manzana.nombre}</div>
-                   </div>
-                 </td>
-                 <td className="p-2">
-                   <div className="text-center">{manzana.personas}</div>
-                 </td>
-                 <td className="p-2">
-                   <div className="text-center text-green-500">{manzana.pagados}</div>
-                 </td>
-                 <td className="p-2">
-                   <div className="text-center">{manzana.pendientes}</div>
-                 </td>
-                 <td className="p-2">
-                   <div className="text-center text-sky-500">{manzana.porcentaje}%</div>
-                 </td>
-               </tr>
-             )) : (
-               <tr>
-                 <td colSpan="5" className="p-4 text-center text-gray-500">
-                   {loading ? 'Cargando...' : 'No hay datos disponibles'}
-                 </td>
-               </tr>
-             )}
-           </tbody>
-         </table>
-       </div>
-     </div>
-   </div>
- );
+  // Función para determinar el color del porcentaje según el valor
+  const getPercentageColor = (percentage) => {
+    const value = formatPercentage(percentage);
+    if (value >= 90) return '#10B981'; // Verde
+    if (value >= 70) return '#3B82F6'; // Azul
+    if (value >= 50) return '#F59E0B'; // Amarillo
+    return '#EF4444'; // Rojo
+  };
+
+  return (
+    <div className="col-span-full xl:col-span-8 bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
+      <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
+          {comitiva} - Resumen Anual {anio}
+        </h2>
+      </header>
+      <div className="p-3">
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="table-auto w-full dark:text-gray-300">
+            {/* Table header */}
+            <thead className="text-xs uppercase text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/50 rounded-xs">
+              <tr>
+                <th className="p-2">
+                  <div className="font-semibold text-left">Manzanas</div>
+                </th>
+                <th className="p-2">
+                  <div className="font-semibold text-center">Personas</div>
+                </th>
+                <th className="p-2">
+                  <div className="font-semibold text-center">Pagados</div>
+                </th>
+                <th className="p-2">
+                  <div className="font-semibold text-center">Pendientes</div>
+                </th>
+                <th className="p-2">
+                  <div className="font-semibold text-center">Porcentaje</div>
+                </th>
+              </tr>
+            </thead>
+            {/* Table body */}
+            <tbody className="text-sm font-medium divide-y divide-gray-100 dark:divide-gray-700/60">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="p-4 text-center text-gray-500">
+                    <div className="flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                      <span className="ml-2">Cargando datos...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : data && data.manzanas && data.manzanas.length > 0 ? (
+                data.manzanas.map((manzana) => {
+                  const percentageColor = getPercentageColor(manzana.porcentaje);
+                  return (
+                    <tr key={manzana.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="p-2">
+                        <div className="flex items-center">
+                          <div className="shrink-0 mr-3 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: manzana.color }}>
+                            <span className="text-white font-bold text-xs">{manzana.nombre.charAt(0)}</span>
+                          </div>
+                          <div className="text-gray-800 dark:text-gray-100">{manzana.nombre}</div>
+                        </div>
+                      </td>
+                      <td className="p-2">
+                        <div className="text-center">{manzana.personas}</div>
+                      </td>
+                      <td className="p-2">
+                        <div className="text-center text-green-500 font-semibold">{manzana.pagados}</div>
+                      </td>
+                      <td className="p-2">
+                        <div className="text-center text-red-500">{manzana.pendientes}</div>
+                      </td>
+                      <td className="p-2">
+                        <div className="text-center font-semibold" style={{ color: percentageColor }}>
+                          {formatPercentage(manzana.porcentaje)}%
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="5" className="p-4 text-center text-gray-500">
+                    No hay datos disponibles
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            {/* Table footer con totales */}
+            {data && data.manzanas && data.manzanas.length > 0 && !loading && (
+              <tfoot className="text-sm font-semibold text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/70">
+                <tr>
+                  <td className="p-2 text-left">Total</td>
+                  <td className="p-2 text-center">
+                    {data.manzanas.reduce((total, manzana) => total + manzana.personas, 0)}
+                  </td>
+                  <td className="p-2 text-center text-green-500">
+                    {data.manzanas.reduce((total, manzana) => total + manzana.pagados, 0)}
+                  </td>
+                  <td className="p-2 text-center text-red-500">
+                    {data.manzanas.reduce((total, manzana) => total + manzana.pendientes, 0)}
+                  </td>
+                  <td className="p-2 text-center" style={{ 
+                    color: getPercentageColor(
+                      (data.manzanas.reduce((total, manzana) => total + manzana.pagados, 0) /
+                      data.manzanas.reduce((total, manzana) => total + manzana.personas, 0)) * 100
+                    )
+                  }}>
+                    {formatPercentage(
+                      (data.manzanas.reduce((total, manzana) => total + manzana.pagados, 0) /
+                        data.manzanas.reduce((total, manzana) => total + manzana.personas, 0)) * 100
+                    )}%
+                  </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default DashboardCard07;

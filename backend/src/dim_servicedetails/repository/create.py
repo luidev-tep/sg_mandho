@@ -22,7 +22,7 @@ def insertar_registro(data: DIM_Details) -> None:
             data.DIM_ServiceDetailsId,
             data.DIM_DateId,
             data.DIM_ServiceId,
-            data.ServiceDetailsType,
+            data.serviceDetailesType,
             data.amount,
             data.StartDate,
             data.EndDate

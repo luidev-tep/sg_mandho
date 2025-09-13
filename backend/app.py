@@ -8,7 +8,7 @@ import os
 from src.routes.user_route import user_route
 from src.routes.account_route import account_route
 from src.routes.search_real_time import search_route
-from src.routes.auth_route import auth_route
+from src.routes.security_route import security_route
 from src.routes.payment_route import payment_route
 from src.routes.analitycs_route import analitycs_route
 #from src.routes.
@@ -21,7 +21,7 @@ app = Flask(__name__)
 app.register_blueprint(user_route)
 app.register_blueprint(account_route)
 app.register_blueprint(search_route)
-app.register_blueprint(auth_route)
+app.register_blueprint(security_route)
 app.register_blueprint(payment_route)
 app.register_blueprint(analitycs_route)
 # Desactivar las verificaciones CORS permitiendo todas las solicitudes

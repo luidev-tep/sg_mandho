@@ -142,9 +142,9 @@ function DateSelect({ onFilterChange }) {
 
   return (
     <div className="relative">
-      <button
+      <button   
         ref={trigger}
-        className="flex items-center justify-between px-3 py-2 text-sm font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 min-w-[120px]"
+        className="flex items-center justify-between px-4 py-2 text-sm font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 min-w-[180px]"
         onClick={() => setDropdownOpen(!dropdownOpen)}
         aria-expanded={dropdownOpen}
         aria-haspopup="true"
@@ -154,7 +154,7 @@ function DateSelect({ onFilterChange }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <span className="text-gray-700 dark:text-gray-200">
-            {options.find(opt => opt.id === selected)?.period || 'Seleccionar'}
+            {options.find(opt => opt.id === selected)?.period || 'Filtrar por mes'}
           </span>
         </div>
         <svg className="ml-1 w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">

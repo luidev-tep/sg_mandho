@@ -121,7 +121,6 @@ CREATE TABLE FACT_Revenue (
     DIM_MovementId TEXT,
     DIM_StatusId TEXT,
     amount REAL NOT NULL,
-    YearPay INTEGER NOT NULL,
     timestamp TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
     FOREIGN KEY (DIM_DateId) REFERENCES DIM_Date(DIM_DateId),
     FOREIGN KEY (DIM_AccountId) REFERENCES DIM_Account(DIM_AccountId),

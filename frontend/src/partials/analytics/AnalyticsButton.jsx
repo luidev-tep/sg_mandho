@@ -8,31 +8,36 @@ function AnalyticsButton({ comitiva }) {
      { path: "/modulos/generar_reporte/panteon", label: "Generar Reporte", isReport: true },
      { path: "/modulos/panteon", label: "Ver Registros" },
      { path: "/modulos/crear_pago/panteon", label: "Generar Registro" },
-     { path: "/modulos/usuarios/panteon", label: "Ver Personas" }
+     { path: "/modulos/usuarios/panteon", label: "Ver Personas" },
+     { path: "/modulos/crear_servicio/panteon", label: "Agregar servicio" }
    ], 
    personas: [
      { path: "/modulos/generar_reporte/personas", label: "Generar Reporte", isReport: true },
      { path: "/personas/usuarios", label: "Lista de personas" },
      { path: "/cuentas/cuenta", label: "Crear cuenta" },
-     { path: "/personas/registro", label: "Agregar persona" }
+     { path: "/personas/registro", label: "Agregar persona" },
+     { path: "/modulos/crear_servicio/personas", label: "Agregar servicio" }
    ],
    agua: [
      { path: "/modulos/generar_reporte/agua", label: "Generar Reporte", isReport: true },
      { path: "/modulos/agua", label: "Ver pagos" },
      { path: "/modulos/crear_pago/agua", label: "Generar recibo" },
-     { path: "/modulos/usuarios/agua", label: "Ver Personas" }
+     { path: "/modulos/usuarios/agua", label: "Ver Personas" },
+     { path: "/modulos/crear_servicio/agua", label: "Agregar servicio" }
    ],
    delegacion: [
      { path: "/modulos/generar_reporte/delegacion", label: "Generar Reporte", isReport: true },
      { path: "/modulos/delegacion", label: "Ver registros" },
      { path: "/modulos/crear_pago/delegacion", label: "Generar recibo" },
-     { path: "/modulos/usuarios/delegacion", label: "Ver Personas" }
+     { path: "/modulos/usuarios/delegacion", label: "Ver Personas" },
+     { path: "/modulos/crear_servicio/delegacion", label: "Agregar servicio" }
    ],
    feria: [
      { path: "/modulos/generar_reporte/feria", label: "Generar Reporte", isReport: true },
      { path: "/modulos/feria", label: "Ver registros" },
      { path: "/modulos/crear_pago/feria", label: "Generar recibo" },
-     { path: "/modulos/usuarios/feria", label: "Ver Personas" }
+     { path: "/modulos/usuarios/feria", label: "Ver Personas" },
+     { path: "/modulos/crear_servicio/feria", label: "Agregar servicio" }
    ]
  };
 
