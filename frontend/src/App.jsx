@@ -31,6 +31,8 @@ import Cuenta from './pages/cuentas/Cuenta.jsx';
 
 //Usuarios para ver por cada modulo
 import DynamicMostrarUsuarios from './pages/payments/DynamicMostrarUsuarios.jsx';
+
+import AgregarServicio from './pages/payments/AgregarServicio.jsx';
 //import Navigation from './components/Navigation.jsx';
 
 /**
@@ -81,8 +83,10 @@ function App() {
           <Route path="/modulos/estado_pago" element={<PaymentStatus />} />
           <Route path="/modulos/:moduleName" element={<DynamicMenu />} />
           <Route path="/Analytics/:comitiva" element={<Analytics />} /> 
+          <Route path="/modulos/servicio/:moduleName" element={<DynamicMenu />} />
 
           <Route path="/modulos/usuarios/:moduleName" element={<DynamicMostrarUsuarios />} />
+          <Route path="/modulos/crear_servicio/:moduleName" element={<AgregarServicio />} />
           {/* Rutas adicionales */}
         </Routes>
     </>

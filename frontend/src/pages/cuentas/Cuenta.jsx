@@ -255,7 +255,7 @@ function Cart() {
                     <p className="mt-2 text-xl font-semibold">{message.text}</p>
                   </div>
                   <Link 
-                    to="/modulo/personas" 
+                    to="/personas/usuarios" 
                     className="
                       inline-block px-6 py-3
                       bg-white dark:bg-gray-700

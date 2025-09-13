@@ -56,6 +56,8 @@ class Analitycs:
             data_analythics['dataFractions'] = self.get_analytics.get_bills_by_month(data_json['mes'], data_json['comitiva'], data_json['anio'])
 
             data_analythics['dataCountUsers'] = {'manzanas': self.get_analytics.get_population_by_manzana()}
+
+            data_analythics['dataUserBills'] = {'manzanas': self.get_analytics.get_data_payments(data_json['comitiva'], data_json['anio'])}
             
             return 200, 'Datos obtenidos correctamente', data_analythics
         except Exception as e:

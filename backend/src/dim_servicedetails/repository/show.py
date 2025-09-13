@@ -208,3 +208,35 @@ def get_count_servicetypes_by_service(ServiceId: str, starDate: str, endDate: st
         return 0
     finally:
         object_conecttion.close_conexion()
+
+
+def get_similar_services(ServiceName: str, FiscalYear: str, serviceType: str) -> bool:
+    """ 
+    Funcion la cual sera encarga de obtener servicios similares en el anio actual, en caso de 
+    que encuentre alguno devolvera true, en caso contrario false
+    """
+    query = """
+        SELECT s.ServiceName, count(ServiceDetailesType) from DIM_ServiceDetails as ser
+        JOIN DIM_Date as d on
+        d.DIM_DateId = ser.DIM_DateId AND
+        d.FiscalYear = ?
+        JOIN DIM_Service as s on 
+        s.DIM_ServiceId = ser.DIM_ServiceId
+        WHERE ServiceDetailesType like ? --Pasar los % % dentro del parametro que se quiere enviar
+        and s.ServiceName = ?
+        GROUP 	by 	s.ServiceName
+        """
+    handler_conecciont = Conexion()
+    try:
+        serviceType = f'%{serviceType}%'
+        handler_conecciont.cursor.execute(query, (FiscalYear, serviceType, ServiceName))
+        result = handler_conecciont.cursor.fetchone()
+        if result is None:
+            return False
+        else:
+            return True
+    except Exception as e:
+        print('Error en la consulta', e)
+        return True
+    finally:
+        handler_conecciont.close_conexion()

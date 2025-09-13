@@ -8,7 +8,6 @@ import AnalyticsCard11 from '../partials/analytics/AnalyticsCard11';
 import AnaliticsButton from '../partials/analytics/AnalyticsButton';
 import DashboardCard09 from '../partials/analytics/DashboardCard09';
 import FintechCard09 from '../partials/analytics/FintechCard09';
-//import FintechCard09 from '../partials/analytics/FintechCard09prueba';
 import DashboardCard07 from '../partials/analytics/DashboardCard07';
 import FintechIntro from '../partials/analytics/FintechIntro';
 import DashboardCard10 from '../partials/analytics/DashboardCard10';
@@ -23,12 +22,12 @@ function Analytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Estados para los datos de los componentes
+  // Estados para los datos de los componentes - Corregido: dataCountUsers inicializado con estructura correcta
   const [dashboardData, setDashboardData] = useState({
     dataIncomes: null,
     dataFractions: null,
-    dataUserBills: null,
-    dataCountUsers: null,
+    dataUserBills: { manzanas: [] },
+    dataCountUsers: { manzanas: [] },
     dataServiceMembers: null
   });
 
@@ -112,26 +111,23 @@ function Analytics() {
         usuario: authState.usuario.DIM_AccountId
       });
       
-      console.log("Datos recibidos:", response);
+      // console.log("Datos recibidos:", response);
       if (response) {
-        // Transformar dataCountUsers al formato requerido
-        const formattedDataCountUsers = response.dataCountUsers && Array.isArray(response.dataCountUsers.manzanas)
-          ? {
-              manzanas: response.dataCountUsers.manzanas.map(item => ({
-                nombre: item.fraction.charAt(0).toUpperCase() + item.fraction.slice(1), // Capitalize first letter
-                personas: item.population || 0
-              })).filter(m => m.personas > 0) // Filtrar manzanas con 0 personas
-            }
-          : { manzanas: [] };
+        // Transformar dataCountUsers - YA VIENE EN EL FORMATO CORRECTO
+        const formattedDataCountUsers = response.dataCountUsers || { manzanas: [] };
+
+        // Transformar dataUserBills - YA VIENE EN EL FORMATO CORRECTO
+        const formattedDataUserBills = response.dataUserBills || { manzanas: [] };
 
         // Crear nuevas instancias de arrays para forzar actualización
         setDashboardData({
           dataIncomes: response.dataIncomes ? [...response.dataIncomes] : [],
           dataFractions: response.dataFractions ? [...response.dataFractions] : [],
-          dataUserBills: response.dataUserBills ? [...response.dataUserBills] : [],
+          dataUserBills: formattedDataUserBills,
           dataCountUsers: formattedDataCountUsers,
           dataServiceMembers: response.dataServiceMembers ? [...response.dataServiceMembers] : []
         });
+        console.log("Datos recibidos:", response);
       }
     } catch (err) {
       console.error('Error al cargar datos analíticos:', err);
@@ -214,20 +210,23 @@ function Analytics() {
               />
               <br />
               <br />
+              
+              {/* DashboardCard07 recibe dataUserBills que ya tiene el formato correcto */}
               <DashboardCard07 
                 comitiva={comitiva} 
                 mes_format={mesFormateado} 
-                //data={dashboardData.dataUserBills}
-                data={dashboardData.dataCountUsers}
+                data={dashboardData.dataUserBills}
+                anio={anio}
                 loading={loading}
               />
 
               <br />
               <br />
 
-              
+              {/* FintechCard09 recibe dataCountUsers que ya tiene el formato correcto */}
               <FintechCard09 
                 comitiva={comitiva} 
+                mes_format={mesFormateado}
                 data={dashboardData.dataCountUsers}
                 loading={loading}
               />

@@ -1,6 +1,6 @@
 from src.utils.conexion import Conexion
 from src.dim_service.DIM_Service import DIM_Service
-from src.analytics_reports.models.amount_per_month import AnalythicsModels
+from src.analytics_reports.models.model_component import AnalythicsModels
 
 handler_model = AnalythicsModels()
 
@@ -13,15 +13,6 @@ class GetAnalytics:
     para generar datos de ingresos por año, facturas por mes, y otra
     información relevante.
     """
-    def __init__(self):
-        """
-        Inicializa la clase GetAnalytics.
-
-        Actualmente no requiere parámetros, pero se puede extender para
-        inicializar otras dependencias si es necesario.
-        """
-        pass
-
     def get_table_by_fraction(self, comitiva: str) -> str:
         """
         Obtiene el nombre de la vista de pagos de la base de datos
@@ -212,7 +203,7 @@ class GetAnalytics:
         finally:
             handler_conexion.close_conexion()
     
-    def get_data_payments(self, mes, comitiva):
+    def get_data_payments(self, comitiva:str, anio:str ) -> list | dict[str, list]:
         """
         Obtiene un resumen del estado de pagos por manzana para un mes y comitiva.
 
@@ -223,11 +214,84 @@ class GetAnalytics:
         Args:
             mes (str): El mes de referencia.
             comitiva (str): La comitiva de la cual se obtendrán los datos.
+            debe enviar informacion en este formato:     "manzanas": [
+      {
+        "id": 1,
+        "nombre": "Manzana A",
+        "color": "#4F46E5",
+        "personas": 150,
+        "pagados": 120,
+        "pendientes": 30,
+        "porcentaje": 80
+      },
 
         Returns:
             list: Una lista de diccionarios con la información de pagos por manzana.
         """
-        pass
+        table_name = self.get_table_by_fraction(comitiva)
+        if not table_name:
+            return []
+        
+        estados = ('completo', 'pendiente')
+        query = """
+            SELECT
+                cus.CustomerFraction,
+                -- Contamos una columna de la tabla de Fechas (la última en la cadena)
+                COUNT(dat.DIM_DateId) AS pendientes
+            FROM
+                DIM_Customer AS cus
+            LEFT JOIN [tabla] AS v1 ON
+                cus.DIM_CustomerId = v1.DIM_CustomerId
+                AND v1.StatusFactura = ?
+                AND v1.YearPay = ?
+            LEFT JOIN DIM_Date AS dat ON
+                v1.DIM_DateId = dat.DIM_DateId
+            GROUP BY
+                cus.CustomerFraction;  
+        """
+        query = query.replace("[tabla]", table_name)
+        
+
+        handler_conexion = Conexion()
+        # se obtien eel anio en formato esperado
+        get_year = anio[1:]
+        year = f"20{get_year}"
+        manzanas = {
+            'buenavista': [],
+            'centro': [],
+            'cerritos': [],
+            'garambullo': [],
+            'tepetate': [],
+            'yhonda': []
+                }
+        try:
+            for estado in estados:
+                print(query)
+                print(estado, year)
+                handler_conexion.cursor.execute(query, (estado, year))
+                data = handler_conexion.cursor.fetchall()
+                
+                for row in data:
+                    manzanas[row[0]].append(row[1])
+                print(manzanas)
+
+            #obtener el porcentaje de pagos 
+            for manzana in manzanas:
+                total = sum(manzanas[manzana])
+                porcentaje = manzanas[manzana][0] / total * 100
+                porcentaje = round(porcentaje, 2)
+                manzanas[manzana].append(porcentaje)
+                manzanas[manzana].insert(0, total) 
+
+            return [handler_model.model_get_bill_payments(name,*values) for name, values in manzanas.items()]
+
+        except Exception as e:
+            print(f"Error al obtener la informacion de la comitiva: {e}")
+            return []
+        finally:
+            handler_conexion.close_conexion()
+
+
     
     def get_population_by_manzana(self) -> list[dict] | list:
         """

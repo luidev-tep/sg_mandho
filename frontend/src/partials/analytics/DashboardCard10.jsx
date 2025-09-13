@@ -20,7 +20,7 @@ function DashboardCard10({ comitiva, mes_format, data, loading }) {
     ],
   });
 
-  console.log("Datos recibidos en el componente hijo: ", data);
+  //console.log("Datos recibidos en el componente hijo: ", data);
   const [chartKey, setChartKey] = useState(0);
 
   // Efecto para actualizar chartData cuando cambian los datos
