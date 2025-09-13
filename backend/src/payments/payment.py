@@ -222,6 +222,12 @@ class PaymentCrud:
             # Captura cualquier excepción que ocurra durante el proceso, imprime el error
             # en la consola y retorna un código de error 500 para indicar un fallo interno.
             print(e)
+            return 500, f"Error leyendo los pagos: {str(e)}", []
+        
+
+
+
+
     def read_payments_customer_id(self, filters: dict) -> tuple[int, Any, list]:
         """Lee los registros de pagos de un cliente basados en los filtros proporcionados.
 

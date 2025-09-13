@@ -214,6 +214,15 @@ def get_similar_services(ServiceName: str, FiscalYear: str, serviceType: str) ->
     """ 
     Funcion la cual sera encarga de obtener servicios similares en el anio actual, en caso de 
     que encuentre alguno devolvera true, en caso contrario false
+
+    Args:
+        ServiceName (str): El nombre del servicio a buscar.
+        FiscalYear (str): El anio fiscal en el que se realizara la busqueda.
+        serviceType (str): El tipo de servicio a buscar, se usa con un LIKE para encontrar similitudes.
+
+    Returns:
+        bool: Retorna True si encuentra uno o mas servicios similares, de lo contrario retorna False.
+              En caso de un error en la consulta, tambien retorna True para evitar la insercion de datos.
     """
     query = """
         SELECT s.ServiceName, count(ServiceDetailesType) from DIM_ServiceDetails as ser
@@ -224,7 +233,7 @@ def get_similar_services(ServiceName: str, FiscalYear: str, serviceType: str) ->
         s.DIM_ServiceId = ser.DIM_ServiceId
         WHERE ServiceDetailesType like ? --Pasar los % % dentro del parametro que se quiere enviar
         and s.ServiceName = ?
-        GROUP 	by 	s.ServiceName
+        GROUP  by s.ServiceName
         """
     handler_conecciont = Conexion()
     try:

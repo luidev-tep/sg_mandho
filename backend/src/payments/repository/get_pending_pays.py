@@ -90,7 +90,7 @@ def get_pending_pays(DIM_accountsId, serviceName) -> None | list[dict[str]] | li
         handler_conexion.cursor.execute(query, (serviceName, DIM_accountsId))
         rows = handler_conexion.cursor.fetchall()
         
-        if rows is None:
+        if rows[0] is None:
             return None
         
         # Filtramos los pagos si el servicio es 'agua', ya que solo se necesita un pago anual.
