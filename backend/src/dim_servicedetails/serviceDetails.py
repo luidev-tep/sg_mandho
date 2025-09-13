@@ -14,22 +14,30 @@ from src.dim_servicedetails.services.validate_servicedatil import valide_service
 
 from src.dim_servicedetails.repository.create import insertar_registro
 
-
-#Si esta clase se hace predefinida, se esta logica no sera tan utils hasta que la clase sea creada
-# y se cree en la interfaz un metodo para poder interactusl con ella
 class ServiceDetailsCrud:
     """Class to handle CRUD operations for service details."""
-
 
     def insert_service_details(self, service_details_json: dict) -> tuple:
         """
         Insert a new service details record if the provided data is valid.
 
+        This function validates the input data, checks for existing services and duplicate entries,
+        and then formats and inserts the new service details into the database.
+
         Args:
             service_details_json (dict): A dictionary containing service details information.
+                Expected keys:
+                - "ServiceName" (str): The name of the service.
+                - "serviceDetailesType" (str): The type of service detail.
+                - "amount" (float): The monetary amount for the service detail.
+                - "year" (int): The year of the service detail.
 
         Returns:
             tuple: A tuple containing the status code and a message.
+                - (201, str): If the record is created successfully, returns the status code 201 and the new record's ID.
+                - (400, str): If the data is invalid or a similar service already exists for the year.
+                - (404, str): If the specified service name is not found.
+                - (500, str): If an unexpected error occurs during the process.
         """
         float(service_details_json["amount"])
         campos = ["ServiceName", "serviceDetailesType", "amount", "year"]
@@ -46,39 +54,37 @@ class ServiceDetailsCrud:
             if not service_id:
                 return 404, "Servicio no encontrado"
             
-            #validar si el anio es el actual
-            year , month, day = handler_date.full_date
+            # Validar si el anio es el actual
+            year, month, day = handler_date.full_date
             
             if not year == service_details_json["year"]:
-                return 400, "Esta mal la fecha proporcionada"
+                return 400, "La fecha proporcionada es incorrecta"
             
-
             StartDate = f'{service_details_json["year"]}-01-01'
             EndDate = f'{service_details_json["year"]}-12-31'
 
-            #validar que el tipo de serviicio no este repetido
+            # Validar que el tipo de servicio no este repetido
             has_Similar_service = valide_service_details(service_details_json)
             if has_Similar_service:
                 return 400, "Ya existe un servicio similar en el anio actual"
 
-            
-            #servicio, detalle[0], starDate[1:7]
+            # servicio, detalle[0], starDate[1:7]
             startDate = str(handler_date.dateId)
             data_format = {
-                "DIM_ServiceDetailsId": create_id([service_details_json['ServiceName'], service_details_json['serviceDetailesType'], startDate[2:7]]), #Testeado para que no de error
+                "DIM_ServiceDetailsId": create_id([service_details_json['ServiceName'], service_details_json['serviceDetailesType'], startDate[2:7]]), # Testeado para que no de error
                 "DIM_DateId": handler_date.dateId,
                 "DIM_ServiceId": service_id,
                 "serviceDetailesType": service_details_json["serviceDetailesType"],
-                "amount": service_details_json["amount"] ,
-                #Modificar desde aquiiii
+                "amount": service_details_json["amount"],
+                # Modificar desde aquiiii
                 "StartDate": StartDate, # Estos aun no existen
                 "EndDate": EndDate # ni este sajsvnfk
             }
             print(f"Data format for service details: {data_format}")
             service_details = DIM_Details(**data_format)
             
-
-            #insertar_registro(service_details)
+            # SE DEJA PENDIENTE EL CREAR SERVICIO CORRECTAMENTE PARA QUE SE TERMINEN DE HACER LA PRUEBAS 
+            insertar_registro(service_details)
             
             return 201, data_format["DIM_ServiceDetailsId"]
         

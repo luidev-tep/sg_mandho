@@ -6,6 +6,11 @@ from src.payments.payment import PaymentCrud
 
 payment_options = PaymentCrud()
 
+from src.dim_servicedetails.serviceDetails import ServiceDetailsCrud
+
+service_details_options = ServiceDetailsCrud()
+
+
 payment_route = Blueprint('payment_route', __name__, url_prefix='/api/payment/')
 
 @payment_route.route('create/', methods=['POST'])
@@ -163,6 +168,7 @@ def get_any_data() -> Response:
         
         if 'pagosPendientes' in data_json and data_json['pagosPendientes']:
             estado, mensaje, datos = payment_options.get_cost(data_json['pagosPendientes'])
+            print(f"Datos recibidos: {datos}")
         # Aquí se pueden agregar más condiciones para otros tipos de servicios en el futuro
         # Ejemplo:
         # elif 'otro_servicio' in data_json:
@@ -182,4 +188,38 @@ def get_any_data() -> Response:
         error_msg = f"Error interno al procesar la solicitud: {e}"
         print(f"Error al obtener el costo: {error_msg}")
         return send_error(error_msg, 500)
+    
+
+@payment_route.route('generar_servicio/', methods=['POST'])
+def insert_new_service() -> Response:
+    """
+    Maneja la obtención del costo de un servicio o producto a través de una solicitud POST.
+
+    Este endpoint recibe los datos necesarios para calcular el costo y
+    devuelve el costo correspondiente.
+
+    Args:{
+            serviceName: str, "Nombre del servicio o producto"
+            DIM_CustomerId: str, "ID del cliente"
+            //Este endpoind sera solo para la infromacion en general puesto que deben haver algunos filtros especificos 
+        }
+    Returns:
+        Response: Un objeto de respuesta de Flask que contiene un JSON con
+                  el estado HTTP y el costo calculado o un mensaje de error.
+    """
+    try:
+        cost_json = request.json
+        if not cost_json:
+            return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+        
+        estado, mensaje = service_details_options.insert_service_details(cost_json)
+
+        if 200 <= estado <= 205:
+            return send_success(mensaje, None, estado)
+        else:
+            return send_error(mensaje, estado)
+            
+    except Exception as e:
+        print(f"Error al obtener el costo: {e}")
+        return send_error(str(e), 500)
     

@@ -91,9 +91,10 @@ class AccountCrud():
                 status_id = status_name
 
             if estado and dim_date and valido:
-                
+                #Formatear el dim date para que la informacion sea correcta
+                date = str(dim_date.dateId)[4:]
                 account_data = {
-                    "DIM_AccountId": create_id([dim_role_id, account_json["customer_id"], dim_date.dateId]),
+                    "DIM_AccountId": create_id([dim_role_id, account_json["customer_id"], date]),
                     "DIM_DateId": dim_date.dateId, 
                     "DIM_CustomerId": account_json["customer_id"],
                     "DIM_RoleId": dim_role_id,
