@@ -162,7 +162,7 @@ function DynamicTable({ filters, serviceName }) {
         </h2>
       </header>
       <div className="w-full">
-        {/* Encabezado de la tabla (visible solo en md y superior) */}
+        {/* Encabezado de la tabla */}
         <div className="hidden md:grid md:grid-cols-8 md:gap-4 bg-gray-50 dark:bg-gray-700/50 font-semibold text-xs uppercase text-gray-500 dark:text-gray-400 p-2 rounded-t-lg border-b border-gray-200 dark:border-gray-700">
           <div className="text-center">Avatar</div>
           <div className="col-span-2">Nombre</div>
@@ -176,8 +176,8 @@ function DynamicTable({ filters, serviceName }) {
           </div>
         </div>
 
-        {/* Cuerpo de la tabla */}
-        <div className="space-y-2 md:space-y-0">
+        {/* Cuerpo de la tabla con padding inferior para el menú de acciones */}
+        <div className="space-y-2 md:space-y-0 pb-24">
           {filteredCustomers.map(customer => {
             // Crear clave única combinando ID de cuenta y tipo de servicio
             const uniqueKey = getUniqueKey(customer);

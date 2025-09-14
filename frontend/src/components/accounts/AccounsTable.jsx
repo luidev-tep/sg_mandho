@@ -30,6 +30,8 @@ function AccountsTableModal({ id_user, onClose }) {
                 endDate: item.endDate || 's/n'
               }))
             : [];
+
+          console.log(accountsData);
           
           setAccounts(accountsData);
           

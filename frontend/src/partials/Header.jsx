@@ -18,7 +18,7 @@ function Header({
 
           {/* Header: Left side */}
           <div className="flex">
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">S.G. El Mandho</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Sistema de Registro El Mandho</h1>
           </div>
 
           {/* Header: Right side */}

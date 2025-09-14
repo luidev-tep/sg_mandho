@@ -25,9 +25,9 @@ def crate_account():# -> tuple[Response, Literal[400]] | tuple[Response, Any] | 
         if not account_json:
             return send_error("No se recibieron datos", 400)
         
-        print(account_json)
-        estado, mensaje = account_options.insert_account(account_json)
 
+        estado, mensaje = account_options.insert_account(account_json)
+        
         if 200 <= estado <= 205:
             return send_success(mensaje,None, estado)
         else:

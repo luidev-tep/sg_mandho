@@ -95,8 +95,6 @@ function DesactivarUsuarioModal({ id_user, onClose, onUpdate }) {
               </div>
             </div>
           </div>
-          {/* SE DEBEIGUAL VERIFICAR SI ES QUE SE VERA CORRECTAMENTE CUANDO 
-          SE AGREGEN TAMVIEN LOS PAGOS PEDNDIENTES TOTALES DEL USUARIO */}
 
           {error && (
             <div className="mt-4">

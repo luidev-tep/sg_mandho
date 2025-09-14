@@ -19,6 +19,9 @@ from src.dim_roles.role import Role
 #importacion de validaciones para saber si es administrador o usuario eliminado
 from src.users.repository.delete import is_admin, defuncion_validation
 
+#Validaciones de pagos se llaman aqui
+from src.payments.repository.get_pending_pays import get_all_payments_pending, get_pending_pays
+
 #Manejadro de los roles para cuenta, ya que es a donde esta asociado
 handler_role = Role()
 
@@ -50,75 +53,131 @@ class AccountCrud():
         
         resultado, mensaje = validate_data(account_json,campos, tipo_campos, "account")
         
-        if resultado:
-            #SE MODIFICO AQUI. eSTA VALIDACIONES DEBRAS REVISARSE EN EL FUTURO
-            if is_admin(account_json["customer_id"]):
-                return 403, "No se pueden editar los datos de un administrador"
-            
-            if not defuncion_validation(account_json["customer_id"]): #Para verificar si el usuario ya esta marcado como defuncion
-                return 403, "No se pueden editar los datos de un usuario fallecido"
-            
-            #asi se desactivan las cuentas anteriores correctamente 
-            if has_active_account(account_json["customer_id"]):
-                self.desactivate_account(account_json["customer_id"])
-
-            #Creamos la instancia de clases que se ingresaran a la bd
-            dim_date = DIM_DATE()
-            
-            # Se crea el rol asociado y se obtiene el id
-            valid, dim_role_id, message = handler_role.insert_role(account_json)
-            
-            print(f"El id del rol es: {dim_role_id} {message} {valid}")
-            if not valid:
-                print("Termino porque no era valido al insertr el rol")
-                return 501, message
-            
-            
-            #Estatus sera para ver si el pago ya esta pendiente o pagado, los roles seran los que tomaran la fucniona ctual de estatus
-            estado = DIM_status()
-            valido = validate_account(account_json["customer_id"])
-            
-            #Validaciones para ver si la cuenta debe ser activa u inactiva
-            status_name = estado.get_status_id("","account")
-            
-            is_active, Status, EndDate = validate_status(account_json["status"])  
-
-            #En caso de no ser activas las variables se asignan como desactivadas
-            if not is_active:
-                status_id = Status
-                account_json["end_date"] = EndDate
-            else:
-                status_id = status_name
-
-            if estado and dim_date and valido:
-                #Formatear el dim date para que la informacion sea correcta
-                date = str(dim_date.dateId)[4:]
-                account_data = {
-                    "DIM_AccountId": create_id([dim_role_id, account_json["customer_id"], date]),
-                    "DIM_DateId": dim_date.dateId, 
-                    "DIM_CustomerId": account_json["customer_id"],
-                    "DIM_RoleId": dim_role_id,
-                    "DIM_StatusId":  status_id, 
-                    "StartDate": account_json["start_date"],
-                    "EndDate": account_json["end_date"]
-                    # timestamp se omite para que se genere automáticamente
-                }
-                
-                # Ingresar los datos a la base de datos 
-                cuenta = DIM_Account(**account_data)
-                
-                request, message = insert(cuenta)
-                if request:
-                    mensaje = "Cuenta creada con exito"
-                    return 200, mensaje
-                else:
-                    return 501, f"Error inesperado: {message}"
-            else:
-                mensaje = "Termino por que estado no es activo, o dim_date no correcto o no es valido"
-                print(mensaje)
-                return 501, mensaje
-        else:
+        if not resultado:
             return 400, mensaje
+        
+        #SE 
+        if is_admin(account_json["customer_id"]):
+            return 403, "No se pueden editar los datos de un administrador"
+        
+        if not defuncion_validation(account_json["customer_id"]): #Para verificar si el usuario ya esta marcado como defuncion
+            return 403, "No se pueden editar los datos de un usuario fallecido"
+        
+        #asi se desactivan las cuentas anteriores correctamente 
+        if has_active_account(account_json["customer_id"]):
+            self.desactivate_account(account_json["customer_id"])
+        
+        #VALIDACIONES DE PAGOS PENDIENTES EMPIEZAN AQUI
+        #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
+        #SE TIENE QUE MODIFICAR AQUI SI ES QUE SE QUIERE SER MAS FELXIBLE A LA HORA DE ACTUALIZAR LA INFORMACION
+       
+        pagos_pendientes = get_all_payments_pending(account_json["customer_id"])
+
+        if pagos_pendientes is None:
+            return 404, 'No se pudo obtener la informacion del usuario'
+        
+        pendientes = ''
+        for pago in pagos_pendientes:
+            if pago == {}:
+                continue
+
+            year = pago['year']
+            services = pago['data']
+            
+            for service in services:
+                service_name = service['ServiceName']
+                service_type = service['serviceType']
+                
+                # Formato más legible y amigable
+                fila = f'Año {year}: Servicio de {service_name} - Tipo: {service_type}\n'
+                pendientes += fila
+        
+        if pagos_pendientes:
+            return 404, f"El usuario aun tiene pagos pendientes cambiarse de cuenta: \n {pendientes}"
+        
+        pagos_gechos_pendientes = [get_pending_pays(account_json["customer_id"], service_name) for service_name in ["agua", "feria", "panteon", 'delegacion']]
+        #print(pagos_gechos_pendientes)
+        if pagos_gechos_pendientes is None:
+            return 404, 'No se pudo obtener la informacion del usuario'
+        
+        pendientes = ''
+        for categoria in pagos_gechos_pendientes:
+
+            if categoria == []:
+                    continue
+            
+            for pago in categoria:
+                year = pago['year']
+                services = pago['data']
+                
+                fila = f'Año {year}:  \n'
+                for service in services:
+                    service_ype = service['serviceType']
+                    amount = service['amount']
+                    
+                    # Formato más legible y amigable
+                    fila += f'  Servicio de {service_ype} - Debe: $ {amount}\n'
+                    pendientes += fila
+        
+
+        if any(pagos_gechos_pendientes):
+            return 404, f"El usuario aun tiene pagos pendientes Antes de poder cambiarse de cuenta: \n {pendientes}"
+
+
+        #Creamos la instancia de clases que se ingresaran a la bd
+        dim_date = DIM_DATE()
+        
+        # Se crea el rol asociado y se obtiene el id
+        valid, dim_role_id, message = handler_role.insert_role(account_json)
+        
+        if not valid:
+            print("Termino porque no era valido al insertr el rol")
+            return 501, message
+        
+        
+        #Estatus sera para ver si el pago ya esta pendiente o pagado, los roles seran los que tomaran la fucniona ctual de estatus
+        estado = DIM_status()
+        valido = validate_account(account_json["customer_id"])
+        
+        #Validaciones para ver si la cuenta debe ser activa u inactiva
+        status_name = estado.get_status_id("","account")
+        
+        is_active, Status, EndDate = validate_status(account_json["status"])  
+
+        #En caso de no ser activas las variables se asignan como desactivadas
+        if not is_active:
+            status_id = Status
+            account_json["end_date"] = EndDate
+        else:
+            status_id = status_name
+
+        if estado and dim_date and valido:
+            #Formatear el dim date para que la informacion sea correcta
+            date = str(dim_date.dateId)[4:]
+            account_data = {
+                "DIM_AccountId": create_id([dim_role_id, account_json["customer_id"], date]),
+                "DIM_DateId": dim_date.dateId, 
+                "DIM_CustomerId": account_json["customer_id"],
+                "DIM_RoleId": dim_role_id,
+                "DIM_StatusId":  status_id, 
+                "StartDate": account_json["start_date"],
+                "EndDate": account_json["end_date"]
+            }
+            
+            # Ingresar los datos a la base de datos 
+            cuenta = DIM_Account(**account_data)
+            
+            request, message = insert(cuenta)
+            if request:
+                mensaje = "Cuenta creada con exito"
+                return 200, mensaje
+            else:
+                return 501, f"Error inesperado: {message}"
+        else:
+            mensaje = "Termino por que estado no es activo, o dim_date no correcto o no es valido"
+            print(mensaje)
+            return 501, mensaje
+
         
         
     def read_account(self, persona_id: str = None) -> tuple[int, str, list]:
@@ -183,7 +242,7 @@ class AccountCrud():
                 if datos:
                     # Aquí se transformarían los IDs a información legible
                     datos_legibles = convertir_a_formato_legible(datos)
-                    print("datos legibles", datos_legibles)
+                    #print("datos legibles", datos_legibles)
                     return 200, "Cuenta obtenida correctamente", datos_legibles
                 else:
                     mensaje = "No se encontró la cuenta especificada"

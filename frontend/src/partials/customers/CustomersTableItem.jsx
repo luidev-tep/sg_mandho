@@ -88,7 +88,7 @@ function CustomersTableItem(props) {
             {/* Fecha Defunción */}
             <div className="hidden md:block md:px-2 md:py-3">
                 <div className="text-center text-sm">{props.date_of_end}</div>
-            </div>
+            </div> 
 
                 {/* Acciones */}
                 <div className="hidden md:flex md:justify-center md:items-center md:px-3 md:py-3">

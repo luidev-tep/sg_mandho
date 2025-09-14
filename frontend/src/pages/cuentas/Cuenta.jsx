@@ -1,3 +1,4 @@
+// Crear cueta.jsx
 // Codigo de cuenta - Corrección en el manejo de errores
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -8,6 +9,7 @@ import Sidebar from '../../partials/SideBar';
 import Header from "../../partials/Header";
 import BarraBusquedaAutomatica from '../../components/customers/BarraBusqueda';
 import { crearCuenta } from '../../api/api_account';
+import FormattedErrorMessage from '../../components/alertas/FormattedErrorMessage';
 
 const accountSchema = yup.object().shape({
   clienteId: yup.string().required('Debe seleccionar un cliente'),
@@ -46,6 +48,9 @@ function Cart() {
   };
 
   const getErrorMessage = (error) => {
+    if (error.response && error.response.data && error.response.data.message) {
+      return error.response.data.message;
+    }
     return error.message || 'Error de conexión';
   };
 
@@ -125,10 +130,16 @@ function Cart() {
               {message.text && (
                 <div className={`mb-6 p-4 rounded-lg ${
                   message.type === 'success' 
-                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
-                    : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                    ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-100' 
+                    : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-100'
                 }`}>
-                  {message.text}
+                  {/* Usa el nuevo componente para renderizar el mensaje */}
+                  {message.type === 'error' ? (
+                    // Simplemente llama a tu nuevo componente aquí
+                    <FormattedErrorMessage message={message.text} />
+                  ) : (
+                    message.text
+                  )}
                 </div>
               )}
 
@@ -225,9 +236,9 @@ function Cart() {
                     <button 
                       type="submit" 
                       disabled={isSubmitting || (selectedClient?.edad < 15 && 
-                         estadoPersonaValue && 
-                         estadoPersonaValue !== "Estudiante" && 
-                         estadoPersonaValue !== "Invalido")}
+                        estadoPersonaValue && 
+                        estadoPersonaValue !== "Estudiante" && 
+                        estadoPersonaValue !== "Invalido")}
                       className="flex-1 px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-100 dark:to-gray-200 text-white dark:text-gray-900 font-medium rounded-lg shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-95 relative overflow-hidden group"
                     >
                       {isSubmitting ? (

@@ -113,6 +113,7 @@ def get_pending_pays(DIM_accountsId: int, serviceName: str) -> None | list[dict[
             {'year': 2022, 'data': [{'serviceType': 'tomas', 'amount': 360.0}]},
             {'year': 2023, 'data': [{'serviceType': 'consumo', 'amount': 360.0}]}
         ]
+    ESTA CLASE SE MANDA A LLAMAR EN USUARIOS PARA PODER VER SUS PAGOS PENDIENTES
     """
     handler_conexion = Conexion()
     special_service = SpecialServices()
@@ -183,7 +184,7 @@ def get_all_payments_pending(dim_customerId: int) -> list | None:
         
         # Validación corregida para resultados vacíos
         if not rows:
-            return None
+            return []
         
         # Conversión de resultados a formato de diccionario
         rows_format = [PendingPaidModel2(*row).to_dict() for row in list(rows)]

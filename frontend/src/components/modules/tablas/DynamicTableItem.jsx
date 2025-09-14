@@ -11,7 +11,7 @@ function DynamicTableItem(props) {
         // 'Image02': Image02, // Ejemplo de cómo agregar más
         // 'Image03': Image03,
     };
-
+  
     // Determinar qué imagen usar basado props.status_account
     const getImage = () => {
         if (props.status_account && props.status_account.toLowerCase() === 'inactivo') {
