@@ -33,15 +33,17 @@ def validate_account(user_id: str) -> bool:
     query = f"SELECT COUNT(*) FROM DIM_account WHERE DIM_CustomerId = '{user_id}'"
     object_connection.cursor.execute(query)
     result = object_connection.cursor.fetchone()  # Obtiene la primera fila de resultados
-        
-    if result is None: # No hay cuentas asociadas a este id
-        return True
     
-    desactivate_account = descativar_otra_cuenta(user_id)
+    if result[0] == 0: # No hay cuentas asociadas a este id
+        return 0
     
     account_count = result[0]  # El COUNT(*) es el primer elemento de la tupla
+    
     # Verificar el límite (menor a 10)
-    return account_count < 10
+    if account_count <= 10:
+        return account_count
+    else:
+        return False
     
 
 

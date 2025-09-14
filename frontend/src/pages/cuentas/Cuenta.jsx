@@ -135,7 +135,6 @@ function Cart() {
                 }`}>
                   {/* Usa el nuevo componente para renderizar el mensaje */}
                   {message.type === 'error' ? (
-                    // Simplemente llama a tu nuevo componente aquí
                     <FormattedErrorMessage message={message.text} />
                   ) : (
                     message.text

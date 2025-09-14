@@ -1,4 +1,5 @@
 //editarusuariomodal
+
 import { useState, useEffect } from "react";
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -230,37 +231,37 @@ useEffect(() => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nombre completo</label>
-                      <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                      <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                         {full_name}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Rol del cliente</label>
-                      <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                      <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                         {role_name}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Servicio</label>
-                      <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                      <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                         {service_name} - {service_type}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Monto pagado hasta ahora</label>
-                      <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                      <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                         {amount.toFixed(2)}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Año de pago</label>
-                      <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                      <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                         {dim_date}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Costo del servicio</label>
-                      <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                      <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                         {amountTotal.toFixed(2)}
                       </p>
                     </div>
@@ -286,7 +287,7 @@ useEffect(() => {
                     {...register('cantidadRecibida', {
                       validate: validateAmount
                     })}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-gray-900"
                   />
                   {errors.cantidadRecibida && (
                     <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.cantidadRecibida.message}</p>
