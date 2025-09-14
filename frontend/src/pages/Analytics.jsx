@@ -40,7 +40,7 @@ function Analytics() {
     const titles = {
       agua: "Panel de Control - Comitiva Agua",
       panteon: "Panel de Control - Comitiva Panteón",
-      personas: "Panel de Control - Modulo Personas",
+      personas: "Panel de Control - Comitiva Personas",
       delegacion: "Panel de Control - Comitiva Delegación",
       feria: "Panel de Control - Comitiva Feria"
     };
@@ -170,8 +170,11 @@ function Analytics() {
               {/* Right: Actions */}
               <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
                  
-                {/* Datepicker built with React Day Picker */}
-                <DateSelect align="right" onFilterChange={handleDateFilterChange} />
+                {/* Filtro de fecha con etiqueta */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="date-select-button" className="text-sm font-medium text-gray-600 dark:text-gray-300">Filtrar por mes:</label>
+                  <DateSelect align="right" onFilterChange={handleDateFilterChange} />
+                </div>
                  
               </div>
             

@@ -89,7 +89,7 @@ function DashboardCard10({ comitiva, mes_format, data, loading }) {
     return (
       <div className="flex flex-col col-span-full sm:col-span-6 bg-white dark:bg-gray-800 shadow-xs rounded-xl">
         <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-100">Ingresos por Manzana {comitiva ? `de ${comitiva}` : 'de la comunidad'}</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-2xl">Ingresos por Manzana {comitiva ? `de ${comitiva}` : 'de la comunidad'}</h2>
         </header>
         <div className="px-5 py-3">
           <div className="flex items-start">
@@ -108,7 +108,7 @@ function DashboardCard10({ comitiva, mes_format, data, loading }) {
   return (
     <div className="flex flex-col col-span-full sm:col-span-6 bg-white dark:bg-gray-800 shadow-xs rounded-xl">
       <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center">
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-2xl">
           Ingresos por Manzana {comitiva && `- ${comitiva}`} {mes_format && `- ${mes_format}`}
         </h2>
         <Tooltip className="ml-2" size="lg">
@@ -123,7 +123,7 @@ function DashboardCard10({ comitiva, mes_format, data, loading }) {
           <div className="text-3xl font-bold text-gray-800 dark:text-gray-100 mr-2">
             ${totalIngresos.toLocaleString()}
           </div>
-          <div className="text-sm font-medium px-1.5 rounded-full text-indigo-700 bg-indigo-500/20">
+          <div className="text-sm font-medium px-2.5 rounded-md text-indigo-800 bg-indigo-500/20 text-center text-2x1">
             Mayor: {manzanaMayorIngreso}
           </div>
         </div>

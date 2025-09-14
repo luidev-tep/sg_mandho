@@ -86,44 +86,49 @@ function DateSelect({ onFilterChange }) {
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
-  // Cerrar al hacer clic fuera
+  // Cerrar al hacer clic fuera - EXACTAMENTE como estaba funcionando
   useEffect(() => {
-    const clickHandler = (event) => {
+    const handleClickOutside = (event) => {
       if (!dropdownOpen) return;
-      if (!trigger.current || !dropdown.current) return;
       
-      // Verificar si el clic fue fuera del componente
-      const isClickOutside = !trigger.current.contains(event.target) && 
-                           !dropdown.current.contains(event.target);
+      const isClickInsideTrigger = trigger.current && trigger.current.contains(event.target);
+      const isClickInsideDropdown = dropdown.current && dropdown.current.contains(event.target);
       
-      if (isClickOutside) {
+      // Solo cerrar si el clic fue completamente fuera del componente
+      if (!isClickInsideTrigger && !isClickInsideDropdown) {
         setDropdownOpen(false);
       }
     };
-    
-    // Agregar el event listener al documento
-    document.addEventListener('mousedown', clickHandler);
-    
-    // Limpiar el event listener al desmontar el componente
-    return () => {
-      document.removeEventListener('mousedown', clickHandler);
-    };
-  }, [dropdownOpen]); // Solo se vuelve a ejecutar cuando cambia dropdownOpen
 
-  // Cerrar al presionar la tecla Escape
+    // Usar capture: true para capturar el evento antes de que llegue al botón
+    document.addEventListener('mousedown', handleClickOutside, true);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [dropdownOpen]);
+
+  // Cerrar al presionar la tecla Escape - EXACTAMENTE como estaba funcionando
   useEffect(() => {
-    const keyHandler = (event) => {
+    const handleKeyDown = (event) => {
       if (event.key === 'Escape' && dropdownOpen) {
         setDropdownOpen(false);
       }
     };
     
-    document.addEventListener('keydown', keyHandler);
+    document.addEventListener('keydown', handleKeyDown);
     
     return () => {
-      document.removeEventListener('keydown', keyHandler);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [dropdownOpen]);
+
+  // Manejador del botón - EXACTAMENTE como estaba funcionando
+  const handleButtonClick = (event) => {
+    // Prevenir que el evento se propague y cause conflictos
+    event.stopPropagation();
+    setDropdownOpen(prev => !prev);
+  };
 
   const handleSelection = (id) => {
     const option = options.find(opt => opt.id === id);
@@ -144,26 +149,27 @@ function DateSelect({ onFilterChange }) {
     <div className="relative">
       <button   
         ref={trigger}
-        className="flex items-center justify-between px-4 py-2 text-sm font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 min-w-[180px]"
-        onClick={() => setDropdownOpen(!dropdownOpen)}
+        id="date-select-button"
+        className="flex items-center justify-between px-5 py-3 text-base font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 min-w-[220px]"
+        onClick={handleButtonClick}
         aria-expanded={dropdownOpen}
         aria-haspopup="true"
       >
         <div className="flex items-center">
-          <svg className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <span className="text-gray-700 dark:text-gray-200">
             {options.find(opt => opt.id === selected)?.period || 'Filtrar por mes'}
           </span>
         </div>
-        <svg className="ml-1 w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="ml-2 w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
         </svg>
       </button>
 
       <Transition
-        show={dropdownOpen}
+        show={dropdownOpen} 
         tag="div"
         className="z-20 absolute mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden"
         enter="transition ease-out duration-100"

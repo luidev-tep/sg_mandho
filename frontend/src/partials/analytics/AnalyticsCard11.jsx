@@ -8,7 +8,7 @@ function AnalyticsCard11({ comitiva, data, loading }) {
   return (
     <div className="col-span-full bg-white dark:bg-gray-800 shadow-xs rounded-xl">
       <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100">Administradores - {comitiva}</h2>
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-50">Administradores - {comitiva}</h2>
       </header>
       <div className="p-3">
 
