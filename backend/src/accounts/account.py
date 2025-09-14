@@ -5,7 +5,7 @@ from src.utils.id_generator import create_id
 
 # importaciones espeficias de insert_account
 from src.accounts.repository.insert import insert
-from src.accounts.services.validate import validate_account
+from src.accounts.services.validate import validate_account, descativar_otra_cuenta
 from src.accounts.models.DIM_account import DIM_Account
 from src.dim_status.status import DIM_status
 
@@ -63,66 +63,73 @@ class AccountCrud():
         if not defuncion_validation(account_json["customer_id"]): #Para verificar si el usuario ya esta marcado como defuncion
             return 403, "No se pueden editar los datos de un usuario fallecido"
         
-        #asi se desactivan las cuentas anteriores correctamente 
-        if has_active_account(account_json["customer_id"]):
-            self.desactivate_account(account_json["customer_id"])
         
-        #VALIDACIONES DE PAGOS PENDIENTES EMPIEZAN AQUI
-        #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
-        #SE TIENE QUE MODIFICAR AQUI SI ES QUE SE QUIERE SER MAS FELXIBLE A LA HORA DE ACTUALIZAR LA INFORMACION
-       
-        pagos_pendientes = get_all_payments_pending(account_json["customer_id"])
-
-        if pagos_pendientes is None:
-            return 404, 'No se pudo obtener la informacion del usuario'
-        
-        pendientes = ''
-        for pago in pagos_pendientes:
-            if pago == {}:
-                continue
-
-            year = pago['year']
-            services = pago['data']
+        valido = validate_account(account_json["customer_id"])
+        #Asi se pued emanejar el caos de cuando una cuenta es creada por primera veez, se tienen que hacer todas las pruebas para verificar si una cuenta, puede
+        #se cambiada cuando se pasan los filtro de validaciones
+        if valido == 0:
+            #print("Se hizo la priemra opcion")
+            valido = True
+        elif valido is False:
+            #print("Se hizo la segunda opcion")
+            return 404, "Este usuario ha sobrepasado el limite de cuentas"
+        else:
+            #print("Se hizo la tercera opcion")
+            valido = True
+            #VALIDACIONES DE PAGOS PENDIENTES EMPIEZAN AQUI
+            #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
+            #SE TIENE QUE MODIFICAR AQUI SI ES QUE SE QUIERE SER MAS FELXIBLE A LA HORA DE ACTUALIZAR LA INFORMACION
             
-            for service in services:
-                service_name = service['ServiceName']
-                service_type = service['serviceType']
-                
-                # Formato más legible y amigable
-                fila = f'Año {year}: Servicio de {service_name} - Tipo: {service_type}\n'
-                pendientes += fila
-        
-        if pagos_pendientes:
-            return 404, f"El usuario aun tiene pagos pendientes cambiarse de cuenta: \n {pendientes}"
-        
-        pagos_gechos_pendientes = [get_pending_pays(account_json["customer_id"], service_name) for service_name in ["agua", "feria", "panteon", 'delegacion']]
-        #print(pagos_gechos_pendientes)
-        if pagos_gechos_pendientes is None:
-            return 404, 'No se pudo obtener la informacion del usuario'
-        
-        pendientes = ''
-        for categoria in pagos_gechos_pendientes:
+            pagos_pendientes = get_all_payments_pending(account_json["customer_id"])
 
-            if categoria == []:
+            if pagos_pendientes is None:
+                return 404, 'No se pudo obtener la informacion del usuario'
+            
+            pendientes = ''
+            for pago in pagos_pendientes:
+                if pago == {}:
                     continue
-            
-            for pago in categoria:
+
                 year = pago['year']
                 services = pago['data']
                 
-                fila = f'Año {year}:  \n'
                 for service in services:
-                    service_ype = service['serviceType']
-                    amount = service['amount']
+                    service_name = service['ServiceName']
+                    service_type = service['serviceType']
                     
                     # Formato más legible y amigable
-                    fila += f'  Servicio de {service_ype} - Debe: $ {amount}\n'
+                    fila = f'Año {year}: Servicio de {service_name} - Tipo: {service_type}\n'
                     pendientes += fila
+            
+            if pagos_pendientes:
+                return 404, f"El usuario aun tiene pagos pendientes cambiarse de cuenta: \n {pendientes}"
+            
+            pagos_gechos_pendientes = [get_pending_pays(account_json["customer_id"], service_name) for service_name in ["agua", "feria", "panteon", 'delegacion']]
+            #print(pagos_gechos_pendientes)
+            if pagos_gechos_pendientes is None:
+                return 404, 'No se pudo obtener la informacion del usuario'
+            
+            pendientes = ''
+            for categoria in pagos_gechos_pendientes:
+
+                if categoria == []:
+                        continue
+                
+                for pago in categoria:
+                    year = pago['year']
+                    services = pago['data']
+                    
+                    fila = f'Año {year}:  \n'
+                    for service in services:
+                        service_ype = service['serviceType']
+                        amount = service['amount']
+                        
+                        # Formato más legible y amigable
+                        fila += f'  Servicio de {service_ype} - Debe: $ {amount}\n'
+                        pendientes += fila
+                if any(pagos_gechos_pendientes):
+                    return 404, f"El usuario aun tiene pagos pendientes Antes de poder cambiarse de cuenta: \n {pendientes}"
         
-
-        if any(pagos_gechos_pendientes):
-            return 404, f"El usuario aun tiene pagos pendientes Antes de poder cambiarse de cuenta: \n {pendientes}"
-
 
         #Creamos la instancia de clases que se ingresaran a la bd
         dim_date = DIM_DATE()
@@ -134,10 +141,12 @@ class AccountCrud():
             print("Termino porque no era valido al insertr el rol")
             return 501, message
         
+        #asi se desactivan las cuentas anteriores correctamente 
+        if has_active_account(account_json["customer_id"]):
+            self.desactivate_account(account_json["customer_id"])
         
         #Estatus sera para ver si el pago ya esta pendiente o pagado, los roles seran los que tomaran la fucniona ctual de estatus
         estado = DIM_status()
-        valido = validate_account(account_json["customer_id"])
         
         #Validaciones para ver si la cuenta debe ser activa u inactiva
         status_name = estado.get_status_id("","account")
@@ -168,6 +177,8 @@ class AccountCrud():
             cuenta = DIM_Account(**account_data)
             
             request, message = insert(cuenta)
+            # request, message = (True, 'Prueba de testeo para crear usuarios')
+            
             if request:
                 mensaje = "Cuenta creada con exito"
                 return 200, mensaje

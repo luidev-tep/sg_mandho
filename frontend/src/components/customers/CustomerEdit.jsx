@@ -7,6 +7,7 @@ import { capitalizeFirstLetter } from "../../utils/stringUtils";
 import { MostrarUsuarios } from "../../api/api_user";
 import { EditarUsuario } from "../../api/api_user";
 import { MostrarCuentas } from '../../api/api_account';
+import FormattedErrorMessage from "../alertas/FormattedErrorMessage";
 
 // Esquema de validación simplificado (sin campos de nombre)
 const editSchema = yup.object().shape({
@@ -222,7 +223,7 @@ return (
     <div className="bg-white dark:bg-gray-800 shadow-xs rounded-xl relative max-w-4xl w-full max-h-[90vh] overflow-y-auto">
       <header className="px-5 py-4 sticky top-0 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+          <h2 className="font-semibold text-gray-900 dark:text-white">
             Editar Usuario
           </h2>
           <button 
@@ -243,17 +244,15 @@ return (
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
           </div>
         ) : error ? (
-          <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-100 rounded-lg">
-            {error}
-          </div>
+                    <FormattedErrorMessage message={error} />
         ) : customer ? (
           isAdmin ? (
             <div>
-              <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg">
-                <h3 className="text-lg font-bold text-yellow-800 dark:text-yellow-100 mb-2">
+              <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-700 text-yellow-900 dark:text-white rounded-lg">
+                <h3 className="text-lg font-bold mb-2">
                   Usuario Administrador
                 </h3>
-                <p className="text-yellow-700 dark:text-yellow-200">
+                <p>
                   No se pueden modificar los datos de un usuario administrador (delegado, comitiva, subdelegado).
                 </p>
               </div>
@@ -270,25 +269,25 @@ return (
           ) : (
           <form onSubmit={handleSubmit(onSubmit)}>
             {success && (
-              <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-100 rounded-lg">
+              <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/50 border border-green-400 dark:border-green-700 text-green-900 dark:text-white rounded-lg">
                 ¡Usuario actualizado correctamente! Cerrando...
               </div>
             )}
             
             <div className="mb-6">
-              <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-100">Información del Cliente</h3>
+              <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">Información del Cliente</h3>
               
               <div className="space-y-4 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Fecha de Registro</label>
-                    <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                    <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                       {customer.CustomerStartDate}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Fecha de Nacimiento</label>
-                    <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                    <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                       {customer.CustomerDateBirth}
                     </p>
                   </div>
@@ -296,7 +295,7 @@ return (
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nombre Completo</label>
-                  <p className="text-base font-medium text-gray-800 dark:text-gray-200 p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+                  <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
                     {customer.CustomerName} 
                     {customer.CustomerMiddleName ? ` ${customer.CustomerMiddleName}` : ''} 
                     {` ${customer.CustomerLastName} ${customer.CustomerSecondLastName}`}
@@ -306,7 +305,7 @@ return (
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">Datos de Dirección</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Datos de Dirección</h3>
               
               <div>
                 <label className="block text-sm font-medium text-gray-500 dark:text-gray-300 mb-1" htmlFor="CustomerFraction">
@@ -314,7 +313,7 @@ return (
                 </label>
                 <select
                   id="CustomerFraction"
-                  className={`form-select w-full rounded-lg py-2.5 ${errors.CustomerFraction ? 'border-red-500' : 'border-gray-300'} dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                  className={`form-select w-full rounded-lg py-2.5 ${errors.CustomerFraction ? 'border-red-500' : 'border-gray-300'} dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white`}
                   {...register("CustomerFraction")}
                   disabled={isSubmitting || success}
                 >
@@ -326,7 +325,7 @@ return (
                   ))}
                 </select>
                 {errors.CustomerFraction && (
-                  <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.CustomerFraction.message}</p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.CustomerFraction.message}</p>
                 )}
               </div>
 
@@ -337,13 +336,13 @@ return (
                   </label>
                   <input
                     id="CustomerAddress"
-                    className={`form-input w-full rounded-lg py-2.5 ${errors.CustomerAddress ? 'border-red-500' : 'border-gray-300'} dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                    className={`form-input w-full rounded-lg py-2.5 ${errors.CustomerAddress ? 'border-red-500' : 'border-gray-300'} dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white`}
                     type="text"
                     {...register("CustomerAddress")}
                     disabled={isSubmitting || success}
                   />
                   {errors.CustomerAddress && (
-                    <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.CustomerAddress.message}</p>
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.CustomerAddress.message}</p>
                   )}
                 </div>
 
@@ -353,20 +352,20 @@ return (
                   </label>
                   <input
                     id="CustomerNumberExt"
-                    className={`form-input w-full rounded-lg py-2.5 ${errors.CustomerNumberExt ? 'border-red-500' : 'border-gray-300'} dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                    className={`form-input w-full rounded-lg py-2.5 ${errors.CustomerNumberExt ? 'border-red-500' : 'border-gray-300'} dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white`}
                     type="text"
                     {...register("CustomerNumberExt")}
                     disabled={isSubmitting || success}
                   />
                   {errors.CustomerNumberExt && (
-                    <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.CustomerNumberExt.message}</p>
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.CustomerNumberExt.message}</p>
                   )}
                 </div>
               </div>
             </div>
 
             <div className="mb-6">
-              <h3 className="text-lg font-medium pt-4 text-gray-800 dark:text-gray-100">Detalles de la Cuenta</h3>
+              <h3 className="text-lg font-medium pt-4 text-gray-900 dark:text-white">Detalles de la Cuenta</h3>
               
               {hasActiveAccount ? (
                 <div className="mb-4 mt-2">
@@ -374,7 +373,7 @@ return (
                     Estado de la persona <span className="text-red-500">*</span>
                   </label>
                   <select
-                    className={`form-select w-full rounded-lg py-2.5 border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white`}
+                    className={`form-select w-full rounded-lg py-2.5 border-gray-300 dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white`}
                     {...register("DIM_RoleId")}
                     disabled={isSubmitting || success}
                   >
@@ -387,7 +386,7 @@ return (
                   </select>
                 </div>
               ) : (
-                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-100 rounded-lg mt-2">
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-400 dark:border-yellow-700 text-yellow-900 dark:text-white rounded-lg mt-2">
                   Este usuario no tiene cuentas activas. La sección de estado de persona está deshabilitada.
                 </div>
               )}
@@ -397,7 +396,7 @@ return (
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
                 disabled={isSubmitting}
               >
                 Cancelar
@@ -413,7 +412,7 @@ return (
           </form>
           )
         ) : (
-          <div className="p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-100 rounded-lg">
+          <div className="p-4 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-400 dark:border-yellow-700 text-yellow-900 dark:text-white rounded-lg">
             No se encontraron datos del cliente
           </div>
         )}
