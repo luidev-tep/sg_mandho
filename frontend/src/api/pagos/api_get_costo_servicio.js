@@ -55,7 +55,7 @@ export const getAmount = async (data) => {
         if (!data) {
             throw new Error('Faltan datos requeridos para obtener el monto');
         }
-        console.log("Los datos llegaron correctamente a Api.js en getAmount", data);
+        //console.log("Los datos llegaron correctamente a Api.js en getAmount", data);
         const response = await api.post('get_any_data/', data);
 
         // Verificar si la respuesta tiene el formato esperado

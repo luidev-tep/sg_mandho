@@ -44,28 +44,55 @@ class PaymentCrud:
         actualiza la vista de pagos pendientes si la entrada es un pago.
 
         Args:
-            data_json (dict): Un diccionario con los datos del pago. Debe contener los
-                              campos requeridos.
+            data_json (dict): Un diccionario con los datos del pago. Debe contener:
+                - DIM_OnwerCustomerId (str): ID del propietario del cliente
+                - DIM_AccountId (str): ID de la cuenta
+                - DIM_CustomerId (str): ID del cliente
+                - ServiceName (str): Nombre del servicio (ej: 'agua', 'feria')
+                - serviceDetailsType (str): Tipo de detalle del servicio
+                - AnioPago (str): Año del pago
+                - movementName (str): Nombre del movimiento
+                - entrada (str): Tipo de entrada
+                - FactAmount (float): Monto facturado
+                - amount (float): Monto del pago
 
         Returns:
-            tuple[int, Any]: Una tupla con el código de estado HTTP y un mensaje.
-                             - (400, "message"): Datos faltantes o inválidos.
-                             - (500, "message"): Error interno del servidor.
-                             - (201, "message"): Pago creado exitosamente.
-        """
-        # print('Mostrando desde create payments')
-        # for dato in data_json:
-        #     print(f'El dato es: {dato} con el valor de: {type(dato)}')
+            tuple[int, Any]: Una tupla con:
+                - Código de estado HTTP
+                - Mensaje descriptivo
+                - Lista de datos adicionales (vacía en caso de error)
+            
+            Códigos de retorno:
+                - 400: Datos faltantes, inválidos o validaciones fallidas
+                - 500: Error interno del servidor
+                - 201: Pago creado exitosamente
 
-        #Hacer validaciones para que no pasen cuentas de tipo estudiante o inactivas
-        #pasar amount a float
-        #SE DEBEN AGREGAR MULTIPLES VALIDACIONES se agregan en la funcionb para crear EL FACT REVENUE PARA QUE NO SE CREEN PAGOS PARA ETX ETX
+        Raises:
+            No levanta excepciones directamente, pero retorna códigos de error.
+
+        Examples:
+            >>> payment_data = {
+            ...     'DIM_OnwerCustomerId': '123',
+            ...     'DIM_AccountId': '456',
+            ...     'ServiceName': 'agua',
+            ...     'serviceDetailsType': 'consumo',
+            ...     'AnioPago': '2024',
+            ...     'amount': 150.50
+            ... }
+            >>> PaymentCrud().create_payment(payment_data)
+            (201, 'Pago creado satisfactoriamente', [])
+        
+        Notes:
+            - Convierte automáticamente amount y FactAmount a float
+            - Valida que la cuenta no sea de estudiante o inactiva
+            - Verifica que no existan pagos pendientes duplicados
+            - Aplica reglas de negocio específicas para diferentes servicios
+        """
         data_json['amount'] = float(data_json['amount'])
         data_json['FactAmount'] = float(data_json['FactAmount'])
         data_json['AnioPago'] = str(data_json['AnioPago'])
         fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
-        for dato in data_json:
-            print(f"El dato es: {dato} con el valor de: {type(dato)}")
+
         type_fields = [str, str, str, str, str, str, str, str, float, float]
 
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
@@ -109,14 +136,10 @@ class PaymentCrud:
                     return 400, "No se pudo actualizar el pago pendiente", []
                 
                 return 201, "Pago creado satisfactoriamente", data
-
-
-            return 201, "Pago creado satisfactoriamente", []
-        
         except Exception as e:
-            # Capturar cualquier excepción inesperada y devolver un error del servidor
+            print(e)
             return 500, f"Error creando el pago: {str(e)}", []
-        
+
 
     def read_payments(self, filters: dict) -> tuple[int, Any, list]:
         """Lee los registros de pagos basados en los filtros proporcionados.
@@ -218,6 +241,7 @@ class PaymentCrud:
             
             # Si todo es correcto, retorna un código 200 con la lista de pagos.
             return 200, "Datos obtenidos satisfactoriamente", data
+        
         except Exception as e:
             # Captura cualquier excepción que ocurra durante el proceso, imprime el error
             # en la consola y retorna un código de error 500 para indicar un fallo interno.
@@ -327,7 +351,7 @@ class PaymentCrud:
             Any: Los datos actualizados si la operación fue exitosa, de lo contrario una lista vacía.
         """
         try:
-            status, datos = payments_handler.update_payment_view(data_json['ServiceName'], data_json['DIM_CustomerId'], data_json['AnioPago'])
+            status, datos = payments_handler.update_payment_view(data_json['ServiceName'], data_json['DIM_CustomerId'], data_json['AnioPago'], data_json['serviceDetailsType'])
             if status != 200:
                 print(f"Error al leer los pagos: {status}")
                 return []

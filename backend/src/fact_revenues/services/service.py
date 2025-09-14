@@ -54,14 +54,20 @@ def valide_amount(amount: float, id_amount: str) -> bool:
     """
     amount_table = get_amount_by_id(id_amount)
 
-    print(f"amount_table en fact_revenues: {amount_table}, cantidad: {amount}")
+    #print(f"amount_table en fact_revenues: {amount_table}, cantidad: {amount}")
     if not amount_table:
         return False
     
     return amount_table == amount
 
 
-def get_status_payment_for_registers(cost_service: float, cantidad_recibida: float, dim_customer_id: str, servicedetails: str, service_name: str, year_pay: str) -> str:
+def get_status_payment_for_registers(
+        cost_service: float,
+        cantidad_recibida: float, 
+        dim_customer_id: str, 
+        servicedetails: str, 
+        service_name: str, 
+        year_pay: str) -> str:
     """Determina el estado de pago de un servicio y actualiza los registros asociados.
 
     Compara el costo total del servicio con la suma de todos los montos pagados
@@ -80,6 +86,17 @@ def get_status_payment_for_registers(cost_service: float, cantidad_recibida: flo
     Returns:
         str: Retorna "pagado" si el monto total coincide o lo supera, o "pendiente" si es menor.
     """
+    print(f"""
+    DETALLE DE VALORES DE ENTRADA:
+    -------------------------------
+    Costo del Servicio:        {cost_service}
+    Cantidad Recibida:         {cantidad_recibida}
+    ID del Cliente:            {dim_customer_id}
+    Tipo de Detalle de Servicio: {servicedetails}
+    Nombre del Servicio:       {service_name}
+    Año de Pago:               {year_pay}
+    -------------------------------
+    """)
     #Obtener primero la suma de los pagos que lleva hasta ahora le cliente
     #Se actualizaran todos los pagos asociados a esta cuenta para que se marquen como pagados,
     status,registros_cliente = get_fact_revenues_by_customer_id(dim_customer_id, service_name, servicedetails, year_pay )
@@ -91,11 +108,14 @@ def get_status_payment_for_registers(cost_service: float, cantidad_recibida: flo
 
     amount = cantidad_recibida
     for registro in registros_cliente:
+        print('Se imprime desde service.Get_ status payments for registers ')
+        print(registro)
         amount += registro['amount']
         
     estado = cost_service - amount
+    data = ""
     if estado == 0:
-        data = "pagado"
+        data = "completo"
         
         
         #Obtenemos el id de cada cuenta obtenida
@@ -106,5 +126,7 @@ def get_status_payment_for_registers(cost_service: float, cantidad_recibida: flo
 
     elif estado > 0:
         data = "pendiente"
-
+        
+    else:
+        print("No se le asigno ningun valor a la variable data")
     return data

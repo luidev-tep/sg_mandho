@@ -54,10 +54,9 @@ class factRevenueCrud():
 
         estatus_id = handler_status.get_status_id(statusName, "fact_revenue")
         dim_date_data = DIM_DATE()
-        #Validar como se debe guardar el pago
-        print(f"Datos del diccionario json", data_json)
+        year = str(dim_date_data.dateId)
         data_format = {
-            'FACT_RevenueId': create_id([data_json['FactAmount'], data_json['DIM_AccountId'], dim_date_data.dateId]), #Asi se evita que el id se repita
+            'FACT_RevenueId': create_id([data_json['FactAmount'], data_json['DIM_AccountId'], year[4:]]), #Asi se evita que el id se repita
             'DIM_DateId': dim_date_data.dateId,
             'DIM_AccountId': data_json['DIM_AccountId'],
             'DIM_ServiceDetailsId': data_json['DIM_ServiceDetailsId'],
@@ -67,10 +66,6 @@ class factRevenueCrud():
         }
         
         fact_register = FACT_Revenue(**data_format)
-        revenuer = fact_register.to_dict()
-
-        for key, value in revenuer.items():
-            print(f"{key}: {value}")
 
         isvalid = insert_fact_revenue(fact_register)
 
