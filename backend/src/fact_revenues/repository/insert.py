@@ -22,6 +22,23 @@ def insert_fact_revenue(data_revenue: FACT_Revenue) -> bool:
             VALUES
         (?, ?, ?, ?, ?, ?, ?)"""
         
+            # Impresión de la información de la tabla `data_revenue`
+            # usando un f-string para formatear la salida.
+
+        #print()
+        f"""
+        INFORMACIÓN DEL REGISTRO EN FACT_Revenue:
+        -----------------------------------------
+        ID de Factura Revenue:     {data_revenue.Fact_RevenueId}
+        ID de Fecha:               {data_revenue.DIM_DateId}
+        ID de Cuenta:              {data_revenue.DIM_AccountId}
+        ID de Detalle de Servicio: {data_revenue.DIM_ServiceDetailsId}
+        ID de Movimiento:          {data_revenue.DIM_MovementId}
+        ID de Estado:              {data_revenue.DIM_StatusId}
+        Monto del Pago:            {data_revenue.amount}
+        -----------------------------------------
+        """
+
         valores = (
             data_revenue.Fact_RevenueId,
             data_revenue.DIM_DateId,

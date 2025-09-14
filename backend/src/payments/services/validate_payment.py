@@ -53,14 +53,14 @@ class ValidatePayment():
             values = (DIM_CustomerId, AnioPago, serviceDetailstype)
 
         registros = class_vista.get_validation_payment(ServiceName, query, values)
-        print(registros)
+        #print(registros)
         # Si no hay registros, permitir el pago
         if registros is None or len(registros) == 0:
             return True, ''
         
         # Verificar si existe algún pago que NO esté pendiente
         for registro in registros:
-            print(registro)
+            #print(registro)
             if registro[6] != 'pendiente':
                 return False, 'El cliente ya tiene un pago para este servicio en este anio'
         

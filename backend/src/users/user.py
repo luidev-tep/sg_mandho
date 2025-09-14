@@ -18,6 +18,12 @@ from src.users.repository.edit import edit_user
 #importaciones de eliminar 
 from src.users.repository.delete import set_defuncion, defuncion_validation, is_admin
 from src.accounts.account import AccountCrud
+
+
+#Importacion para saber si un usuario tiene aun pagos activos para no poder matarlo
+from src.payments.repository.get_pending_pays import get_all_payments_pending
+
+#importacion para verificar si la persona a marcar como morida ya no tien eningun pago activo
 class UserCrud:
     """ 
     Clase la cual hara la mayoria del curd, aun no hara la parte de mostrar ya que esta se esta legando la bd
@@ -232,6 +238,27 @@ class UserCrud:
         if not defuncion_validation(defuncion_data["DIM_CustomerId"]): #Para verificar si el usuario ya esta marcado como defuncion
             return 403, "El usuario ya se encuentra como defuncion", {}
         
+        #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
+        pagos_pendientes = get_all_payments_pending(defuncion_data["DIM_CustomerId"])
+        if pagos_pendientes is  None:
+            return 404, 'No se pudo obtener la informacion del usuario', {}
+        
+        pendientes = ''
+        for pago in pagos_pendientes:
+            year = pago['year']
+            services = pago['data']
+            
+            for service in services:
+                service_name = service['ServiceName']
+                service_type = service['serviceType']
+                
+                # Formato más legible y amigable
+                fila = f'Año {year}: Servicio de {service_name} - Tipo: {service_type}\n'
+                pendientes += fila
+
+        if pagos_pendientes:
+            return 404, f"El usuario aun tiene pagos pendientes: \n {pendientes}", {}
+
         set_defuncion(defuncion_data["DIM_CustomerId"])
         
         #SE MODIFICO AQUI. eSTA VALIDACIONES DEBRAS REVISARSE EN EL FUTURO

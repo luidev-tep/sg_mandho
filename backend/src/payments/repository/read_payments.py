@@ -96,7 +96,7 @@ class ReadPayment:
         Args:
             service (str): El nombre del servicio (por ejemplo, 'agua', 'feria', etc.)
                            para el cual se quieren obtener los pagos.
-            filters (dict): Un diccionario opcional con filtros, como 'DIM_CustomerId' y 'YearPay'.
+            filters (dict): Un diccionario opcional con filtros, como 'DIM_CustomerId', 'ServiceDatailesType' y 'YearPay'.
 
         Returns:
             tuple[int, list[dict]]: Una tupla que contiene:
@@ -119,14 +119,16 @@ class ReadPayment:
                 values = list()
                 query_filtros = """
                     WHERE DIM_CustomerId = ?
+                    and ServiceDetailesType = ?
                     and YearPay = ?"""
                 
                 values.append(filters['DIM_CustomerId'])
+                values.append(filters['ServiceDetailesType'])
                 values.append(filters['YearPay'])
                 query = query.replace("[filtros]", query_filtros)
 
                                  # Ejecutamos la consulta
-                print(query)
+                #print(query)
                 print(values)
                 hanlder_conexion.cursor.execute(query, tuple(values))
             else:
@@ -200,8 +202,8 @@ class ReadPayment:
             
             
             query_base = query_base.replace("[filtros]", query_filtros)
-            print("DEBUG query_base:", query_base)
-            print("DEBUG values:", values)
+            #print("DEBUG query_base:", query_base)
+            #print("DEBUG values:", values)
             #Ejecutar la consulta con los filtros
             object_conection.cursor.execute(query_base, tuple(values))
             registros = object_conection.cursor.fetchall()
@@ -225,6 +227,7 @@ class ReadPayment:
             # Aseguramos que la conexión se cierre
             object_conection.close_conexion()
     
+
     def get_validation_payment(self, service_name: str, filters: str, values: tuple) -> None | list[Any]:
         """
         Valida si un pago ya ha sido realizado para un servicio específico.
@@ -286,7 +289,7 @@ class ReadPayment:
             pass
             
 
-    def update_payment_view(self, service_name: str, customer_id: str, year_payment: str) -> tuple[int, list[dict]] | None:
+    def update_payment_view(self, service_name: str, customer_id: str, year_payment: str, service_type: str) -> tuple[int, list[dict]] | None:
         """
         Actualiza la vista de pagos pendientes de un cliente.
 
@@ -306,7 +309,8 @@ class ReadPayment:
         """
         filters = {
             'DIM_CustomerId': customer_id,
-            'YearPay': year_payment
+            'YearPay': year_payment,
+            'ServiceDetailesType': service_type
         }
         try:
             status , datos_factura = self.get_payments_by_service(service_name,filters)
