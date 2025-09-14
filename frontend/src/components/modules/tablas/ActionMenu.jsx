@@ -86,7 +86,7 @@ function ActionMenu({ onUpdate, id_user, serviceName, props }) {
         />
       )}
 
-            
+
       {desactivateUserOpen && (
         <FinishPayment 
           onClose={() => setDesactivateUserOpen(false)}

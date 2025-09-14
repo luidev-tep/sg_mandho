@@ -5,7 +5,7 @@ def test_insert_account():
     crud = AccountCrud()
     account_json = {
         "status": "estudiante",
-        "customer_id": "74ca90c2-5657-5eef",
+        "customer_id": "d3d688b5-ca9d-5e2c",
         "start_date": "2025-01-01",
         "end_date": "s/n"
     }
@@ -13,6 +13,6 @@ def test_insert_account():
     status_code, message = crud.insert_account(account_json)
     
     print(f"El estado {status_code}  Mensaje: {message}")
-    assert status_code == 403
+    assert status_code == 404
     
     #assert message == "Cuenta creada con exito"

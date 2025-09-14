@@ -134,8 +134,11 @@ class PaymentCrud:
                 data = self.update_payment_view(data_json)
                 if not data:
                     return 400, "No se pudo actualizar el pago pendiente", []
-                
-                return 201, "Pago creado satisfactoriamente", data
+                else:
+                    return 201, "Pago creado satisfactoriamente", data
+            
+            else:
+                return 201, "Pago creado satisfactoriamente", []
         except Exception as e:
             print(e)
             return 500, f"Error creando el pago: {str(e)}", []
@@ -250,8 +253,6 @@ class PaymentCrud:
         
 
 
-
-
     def read_payments_customer_id(self, filters: dict) -> tuple[int, Any, list]:
         """Lee los registros de pagos de un cliente basados en los filtros proporcionados.
 
@@ -268,7 +269,7 @@ class PaymentCrud:
                              - (500, "message"): Error interno del servidor.
                              - (200, data): Datos de pagos encontrados.
         """
-        print(filters)
+        #print(filters)
         fields_required = ['DIM_CustomerId', 'serviceName', 'service_type', 'Year']
         type_fields = [str, str, str, str]
         is_valid, message = validate_data(filters, fields_required, type_fields, "payment")
@@ -309,8 +310,8 @@ class PaymentCrud:
                                    - (200, data): Costo del servicio.
         """
         handler_service = DIM_Service()
-        for dato in data_json:
-            print(f"El dato es: {dato} con el valor de: {type(dato)}")
+        # for dato in data_json:
+        #     print(f"El dato es: {dato} con el valor de: {type(dato)}")
         fields_required = ['service_type', 'Year', 'ServiceName']
         type_fields = [ str, str, str]
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")

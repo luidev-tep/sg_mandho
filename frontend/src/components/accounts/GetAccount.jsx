@@ -129,7 +129,7 @@ const BarraBusquedaConCuentas = ({ onValidityChange, onAccountData}) => {
         }
       };
       
-      console.log('Se cargo una cuenta activa');
+      //console.log('Se cargo una cuenta activa');
       setValue('activeAccount', account, { shouldValidate: true });
       
     } catch (err) {

@@ -21,7 +21,7 @@ from src.accounts.account import AccountCrud
 
 
 #Importacion para saber si un usuario tiene aun pagos activos para no poder matarlo
-from src.payments.repository.get_pending_pays import get_all_payments_pending
+from src.payments.repository.get_pending_pays import get_all_payments_pending, get_pending_pays
 
 #importacion para verificar si la persona a marcar como morida ya no tien eningun pago activo
 class UserCrud:
@@ -71,7 +71,7 @@ class UserCrud:
             persona = User(**user_data)
             
             #BANDERA DE VALIDACION AQUI
-            persona.mostrar_datos()
+            #persona.mostrar_datos()
             
             object_insert = Create()
 
@@ -209,7 +209,6 @@ class UserCrud:
 
         return 201, "El usuario se ha actualizado correctamente", new_user
         
-
     def defuncion_user(self, defuncion_data) -> tuple[Literal[400], Literal['No se pudo actualizar el reg...']]:
         """
         Esta funcion sera la encargada de manejar todo lo relacionado con la defuncion de un usuario, Su funcion sera dejar al usuario
@@ -238,13 +237,20 @@ class UserCrud:
         if not defuncion_validation(defuncion_data["DIM_CustomerId"]): #Para verificar si el usuario ya esta marcado como defuncion
             return 403, "El usuario ya se encuentra como defuncion", {}
         
+
+        
+        #VALIDACIONES DE PAGOS PENDIENTES EMPIEZAN AQUI
         #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
         pagos_pendientes = get_all_payments_pending(defuncion_data["DIM_CustomerId"])
-        if pagos_pendientes is  None:
+
+        if pagos_pendientes is None:
             return 404, 'No se pudo obtener la informacion del usuario', {}
         
         pendientes = ''
         for pago in pagos_pendientes:
+            if pago == {}:
+                continue
+
             year = pago['year']
             services = pago['data']
             
@@ -255,13 +261,42 @@ class UserCrud:
                 # Formato más legible y amigable
                 fila = f'Año {year}: Servicio de {service_name} - Tipo: {service_type}\n'
                 pendientes += fila
-
+        
         if pagos_pendientes:
             return 404, f"El usuario aun tiene pagos pendientes: \n {pendientes}", {}
+        
+        
+        pagos_gechos_pendientes = [get_pending_pays(defuncion_data["DIM_CustomerId"], service_name) for service_name in ["agua", "feria", "panteon", 'delegacion']]
 
+        if pagos_gechos_pendientes is None:
+            return 404, 'No se pudo obtener la informacion del usuario', {}
+        
+        pendientes = ''
+        for categoria in pagos_gechos_pendientes:
+
+            if categoria == []:
+                    continue
+            
+            for pago in categoria:
+                year = pago['year']
+                services = pago['data']
+                
+                fila = f'Año {year}:  \n'
+                for service in services:
+                    service_ype = service['serviceType']
+                    amount = service['amount']
+                    
+                    # Formato más legible y amigable
+                    fila += f'  Servicio de {service_ype} - Debe: $ {amount}\n'
+                    pendientes += fila
+        
+        if any(pagos_gechos_pendientes):
+            return 404, f"El usuario aun tiene pagos pendientes: \n {pendientes}", {}
+        
+        #VALIDACIONES DE PAGOS PENDIENTES TERMINAN AQUI
+        
         set_defuncion(defuncion_data["DIM_CustomerId"])
         
-        #SE MODIFICO AQUI. eSTA VALIDACIONES DEBRAS REVISARSE EN EL FUTURO
         #Modificar la cuenta del usuario, para desactivarlo
         handrer_account.desactivate_account(defuncion_data["DIM_CustomerId"])
         

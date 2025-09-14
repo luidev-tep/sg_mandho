@@ -43,7 +43,7 @@ function FinishPayment({onClose, onUpdate, props }) {
   } = props;
 
   // Verificar si el servicio ya está pagado
-  const isAlreadyPaid = status_factura === 'pagado';
+  const isAlreadyPaid = status_factura === 'completo';
 
   // Actualizar cantidad faltante cuando amountTotal cambie
   useEffect(() => {

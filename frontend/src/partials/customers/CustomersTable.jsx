@@ -154,7 +154,7 @@ function CustomersTable({ filters }) {
           Total de Usuarios <span className="text-gray-400 dark:text-gray-500 font-medium">
             {filteredCustomers.length}
           </span>
-        </h2>
+        </h2> 
       </header>
       <div className="w-full">
         {/* Encabezado (visible en md y superior) */}
@@ -169,7 +169,7 @@ function CustomersTable({ filters }) {
         </div>
 
         {/* Cuerpo de la tabla */}
-        <div className="space-y-2 md:space-y-0">
+        <div className="space-y-2 md:space-y-0 pb-24">
               {filteredCustomers.map(customer => (
                 <Customer
                   key={customer.id_user}
