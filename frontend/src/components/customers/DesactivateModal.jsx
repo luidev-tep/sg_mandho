@@ -28,7 +28,30 @@ function DesactivarUsuarioModal({ id_user, onClose, onUpdate }) {
         throw new Error(response.message || "Error al desactivar el usuario");
       }
     } catch (err) {
-      setError(err.message || "Error al procesar la solicitud");
+      // Formatear el mensaje de error para mostrar como lista
+      if (err.message && err.message.includes('El usuario aun tiene pagos pendientes:')) {
+        const messageParts = err.message.split(':');
+        const mainMessage = messageParts[0] + ':';
+        const paymentsList = messageParts.slice(1).join(':').split('\n').filter(item => item.trim());
+        
+        const formattedMessage = (
+          <div>
+            <p className="font-semibold mb-2">{mainMessage}</p>
+            <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700/30">
+              <ul className="space-y-1 text-sm">
+                {paymentsList.map((payment, index) => (
+                  <li key={index} className="text-gray-700 dark:text-gray-300">
+                    • {payment.trim()}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        );
+        setError(formattedMessage);
+      } else {
+        setError(err.message || "Error al procesar la solicitud");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -72,14 +95,20 @@ function DesactivarUsuarioModal({ id_user, onClose, onUpdate }) {
               </div>
             </div>
           </div>
+          {/* SE DEBEIGUAL VERIFICAR SI ES QUE SE VERA CORRECTAMENTE CUANDO 
+          SE AGREGEN TAMVIEN LOS PAGOS PEDNDIENTES TOTALES DEL USUARIO */}
 
           {error && (
-            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 rounded-lg text-sm border border-red-100 dark:border-red-900/30">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                {error}
+            <div className="mt-4">
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-900/30">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 mr-2 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div className="min-w-0 flex-1">
+                    {error}
+                  </div>
+                </div>
               </div>
             </div>
           )}

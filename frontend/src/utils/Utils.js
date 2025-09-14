@@ -10,6 +10,22 @@ export const formatThousands = (value) => Intl.NumberFormat('en-US', {
   notation: 'compact',
 }).format(value);
 
+/**
+ * Formatea un valor numérico como moneda (MXN por defecto).
+ * @param {number} value - El número a formatear.
+ * @returns {string} - El valor formateado como string de moneda.
+ */
+export const formatCurrency = (value) => {
+  // Devuelve un valor por defecto si la entrada no es un número válido.
+  if (typeof value !== 'number' || isNaN(value)) {
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(0);
+  }
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(value);
+};
+
 export const getCssVariable = (variable) => {
   return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
 };

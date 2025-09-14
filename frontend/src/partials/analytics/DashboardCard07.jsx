@@ -19,7 +19,7 @@ function DashboardCard07({ comitiva, anio, data, loading }) {
   return (
     <div className="col-span-full xl:col-span-8 bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden">
       <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
+        <h2 className="font-semibold text-gray-800 dark:text-gray-100 text-2xl">
           {comitiva} - Resumen Anual {anio}
         </h2>
       </header>
@@ -48,7 +48,7 @@ function DashboardCard07({ comitiva, anio, data, loading }) {
               </tr>
             </thead>
             {/* Table body */}
-            <tbody className="text-sm font-medium divide-y divide-gray-100 dark:divide-gray-700/60">
+            <tbody className="text-sm font-semibold divide-y divide-gray-100 dark:divide-gray-700/60">
               {loading ? (
                 <tr>
                   <td colSpan="5" className="p-4 text-center text-gray-500">
@@ -68,20 +68,20 @@ function DashboardCard07({ comitiva, anio, data, loading }) {
                           <div className="shrink-0 mr-3 w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: manzana.color }}>
                             <span className="text-white font-bold text-xs">{manzana.nombre.charAt(0)}</span>
                           </div>
-                          <div className="text-gray-800 dark:text-gray-100">{manzana.nombre}</div>
+                          <div className="text-gray-800 dark:text-gray-100 font-semibold">{manzana.nombre}</div>
                         </div>
                       </td>
                       <td className="p-2">
                         <div className="text-center">{manzana.personas}</div>
                       </td>
                       <td className="p-2">
-                        <div className="text-center text-green-500 font-semibold">{manzana.pagados}</div>
+                        <div className="text-center text-green-500 font-bold">{manzana.pagados}</div>
                       </td>
                       <td className="p-2">
-                        <div className="text-center text-red-500">{manzana.pendientes}</div>
+                        <div className="text-center text-red-500 font-bold">{manzana.pendientes}</div>
                       </td>
                       <td className="p-2">
-                        <div className="text-center font-semibold" style={{ color: percentageColor }}>
+                        <div className="text-center font-bold" style={{ color: percentageColor }}>
                           {formatPercentage(manzana.porcentaje)}%
                         </div>
                       </td>
@@ -98,7 +98,7 @@ function DashboardCard07({ comitiva, anio, data, loading }) {
             </tbody>
             {/* Table footer con totales */}
             {data && data.manzanas && data.manzanas.length > 0 && !loading && (
-              <tfoot className="text-sm font-semibold text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/70">
+              <tfoot className="text-sm font-bold text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/70">
                 <tr>
                   <td className="p-2 text-left">Total</td>
                   <td className="p-2 text-center">

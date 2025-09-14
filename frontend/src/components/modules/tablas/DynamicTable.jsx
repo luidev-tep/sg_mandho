@@ -1,7 +1,7 @@
 //Agua tabla
 // partials/customers/CustomersTable.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import Customer from './DynamicTableItem';
+import DynamicTableItem from './DynamicTableItem';
 import { MostrarPagos } from '../../../api/pagos/api_mostrar_pago';
 
 function DynamicTable({ filters, serviceName }) {
@@ -110,28 +110,6 @@ function DynamicTable({ filters, serviceName }) {
     }
     setFilteredCustomers(filtered);
 
-    // 2. Resaltar coincidencias en la tabla
-    const rows = tableRef.current.querySelectorAll('tbody tr');
-    let firstMatch = null;
-    
-    rows.forEach(row => {
-      // Eliminar cualquier resaltado previo
-      //row.classList.remove('bg-yellow-100', 'border-l-4', 'border-yellow-500');
-      
-      // Resaltar si coincide con la búsqueda
-      // if (searchTerm.length >= 3) {
-      //   const rowText = row.textContent.toLowerCase();
-      //   if (rowText.includes(searchTerm)) {
-      //     row.classList.add('bg-yellow-100', 'border-l-4', 'border-yellow-500');
-      //     if (!firstMatch) firstMatch = row;
-      //   }
-      // }
-    });
-
-    // Scroll al primer resultado si existe
-    if (firstMatch) {
-      firstMatch.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
   }, [searchTerm, allCustomers]);
 
   // Función para crear una clave única para cada registro de pago
@@ -175,7 +153,7 @@ function DynamicTable({ filters, serviceName }) {
   if (error) return <div className="p-4 text-center text-red-500">Error: {error}</div>;
 
   return (
-    <div ref={tableRef} className="bg-white dark:bg-gray-800 shadow-xs rounded-xl relative">
+    <div ref={tableRef} className="bg-transparent">
       <header className="px-5 py-4">
         <h2 className="font-semibold text-gray-800 dark:text-gray-100">
           Total de Pagos {serviceName} <span className="text-gray-400 dark:text-gray-500 font-medium"> 
@@ -183,77 +161,47 @@ function DynamicTable({ filters, serviceName }) {
           </span>
         </h2>
       </header>
-      <div>
-        <div className="overflow-x-auto">
-          <table className="table-auto w-full dark:text-gray-300">
-            {/* Table header */}
-            <thead className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20 border-t border-b border-gray-100 dark:border-gray-700/60">
-              <tr>
-                {/* Columna Imagen */}
-                <th className="px-3 py-3 whitespace-nowrap w-10">
-                  <div className="flex items-center justify-center">
-                    <p className="hidden md:block">Imagen</p>
-                    <p className="md:hidden">Img</p>
-                  </div>
-                </th>
+      <div className="w-full">
+        {/* Encabezado de la tabla (visible solo en md y superior) */}
+        <div className="hidden md:grid md:grid-cols-8 md:gap-4 bg-gray-50 dark:bg-gray-700/50 font-semibold text-xs uppercase text-gray-500 dark:text-gray-400 p-2 rounded-t-lg border-b border-gray-200 dark:border-gray-700">
+          <div className="text-center">Avatar</div>
+          <div className="col-span-2">Nombre</div>
+          <div className="text-center">Rol</div>
+          <div className="text-center">Estado</div>
+          <div className="text-center">Servicio</div>
+          <div className="text-center">Monto</div>
+          <div className="grid grid-cols-2 items-center">
+              <div className="text-center">Fecha</div>
+              <div className="text-center">Acciones</div>
+          </div>
+        </div>
 
-                {/* Resto de columnas */}
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
-                  <div className="font-semibold">Nombre Completo</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-center">
-                  <div className="font-semibold hidden md:block">Rol de usuario</div>
-                  <div className="font-semibold md:hidden">Rol</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
-                  <div className="font-semibold hidden md:block">Estado de pago</div>
-                  <div className="font-semibold md:hidden">estado</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
-                  <div className="font-semibold hidden md:block">Tipo de servicio</div>
-                  <div className="font-semibold md:hidden">Servicio.</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
-                  <div className="font-semibold hidden md:block">Cantidad</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
-                  <div className="font-semibold hidden md:block">Anio de pago</div>
-                  <div className="font-semibold md:hidden">Fec. pago</div>
-                </th>
-                <th className="px-2 py-3 whitespace-nowrap w-20 text-center">
-                  <span className="font-semibold">Acciones</span>
-                </th>
-              </tr>
-            </thead>
+        {/* Cuerpo de la tabla */}
+        <div className="space-y-2 md:space-y-0">
+          {filteredCustomers.map(customer => {
+            // Crear clave única combinando ID de cuenta y tipo de servicio
+            const uniqueKey = getUniqueKey(customer);
             
-            {/* Table body */}
-            <tbody className="text-sm divide-y divide-gray-100 dark:divide-gray-700/60">
-              {filteredCustomers.map(customer => {
-                // Crear clave única combinando ID de cuenta y tipo de servicio
-                const uniqueKey = getUniqueKey(customer);
-                
-                return (
-                  <Customer
-                    key={uniqueKey}
-                    id={customer.DIM_AccountId}
-                    image={customer.image}
-                    full_name={`${customer.CustomerName} ${customer.CustomerMiddleName || ''} ${customer.CustomerLastName} ${customer.CustomerSecondLastName || ''}`}
-                    role_name={customer.RoleName}
-                    status_factura={customer.StatusFactura}
-                    service_type={customer.ServiceDetailesType || 'N/A'}
-                    amount={customer.amount}
-                    status_account={customer.StatusCuenta}
-                    dim_date={customer.YearPay}
-                    handleClick={handleClick}
-                    service_name ={serviceName}
-                    dim_customer_id={customer.DIM_CustomerId}
-                    isChecked={isCheck.includes(uniqueKey)}
-                    onEditSuccess={handleUpdateRecord}
-                  />
-                );
-              })}
-            </tbody>
-          </table>
+            return (
+              <DynamicTableItem
+                key={uniqueKey}
+                id={customer.DIM_AccountId}
+                image={customer.image}
+                full_name={`${customer.CustomerName} ${customer.CustomerMiddleName || ''} ${customer.CustomerLastName} ${customer.CustomerSecondLastName || ''}`}
+                role_name={customer.RoleName}
+                status_factura={customer.StatusFactura}
+                service_type={customer.ServiceDetailesType || 'N/A'}
+                amount={customer.amount}
+                status_account={customer.StatusCuenta}
+                dim_date={customer.YearPay}
+                handleClick={handleClick}
+                service_name ={serviceName}
+                dim_customer_id={customer.DIM_CustomerId}
+                isChecked={isCheck.includes(uniqueKey)}
+                onEditSuccess={handleUpdateRecord}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

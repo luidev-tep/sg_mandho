@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { validatePassword } from "../api/api_security";
 
+
+//Modal muy importante para bloquear distintos recursos
 function PasswordVerificationModal({ onClose, onVerificationSuccess, title = "Verificación de Seguridad", message = "Ingrese su contraseña para continuar con esta acción especial." }) {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
