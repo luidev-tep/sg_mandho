@@ -276,6 +276,39 @@ const normalizeUserData = (userData) => {
     };
 };
 
+// API.js - Corrige la ruta en el frontend
+export const GenerarReporteUsuario = (Dim_customerId) => {
+    if (!Dim_customerId) {
+        return Promise.reject(new Error("ID de usuario no proporcionado"));
+    }
+
+    return api.get('gat_data/', {  // Cambiado de 'get_data/' a 'gat_data/'
+        params: {
+            Dim_customerId: Dim_customerId
+        }
+    }).then(response => {
+        if (response.data.status === 'success') {
+            const normalizedData = response.data.body;
+            return {
+                success: response.data.status,
+                data: normalizedData
+            };
+        } else {
+            throw new Error(response.data.message || 'Respuesta inesperada del backend');
+        }
+    }).catch(error => {
+        console.error("[API] Error en GenerarReporteUsuario:", {
+            error: error,
+            responseData: error.response?.data,
+            status: error.response?.status
+        });
+        return {
+            success: false,
+            message: error.response?.data?.message || error.message
+        };
+    });
+};
+
 export const MostrarAdmin = () => {
     console.log("MostrarAdmin Hola dese aqui el admin");
     console.log("Esta api aun no es funcional");

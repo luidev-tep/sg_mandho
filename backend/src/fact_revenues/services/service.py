@@ -31,7 +31,7 @@ def get_status_payment(cost_service: float, amount: float) -> str:
     """
     estado = cost_service - amount
     if estado == 0:
-        data = "pagado"
+        data = "completo"
     elif estado > 0:
         data = "pendiente"
     

@@ -23,6 +23,8 @@ from src.accounts.account import AccountCrud
 #Importacion para saber si un usuario tiene aun pagos activos para no poder matarlo
 from src.payments.repository.get_pending_pays import get_all_payments_pending, get_pending_pays
 
+from src.analytics_reports.Analitycs import Analitycs
+
 #importacion para verificar si la persona a marcar como morida ya no tien eningun pago activo
 class UserCrud:
     """ 
@@ -304,3 +306,50 @@ class UserCrud:
         new_user = get_user(defuncion_data["DIM_CustomerId"])
 
         return 201, "El usuario se ha actualizado correctamente", new_user
+    
+    
+    def get_data_customer_payments(self, dim_customer_id: str) -> tuple[int, str, dict]:
+        """
+        Obtiene el historial de pagos de un cliente.
+
+        Esta función actúa como una capa intermedia para obtener el historial de pagos
+        de un cliente desde el módulo de analíticas. Llama a la función
+        `get_analytics_per_customer` para obtener los datos y los retorna en el
+        formato esperado por el frontend.
+
+        Args:
+            dim_customer_id (str): El ID del cliente.
+
+        Returns:
+            tuple[int, str, dict]: Una tupla que contiene:
+                - El código de estado HTTP (200 si es exitoso, 400 o 500 en caso de error).
+                - Un mensaje descriptivo del resultado.
+                - Un diccionario con los datos de analíticas en el siguiente formato,
+                  o un diccionario vacío en caso de error:
+                  {
+                    "completos": {
+                      "agua": {"Year": 2025, "ServiceDetailesType": "tomas", "amount": 360.0}
+                    },
+                    "pendientes": {
+                      "agua": {"Year": 2024, "ServiceDetailesType": "tomas", "amount": 165.0}
+                    },
+                    "pendientes_sin_facturar": {
+                      "agua": [
+                        {"Year": 2021, "ServiceDetailesType": "consumo", "amount": 360.0}
+                      ]
+                    }
+                  }
+        """
+        hanlder_analitycs = Analitycs()
+        try:
+            #print  ('Antes de la logica principal: el id es', dim_customer_id)
+            data = {
+                'Dim_customerId': dim_customer_id
+            }
+            status, message, data = hanlder_analitycs.get_analytics_per_customer(data)
+            #print  ('Sale de la logica principal')
+            return status, message, data
+        except Exception as e:
+            print(f"Error al obtener la informacion del cliente: {e}")
+            return 500, "Ocurrió un error al obtener los datos.", {}
+        

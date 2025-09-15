@@ -3,12 +3,14 @@ import React, { useState, useRef } from 'react';
 import AccountsTableModal from '../accounts/AccounsTable';
 import EditCustomerModal from './CustomerEdit';
 import DesactivateModal from './DesactivateModal';
+import UserReportModal from './CustomerReport';
 
 function ActionMenu({ onUpdate, id_user }) {
   const [isOpen, setIsOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [desactivateUserOpen, setDesactivateUserOpen] = useState(false);
   const [accountsModalOpen, setAccountsModalOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
   const menuRef = useRef(null);
 
   const handleEditClick = (e) => {
@@ -68,6 +70,16 @@ function ActionMenu({ onUpdate, id_user }) {
           >
             Ver Cuentas
           </button>
+          <button
+            className="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            onClick={(e) => {
+              e.stopPropagation();
+              setReportModalOpen(true);
+              setIsOpen(false);
+            }}
+          >
+            Ver Reporte
+          </button>
         </div>
       )}
 
@@ -93,6 +105,14 @@ function ActionMenu({ onUpdate, id_user }) {
         <AccountsTableModal
           id_user={id_user}
           onClose={() => setAccountsModalOpen(false)}
+        />
+      )}
+
+      {/* Modal de Ver Reporte */}
+      {reportModalOpen && (
+        <UserReportModal
+          id_user={id_user}
+          onClose={() => setReportModalOpen(false)}
         />
       )}
     </div>
