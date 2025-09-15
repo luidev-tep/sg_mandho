@@ -53,6 +53,9 @@ class factRevenueCrud():
             
 
         estatus_id = handler_status.get_status_id(statusName, "fact_revenue")
+        if not estatus_id:
+            return 500, f"No se pudo obtener el esto de pago, {statusName}"
+        
         dim_date_data = DIM_DATE()
         year = str(dim_date_data.dateId)
         data_format = {

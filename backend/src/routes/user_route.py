@@ -175,3 +175,27 @@ def userDefuncion() -> tuple[Any, Literal[400]] | tuple | tuple[Any, Literal[500
         return send_error(str(e), 500)
 
 
+@user_route.route("/api/user/gat_data/", methods=["GET"])
+def get_data_customer_payments() -> tuple[dict, int]:
+    """
+    Funcion para manejar la defuncion de un usuario
+    """
+    try:
+        dim_customer_id = request.args.get('Dim_customerId')
+        
+        if not dim_customer_id:
+            return send_error("No se recibió el ID del cliente", 400)
+        #print('Antes de la logica principal')
+        state, message, data = user_options.get_data_customer_payments(dim_customer_id)
+        #print('Sale de la logica principal')
+        if state == 200:
+            print(f"Estado: {state}, Mensaje: {message}")
+            return send_success(message, data, state)
+        else:
+            print(f"Error: {message}")
+            return send_error(message, state)
+    except Exception as e:
+        print(f"Excepción: {e}")
+        return send_error(str(e), 500)
+    
+    

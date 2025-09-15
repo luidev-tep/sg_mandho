@@ -13,6 +13,9 @@ class GetAnalytics:
     para generar datos de ingresos por año, facturas por mes, y otra
     información relevante.
     """
+    def __init__(self):
+        self.comitivas = ('agua', 'feria', 'panteon', 'delegacion')
+        
     def get_table_by_fraction(self, comitiva: str) -> str:
         """
         Obtiene el nombre de la vista de pagos de la base de datos
@@ -25,7 +28,6 @@ class GetAnalytics:
             str: El nombre de la vista de pagos correspondiente.
                  Retorna una cadena vacía si la comitiva no es válida.
         """
-        # Diccionario con las claves (variables en string) y valores (vistas)
         vistas_por_comitiva = {
             "agua": "VISTA_PAGOS_AGUA",
             "feria": "VISTA_PAGOS_FERIA",
@@ -290,8 +292,6 @@ class GetAnalytics:
             return []
         finally:
             handler_conexion.close_conexion()
-
-
     
     def get_population_by_manzana(self) -> list[dict] | list:
         """

@@ -153,7 +153,7 @@ def get_pending_pays(DIM_accountsId: int, serviceName: str) -> None | list[dict[
         handler_conexion.close_conexion()
 
 
-def get_all_payments_pending(dim_customerId: int) -> list | None:
+def get_all_payments_pending(dim_customerId: int, from_message = None ) -> list | None:
     """
     Obtiene TODOS los pagos pendientes de un cliente sin importar el servicio.
     
@@ -189,6 +189,9 @@ def get_all_payments_pending(dim_customerId: int) -> list | None:
         # Conversión de resultados a formato de diccionario
         rows_format = [PendingPaidModel2(*row).to_dict() for row in list(rows)]
 
+        if from_message == "get_all_payments_pending":
+            return rows_format
+            
         # Agrupamiento de resultados por año
         grouped_by_year = {}
         for row in rows_format:
