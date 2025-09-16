@@ -80,7 +80,7 @@ CREATE TABLE DIM_Service (
 -- Tabla DIM_ServiceDetails
 CREATE TABLE DIM_ServiceDetails (
     DIM_ServiceDetailsId TEXT PRIMARY KEY,
-    DIM_DateId INTEGER,,
+    DIM_DateId INTEGER,
     DIM_ServiceId TEXT,
     ServiceDetailesType TEXT,
     amount REAL CHECK (amount >= 0.0),
@@ -258,7 +258,7 @@ SELECT
     estado_factura.StatusName AS StatusFactura,
     DetalleServicio.ServiceDetailesType,
     factura.amount,
-    strftime('%Y', DetalleServicio.StartDate) as YearPay, , 
+    strftime('%Y', DetalleServicio.StartDate) as YearPay, 
     factura.DIM_DateId,
     factura.FACT_RevenueId,
 	cuenta.DIM_AccountId,
@@ -323,7 +323,30 @@ vw.YearPay,
 vw.DIM_AccountId,
 vw.DIM_CustomerId
 
-	
+
+-- SE CREO UNA NUEVA VISTA LA CUAL SE PODRA UTILIZAR EN LAS CHECK LIST
+	CREATE VIEW VISTA_CLIENTES_ACTIVOS AS
+SELECT
+    c.CustomerName, 
+    c.CustomerMiddleName, 
+    c.CustomerLastName, 
+    c.CustomerSecondLastName,
+    r.RoleName, 
+    a.DIM_AccountId,
+    c.DIM_CustomerId
+FROM DIM_Account a
+INNER JOIN DIM_Role r ON r.DIM_RoleId = a.DIM_RoleId
+INNER JOIN DIM_Customer c ON c.DIM_CustomerId = a.DIM_CustomerId  -- Corregido: debe ser DIM_CustomerId
+INNER JOIN DIM_Status s ON a.DIM_StatusId = s.DIM_StatusId 
+WHERE c.CustomerEndDate = 's/n'  -- Persona no muerta
+AND a.DIM_StatusId IN (
+    SELECT DIM_StatusId 
+    FROM DIM_Status 
+    WHERE StatusName = 'activo'
+);
+--SELECT * FROM VISTA_CLIENTES_ACTIVOS
+
+--DROP VIEW IF EXISTS VISTA_CLIENTES_ACTIVOS;
 
 -- Índices adicionales para mejorar el rendimiento
 -- CREATE INDEX idx_customer_date ON DIM_Customer(DIM_DateId);

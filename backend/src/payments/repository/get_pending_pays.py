@@ -75,7 +75,7 @@ def get_query(type_transaction: str) -> str:
                 p.DIM_ServiceDetailsId IS NULL
                 ORDER by FiscalYear;
             """
-    
+            
     # Personalización de la consulta según el tipo de transacción
     if type_transaction == "get_pending_pays":
         Query_base = Query_base.replace('[nombre_servicio]' ,'service.ServiceName,')
@@ -113,7 +113,9 @@ def get_pending_pays(DIM_accountsId: int, serviceName: str) -> None | list[dict[
             {'year': 2022, 'data': [{'serviceType': 'tomas', 'amount': 360.0}]},
             {'year': 2023, 'data': [{'serviceType': 'consumo', 'amount': 360.0}]}
         ]
-    ESTA CLASE SE MANDA A LLAMAR EN USUARIOS PARA PODER VER SUS PAGOS PENDIENTES
+    ESTA CLASE SE MANDA A LLAMAR EN USUARIOS PARA PODER VER SUS PAGOS PENDIENTES\
+        
+        SE DEJARA ESTA CLASE EN PENDIENTE PARA PODER. YA QUE SE PIENSA QUE NO SE UTILIZARA 
     """
     handler_conexion = Conexion()
     special_service = SpecialServices()

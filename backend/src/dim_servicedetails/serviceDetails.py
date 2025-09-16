@@ -40,7 +40,7 @@ class ServiceDetailsCrud:
                 - (500, str): If an unexpected error occurs during the process.
         """
         float(service_details_json["amount"])
-        campos = ["ServiceName", "serviceDetailesType", "amount", "year"]
+        campos = ["ServiceName", "serviceDetailesType", "amount", "year", "ServiceState"] #Se debe agregar a la bd, Verificar logica de agregacion tambien
         tipo_campos = [str, str, float, int]
         is_valid = validate_data(service_details_json, campos, tipo_campos, "service details")
         if not is_valid:
@@ -135,3 +135,7 @@ para el dim_dateid hazlo en este formato 20200101
             return 500, {}
         
     
+    def Update_dim_service_details(self, service_details_json: dict) -> tuple:
+        """
+        Funcion que actualiza el unico parametro modificable de dim_service_details
+        """

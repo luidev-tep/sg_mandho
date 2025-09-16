@@ -110,8 +110,9 @@ class Analitycs:
         try:
             
             pagos_hechos = self.payment_processor.get_all_data_payments(data_json['Dim_customerId'])
-            
-            pagos_pendientes = self.payment_processor.get_all_pending_payments(data_json['Dim_customerId'])
+            #Esta aprte del codigo ya no se utilizara 
+            #self.payment_processor.get_all_pending_payments(data_json['Dim_customerId'])
+            pagos_pendientes = {}
             
             
             data_format = {'completos': pagos_hechos['completos'], 'pendientes': pagos_hechos['pendientes'], 'pendientes_sin_facturar': pagos_pendientes}

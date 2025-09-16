@@ -26,11 +26,13 @@ def validate_account(user_id: str) -> bool:
         user_id (str): El id de la persona
 
     returns:
-        bool: retorna false si se pasa el limite de cuentas, si no retorna false
+        bool: retorna false si se pasa el limite de cuentas, si no retorna false,
+        Se tiene que refctorizar esta funcion para que rpueda resolver tamvien el problema de lso estudiantes y personas, inactivas. 
+        
     """
     object_connection = Conexion()
     #Se hace la conexion Verificar si funciona esta funcion
-    query = f"SELECT COUNT(*) FROM DIM_account WHERE DIM_CustomerId = '{user_id}'"
+    query = f"SELECT COUNT(*) FROM DIM_account WHERE DIM_CustomerId = '{user_id}' AND DIM_StatusId = 'status1'"
     object_connection.cursor.execute(query)
     result = object_connection.cursor.fetchone()  # Obtiene la primera fila de resultados
     
