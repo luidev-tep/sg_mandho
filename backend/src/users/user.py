@@ -240,11 +240,13 @@ class UserCrud:
             return 403, "El usuario ya se encuentra como defuncion", {}
         
 
-        
+        """
+        SE HA COMENTADO ESTA PARTE YA QUE NO SEA UTILIZADA
         #VALIDACIONES DE PAGOS PENDIENTES EMPIEZAN AQUI
         #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
-        pagos_pendientes = get_all_payments_pending(defuncion_data["DIM_CustomerId"])
-
+        #pagos_pendientes = get_all_payments_pending(defuncion_data["DIM_CustomerId"])
+        
+        pagos_pendientes = [{}, {}, {}, {}]
         if pagos_pendientes is None:
             return 404, 'No se pudo obtener la informacion del usuario', {}
         
@@ -266,7 +268,7 @@ class UserCrud:
         
         if pagos_pendientes:
             return 404, f"El usuario aun tiene pagos pendientes: \n {pendientes}", {}
-        
+        """
         
         pagos_gechos_pendientes = [get_pending_pays(defuncion_data["DIM_CustomerId"], service_name) for service_name in ["agua", "feria", "panteon", 'delegacion']]
 

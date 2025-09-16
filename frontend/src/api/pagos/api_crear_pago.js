@@ -13,7 +13,7 @@ export const crearRegistroPago = async (data) => {
             throw new Error('Faltan campos requeridos para crear el pago');
         }
 
-        // console.log(data);
+        console.log(data);
 
         const response = await api.post('create/', data);
         
@@ -49,3 +49,5 @@ export const crearRegistroPago = async (data) => {
         throw new Error(errorMessage);
     }
 };
+
+

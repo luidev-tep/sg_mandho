@@ -1,76 +1,97 @@
-//Agua tabla
 // partials/customers/CustomersTable.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import DynamicTableItem from './DynamicTableItem';
+import ServiciosElegiblesDropdown from './ServiciosElegiblesDropdown';
 import { MostrarPagos } from '../../../api/pagos/api_mostrar_pago';
 
 function DynamicTable({ filters, serviceName }) {
   const [selectAll, setSelectAll] = useState(false);
   const [isCheck, setIsCheck] = useState([]);
   const [allCustomers, setAllCustomers] = useState([]);
+  const [serviciosValidos, setServiciosValidos] = useState(null);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const tableRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      setIsLoading(true);
-      setError(null);
+  const fetchCustomers = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      //Verificar si es funcional
+      const backendFilters = {};
       
-      try {
-        //Verificar si es funcional
-        const backendFilters = {};
-        
-        // Mapear filtros de zona
-        const CustomerFraction = [];
-        if (filters.cerritos) CustomerFraction.push('cerritos');
-        if (filters.centro) CustomerFraction.push('centro');
-        if (filters.garambullo) CustomerFraction.push('garambullo');
-        if (filters.yhonda) CustomerFraction.push('yhonda');
-        if (filters.tepetate) CustomerFraction.push('tepetate');
-        if (filters.buenavista) CustomerFraction.push('buenavista');
-        
-        if (CustomerFraction.length > 0) {
-          backendFilters.CustomerFraction = CustomerFraction;
+      // Mapear filtros de zona
+      const CustomerFraction = [];
+      if (filters.cerritos) CustomerFraction.push('cerritos');
+      if (filters.centro) CustomerFraction.push('centro');
+      if (filters.garambullo) CustomerFraction.push('garambullo');
+      if (filters.yhonda) CustomerFraction.push('yhonda');
+      if (filters.tepetate) CustomerFraction.push('tepetate');
+      if (filters.buenavista) CustomerFraction.push('buenavista');
+      
+      if (CustomerFraction.length > 0) {
+        backendFilters.CustomerFraction = CustomerFraction;
+      }
+      
+      // Mapear filtros de fecha - Buscar clave que coincida con año numérico
+      Object.keys(filters).forEach(key => {
+        // Verificar si la clave es un número de 4 dígitos (año)
+        if (/^\d{4}$/.test(key)) {
+          backendFilters.DIM_Date = parseInt(key); // Convertir a número
         }
+      });
+
+      // MODIFICACIÓN: Siempre enviar año por defecto (actual) si no se especificó uno
+      if (backendFilters.DIM_Date === undefined) {
+        backendFilters.DIM_Date = new Date().getFullYear();
+      }
+
+      // MODIFICACIÓN: Filtro de inactivos - cambiar de 'inactivo' a 'pendiente'
+      if (filters.pendiente) {
+        backendFilters.DIM_StatusId = true;
+      }
+
+      const response = await MostrarPagos({
+        'serviceName': serviceName,
+        'filters': backendFilters
+      });
+      
+      console.log('✅ Pagos cargados con éxito.', response.data);
+
+      // Extraer los datos de servicios válidos si existen
+      const lastItem = response.data[response.data.length - 1];
+      if (lastItem && lastItem.servicios_validos) {
+        // Separar servicios y usuarios del array servicios_validos
+        const servicios = lastItem.servicios_validos[0]; // Array de tipos de servicio ['faena', 'cooperacion']
+        const usuarios = lastItem.servicios_validos[1]; // Array de objetos de usuarios
         
-        // Mapear filtros de fecha - Buscar clave que coincida con año numérico
-        Object.keys(filters).forEach(key => {
-          // Verificar si la clave es un número de 4 dígitos (año)
-          if (/^\d{4}$/.test(key)) {
-            backendFilters.DIM_Date = parseInt(key); // Convertir a número
-          }
+        setServiciosValidos({ 
+          servicios: servicios, 
+          usuarios: usuarios 
         });
-
-        // MODIFICACIÓN: Siempre enviar año por defecto (actual) si no se especificó uno
-        if (backendFilters.DIM_Date === undefined) {
-          backendFilters.DIM_Date = new Date().getFullYear();
-        }
-
-        // MODIFICACIÓN: Filtro de inactivos - cambiar de 'inactivo' a 'pendiente'
-        if (filters.pendiente) {
-          backendFilters.DIM_StatusId = true;
-        }
-
-        const response = await MostrarPagos({
-          'serviceName': serviceName,
-          'filters': backendFilters
-        });
         
-        console.log('✅ Pagos cargados con éxito.');
+        // Excluir este objeto especial de la lista de clientes a renderizar
+        const customerData = response.data.slice(0, -1);
+        setAllCustomers(customerData);
+        setFilteredCustomers(customerData);
+      } else {
         setAllCustomers(response.data);
         setFilteredCustomers(response.data);
-      } catch (err) {
-        setError(err.message || "Error al cargar pagos");
-        console.error("❌ Error al cargar pagos:", err);
-      } finally {
-        setIsLoading(false);
+        setServiciosValidos(null); // Resetear si no vienen datos
       }
-    };
+    } catch (err) {
+      setError(err.message || "Error al cargar pagos");
+      console.error("❌ Error al cargar pagos:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  // Cargar datos iniciales
+  useEffect(() => {
     fetchCustomers();
   }, [filters, serviceName]);
 
@@ -155,16 +176,21 @@ function DynamicTable({ filters, serviceName }) {
   return (
     <div ref={tableRef} className="bg-transparent">
       <header className="px-5 py-4">
-        <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-          Total de Pagos {serviceName} <span className="text-gray-400 dark:text-gray-500 font-medium"> 
-            {filteredCustomers.length}
-          </span>
-        </h2>
+        <div className="flex items-center">
+          <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+            Total de Pagos {serviceName} <span className="text-gray-400 dark:text-gray-500 font-medium">{filteredCustomers.length}</span>
+          </h2>
+          <ServiciosElegiblesDropdown 
+            serviciosValidos={serviciosValidos} 
+            serviceName={serviceName} 
+            onSuccess={fetchCustomers} // Pasar la función para recargar
+          />
+        </div>
       </header>
       <div className="w-full">
         {/* Encabezado de la tabla */}
         <div className="hidden md:grid md:grid-cols-8 md:gap-4 bg-gray-50 dark:bg-gray-700/50 font-semibold text-xs uppercase text-gray-500 dark:text-gray-400 p-2 rounded-t-lg border-b border-gray-200 dark:border-gray-700">
-          <div className="text-center">Avatar</div>
+          <div className="text-center">Imagen</div>
           <div className="col-span-2">Nombre</div>
           <div className="text-center">Rol</div>
           <div className="text-center">Estado</div>

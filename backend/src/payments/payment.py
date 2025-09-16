@@ -33,6 +33,9 @@ validate_payment = ValidatePayment()
 #Importacion para saber le costo de un servicio en especidico en un anio especifico
 from src.dim_servicedetails.repository.show import get_amount_by_service_and_date
 
+#Importaciones del check list
+from src.payments.repository.get_check_list import get_check_list
+from src.payments.services.check_list_services import is_service_valid, get_check_list_valids
 class PaymentCrud:
     """Clase para manejar las operaciones CRUD de pagos."""
 
@@ -143,26 +146,48 @@ class PaymentCrud:
             print(e)
             return 500, f"Error creando el pago: {str(e)}", []
 
-
     def read_payments(self, filters: dict) -> tuple[int, Any, list]:
-        """Lee los registros de pagos basados en los filtros proporcionados.
-
-        Esta función valida los filtros, obtiene los registros de pagos
-        correspondientes y devuelve el resultado.
+        """
+        Lee y filtra registros de pagos según los criterios especificados.
+        
+        Esta función procesa solicitudes de consulta de pagos, aplicando validaciones
+        básicas y delegando la obtención de datos al módulo de manejo de pagos.
+        Soporta dos modos de operación: sin filtros (obtiene todos los registros del servicio)
+        y con filtros aplicados (consulta específica con criterios definidos).
 
         Args:
-            filters (dict): Un diccionario con los filtros para la búsqueda de pagos.
-            {
-            manzana: list[str],
-            dim_date: str,
-            dim_status: str
-            }
+            filters (dict): Diccionario que contiene los parámetros de filtrado con la estructura:
+                {
+                    'serviceName': str,       # Nombre del servicio a consultar
+                    'filters': dict           # Diccionario con criterios de filtrado específicos
+                    # Los filtros pueden incluir:
+                    #   - manzana: list[str]   # Lista de manzanas/áreas
+                    #   - dim_date: str        # Fecha de referencia
+                    #   - dim_status: str      # Estado de los pagos
+                }
 
         Returns:
-            tuple[int, Any]: Una tupla con el código de estado HTTP y los datos o un mensaje.
-                             - (400, "message"): Filtros inválidos.
-                             - (500, "message"): Error interno del servidor.
-                             - (200, data): Datos de pagos encontrados.
+            tuple[int, Any, list]: Tupla con tres elementos:
+                - int: Código de estado HTTP:
+                    * 400: Filtros inválidos o errores de validación
+                    * 500: Error interno del servidor
+                    * 200: Consulta exitosa
+                - Any: Mensaje descriptivo del resultado o datos de error
+                - list: Lista con los datos de pagos encontrados. En caso de aplicar filtros,
+                        incluye adicionalmente un diccionario con datos de checklist en el último
+                        elemento con formato: {tuple(servicios_validos): check_lista_data}
+
+        Flujo de ejecución:
+        1. Valida la estructura básica de los filtros recibidos
+        2. Si no hay filtros específicos ('filters' vacío):
+           - Obtiene todos los registros del servicio especificado
+        3. Si hay filtros específicos ('filters' no vacío):
+           - Aplica los filtros a la consulta
+           - Genera información adicional de checklist si hay servicios válidos
+        4. Maneja excepciones y errores durante el proceso
+
+        Raises:
+            Exception: Captura cualquier error inesperado y lo devuelve como error 500
         """
         
         fields_required = ['serviceName', 'filters']
@@ -186,13 +211,27 @@ class PaymentCrud:
                 return code, "Datos obtenidos satisfactoriamente", data
             #CASO 2
             elif filters['filters'] != {}:
-                print(f"Se aplicaran filtros a la consulta {filters['filters']}     {filters['serviceName']} ")
+                #print(f"Se aplicaran filtros a la consulta {filters['filters']}     {filters['serviceName']} ")
                 #Cuando se proporcionan filtros se deben aplicar los filtros a la consulta
                 code, data = payments_handler.get_payments_with_filters(filters['serviceName'], filters['filters'])
 
                 if code != 200:
                     print(f"Error al leer los pagos: {data}")
                     return code, "Error a la hora de aplicar filtros", []
+                
+                print(f"tamaanio de data: {len(data)}")
+                #Codigo para obtener el check list
+                servicios_validos = get_check_list_valids(filters['filters']['DIM_Date'], filters['serviceName'])
+                
+                print(f"Servicios validos: {servicios_validos}") 
+                if servicios_validos: 
+                    status, mensaje_query, check_lista_data = self.get_check_list_table() 
+                    
+                    data_tuple = (servicios_validos,check_lista_data)
+                    # Crear el diccionario con la tupla como clave 
+                    data_format = {'servicios_validos': data_tuple} 
+                    # Agregar el diccionario a data 
+                    data.append(data_format)
                 
                 #print(f"Code: {code}, Data: Datos creados satisfactoriamente, /n {data[0]}")
                 return code, "Datos obtenidos satisfactoriamente", data
@@ -251,7 +290,6 @@ class PaymentCrud:
             print(e)
             return 500, f"Error leyendo los pagos: {str(e)}", []
         
-
 
     def read_payments_customer_id(self, filters: dict) -> tuple[int, Any, list]:
         """Lee los registros de pagos de un cliente basados en los filtros proporcionados.
@@ -338,18 +376,32 @@ class PaymentCrud:
             # Capturar cualquier excepción inesperada y devolver un error del servidor
             return 500, f"Error leyendo los pagos: {str(e)}", []
         
+        
     def update_payment_view(self, data_json: dict) -> Any:
-        """Actualiza la vista de pagos pendientes.
+        """
+        Actualiza la vista de pagos pendientes después de realizar un pago.
+        
+        Esta función se ejecuta después de un proceso de pexitoso para refrescar la información
+        visualizada al usuario, mostrando el nuevo estado de los pagos del cliente para el servicio
+        y año específicos.
 
-        Esta función se utiliza para actualizar la vista de pagos pendientes de un cliente
-        para un servicio y año específicos después de que se ha realizado un pago.
-        
         Args:
-            data_json (dict): Un diccionario con los datos necesarios para la actualización,
-                              incluyendo 'ServiceName', 'DIM_CustomerId', 'AnioPago'.
-        
+            data_json (dict): Diccionario con los parámetros necesarios para la actualización:
+                {
+                    'ServiceName': str,           # Nombre del servicio afectado
+                    'DIM_CustomerId': str,        # Identificador único del cliente
+                    'AnioPago': str,              # Año del pago realizado
+                    'serviceDetailsType': str     # Tipo de detalle del servicio
+                }
+
         Returns:
-            Any: Los datos actualizados si la operación fue exitosa, de lo contrario una lista vacía.
+            Any: Retorna una de las siguientes opciones:
+                - list: Lista con los datos actualizados de la vista de pagos
+                - []: Lista vacía en caso de error durante el proceso
+
+        Note:
+            La función maneja errores internamente y devuelve lista vacía en caso de excepción
+            para evitar interrumpir el flujo de la aplicación.
         """
         try:
             status, datos = payments_handler.update_payment_view(data_json['ServiceName'], data_json['DIM_CustomerId'], data_json['AnioPago'], data_json['serviceDetailsType'])
@@ -360,3 +412,50 @@ class PaymentCrud:
         except Exception as e:
             print(e)
             return []
+        
+
+    def get_check_list_table(self):
+        """
+        Obtiene la lista de checklist para el módulo de pagos.
+        
+        Esta función proporciona los datos necesarios para construir la interfaz de checklist
+        que acompaña a la vista principal de pagos. Incluye validaciones para evitar duplicados
+        y asegurar la integridad de la información.
+
+        Returns:
+            tuple[int, str, list]: Tupla con tres elementos:
+                - int: Código de estado HTTP (200 exitoso, 500 error)
+                - str: Mensaje descriptivo del resultado de la operación
+                - list: Lista con los datos del checklist o lista vacía en caso de error
+
+        Note:
+            La función está diseñada para ser llamada durante la carga inicial de la vista de pagos
+            o como parte de una actualización asíncrona de la interfaz.
+        """
+        try:
+            return 200, "Datos obtenidos satisfactoriamente", get_check_list()
+        except Exception as e:
+            print(e)
+            return 500, "Error leyendo el check list", []
+    
+
+    def create_check_list(self, data_json: dict):
+        """
+        Procesa y almacena un nuevo registro de checklist en la base de datos.
+        
+        Esta función aplica la lógica de negocio completa para la creación de checklist,
+        incluyendo validaciones, transformación de datos y persistencia en la base de datos.
+
+        Args:
+            data_json (dict): Diccionario con los datos del checklist a crear. La estructura
+                             específica depende de los requisitos del formulario de entrada.
+
+        Returns:
+            Nota: La función actualmente no tiene implementado el valor de retorno. Se recomienda
+            completar con la lógica de retorno apropiada (tuple[int, str, Any] o similar).
+
+        Todo:
+            - Implementar la lógica completa de validación y inserción
+            - Definir el formato de retorno consistente con otras funciones
+            - Agregar manejo de excepciones y logging de errores
+        """

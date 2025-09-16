@@ -56,10 +56,22 @@ def test_show_payments() -> None:
             'filters': {
                 "DIM_Date": 2021
             }
-        }
+        },
+        {
+                'serviceName': 'panteon',           # Nombre del servicio a consultar (en este caso "agua")
+                'filters': {                     # Objeto que contiene todos los filtros de búsqueda
+                    "CustomerFraction": [        # Array de fracciones/colonias a filtrar
+                        "cerritos",              # Incluir usuarios de la fracción Cerritos
+                        "centro",                # Incluir usuarios de la fracción Centro  
+                        "garambullo",            # Incluir usuarios de la fracción Garambullo
+                        "yhonda"                 # Incluir usuarios de la fracción Yhonda
+                    ],
+                    "DIM_Date": 2025           # Filtro por año: "Y22" probablemente representa el año 2022
+                }
+            },
     ]
     
-    expected_results = [200, 200, 400, 400, 400]
+    expected_results = [200, 200, 400, 400, 400, 200]
     
     for i, (test_case, expected_status) in enumerate(zip(test_cases, expected_results), 1):
         print(f"\n--- Ejecutando caso de prueba {i} ---")
@@ -69,7 +81,7 @@ def test_show_payments() -> None:
         
         print(f"Status Code: {status_code}")
         print(f"Mensaje: {mensaje}")
-        print(f"Data: {data[:3]}")
+        print(f"tamanio de los 2 ultimos elemntos: {len(data[-2:])}") #Para ver el ultimo elemento
         
         # Verificaciones
         assert status_code == expected_status, f"Caso {i}: Esperado {expected_status}, obtenido {status_code}"

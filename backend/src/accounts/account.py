@@ -25,7 +25,7 @@ from src.payments.repository.get_pending_pays import get_all_payments_pending, g
 #Manejadro de los roles para cuenta, ya que es a donde esta asociado
 handler_role = Role()
 
-class AccountCrud():
+class AccountCrud(): 
     """
     Clase la cual sera el metodo principal de la parte de cuentas
     contara con todas las funcionalides principales, ya sea crear, actualizar, leer, eliminar
@@ -79,7 +79,7 @@ class AccountCrud():
             #VALIDACIONES DE PAGOS PENDIENTES EMPIEZAN AQUI
             #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
             #SE TIENE QUE MODIFICAR AQUI SI ES QUE SE QUIERE SER MAS FELXIBLE A LA HORA DE ACTUALIZAR LA INFORMACION
-            
+            """
             pagos_pendientes = get_all_payments_pending(account_json["customer_id"])
 
             if pagos_pendientes is None:
@@ -104,6 +104,8 @@ class AccountCrud():
             if pagos_pendientes:
                 return 404, f"El usuario aun tiene pagos pendientes cambiarse de cuenta: \n {pendientes}"
             
+            
+            """
             pagos_gechos_pendientes = [get_pending_pays(account_json["customer_id"], service_name) for service_name in ["agua", "feria", "panteon", 'delegacion']]
             #print(pagos_gechos_pendientes)
             if pagos_gechos_pendientes is None:

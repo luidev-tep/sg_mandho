@@ -6,6 +6,9 @@ import { Link, useParams } from 'react-router-dom';
 import { generarServicio } from '../../api/pagos/api_generar_servicio.js';
 import PayBg from "../../images/pay-bg.jpg";
 
+import Tooltip from '../../components/Tooltip.jsx';
+
+
 function AgregarServicio() {
   const { moduleName } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -13,6 +16,7 @@ function AgregarServicio() {
   // Estados para el formulario
   const [nombreServicio, setNombreServicio] = useState('');
   const [cantidad, setCantidad] = useState('');
+  const [esOpcional, setEsOpcional] = useState(false); // false = No (obligatorio), true = Sí (opcional)
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [isError, setIsError] = useState(false); // Nuevo estado para controlar si es error
@@ -70,7 +74,7 @@ function AgregarServicio() {
     try {
       console.log('Payload a enviar:', formData);
 
-      const response = await generarServicio(formData);
+      //const response = await generarServicio(formData);
       
       if (response) {
         setMensaje('Servicio creado exitosamente');
@@ -123,7 +127,8 @@ function AgregarServicio() {
       ServiceName: moduleName,
       serviceDetailesType: nombreServicio.trim(),
       amount: parseFloat(cantidad),
-      year: currentYear
+      year: currentYear,
+      isOptional: esOpcional // Nuevo campo booleano
     };
 
     // Verificar si la contraseña ya fue validada
@@ -204,9 +209,15 @@ function AgregarServicio() {
                 <div className="space-y-6">
                   {/* Nombre del Servicio */}
                   <div>
-                    <label className="block text-base font-medium mb-2" htmlFor="nombre-servicio">
-                      Nombre del Servicio <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center">
+                      <label className="block text-base font-medium mb-2" htmlFor="nombre-servicio">
+                        Nombre del Servicio <span className="text-red-500">*</span>
+                      </label>
+                      {/* Tooltip para Nombre del Servicio */}
+                      <Tooltip className="ml-2 mb-1">
+                        <div className="text-sm">Define el nombre específico para este nuevo tipo de servicio (ej: faena, cooperación, etc.).</div>
+                      </Tooltip>
+                    </div>
                     <input 
                       id="nombre-servicio" 
                       className="form-input w-full text-base py-3 px-4" 
@@ -223,9 +234,15 @@ function AgregarServicio() {
 
                   {/* Cantidad a Cobrar */}
                   <div>
-                    <label className="block text-base font-medium mb-2" htmlFor="cantidad">
-                      Cantidad a Cobrar <span className="text-red-500">*</span>
-                    </label>
+                    <div className="flex items-center">
+                      <label className="block text-base font-medium mb-2" htmlFor="cantidad">
+                        Cantidad a Cobrar <span className="text-red-500">*</span>
+                      </label>
+                      {/* Tooltip para Cantidad a Cobrar */}
+                      <Tooltip className="ml-2 mb-1">
+                        <div className="text-sm">Establece el monto que se cobrará por este servicio. El valor debe ser numérico.</div>
+                      </Tooltip>
+                    </div>
                     <input 
                       id="cantidad" 
                       className="form-input w-full text-base py-3 px-4" 
@@ -246,6 +263,44 @@ function AgregarServicio() {
                     />
                     <div className="text-sm text-gray-500 mt-1">
                       Máximo permitido: 1000. 
+                    </div>
+                  </div>
+
+                  {/* Participación Opcional */}
+                  <div>
+                    <div className="flex items-center">
+                      <label className="block text-base font-medium mb-2">
+                        ¿La participación en este servicio es opcional?
+                      </label>
+                      {/* Tooltip para Participación Opcional */}
+                      <Tooltip className="ml-2 mb-1">
+                        <div className="text-sm text-left max-w-xs">
+                          Seleccione 'Sí' si los usuarios pueden excusarse de participar (ej: faenas, actividades voluntarias).<br/><br/>
+                          Seleccione 'No' si la participación es obligatoria para todos (ej: cooperaciones, cuotas fijas).
+                        </div>
+                      </Tooltip>
+                    </div>
+                    <div className="flex items-center space-x-6">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="opcional"
+                          className="form-radio h-4 w-4 text-indigo-600"
+                          checked={esOpcional === true}
+                          onChange={() => setEsOpcional(true)}
+                        />
+                        <span className="ml-2 text-base text-gray-700 dark:text-gray-300">Sí</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="opcional"
+                          className="form-radio h-4 w-4 text-indigo-600"
+                          checked={esOpcional === false}
+                          onChange={() => setEsOpcional(false)}
+                        />
+                        <span className="ml-2 text-base text-gray-700 dark:text-gray-300">No</span>
+                      </label>
                     </div>
                   </div>
 
