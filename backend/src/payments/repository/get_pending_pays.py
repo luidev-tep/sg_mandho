@@ -4,6 +4,10 @@ from src.payments.services.special_services import SpecialServices
 from src.payments.model.pending_paid import PendingPaidModel, PendingPaidModel2
 
 
+#ESTE ARCHIVO YA NO ES FUNCIONAL, DEBIDO A QUE LA QUERY EN LA 
+# QUE SE BASAB HA DEJADO DE FUNCIONAR,
+# SE PLANEA ELIMINARLO
+
 def get_query(type_transaction: str) -> str:
     """
     Genera consultas SQL dinámicas para obtener pagos pendientes basadas en el tipo de transacción.

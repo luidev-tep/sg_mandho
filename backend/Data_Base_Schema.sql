@@ -273,6 +273,126 @@ INNER JOIN DIM_ServiceDetails AS DetalleServicio ON factura.DIM_ServiceDetailsId
 INNER JOIN DIM_Service AS servicio ON DetalleServicio.DIM_ServiceId = servicio.DIM_ServiceId
 WHERE servicio.ServiceName = 'agua'; --CAMBIAR SEGUN EL SERVICIO
 
+
+--CREACION DE NUEVAS VISTAS AHORA SI FINAL:
+
+--TIENEN LOS MISMOS CAMPOS QUE LA VISTAS ANTIGUAS
+CREATE VIEW VISTA_PAGOS_FERIA AS
+WITH vwCustomerPayments AS (
+    SELECT 
+        FACT_Revenue.DIM_DateId,
+        FACT_Revenue.DIM_AccountId,
+        DIM_Customer.DIM_CustomerId,
+        CAST(DIM_Date.Year AS TEXT) as YearPayment,
+        FACT_Revenue.DIM_ServiceDetailsId,
+        DIM_Customer.CustomerName,
+        DIM_Customer.CustomerMiddleName,
+        DIM_Customer.CustomerLastName,
+        DIM_Customer.CustomerSecondLastName, 
+        DIM_Role.RoleName,
+        DIM_Service.ServiceName,
+        DIM_ServiceDetails.ServiceDetailesType,
+        DIM_Status.StatusName,
+        sum(FACT_Revenue.amount) as BilledRevenue
+    FROM FACT_Revenue
+    JOIN DIM_Date ON DIM_Date.DIM_DateId = FACT_Revenue.DIM_DateId
+    JOIN DIM_Account ON DIM_Account.DIM_AccountId = FACT_Revenue.DIM_AccountId
+    JOIN DIM_Customer ON DIM_Customer.DIM_CustomerId = DIM_Account.DIM_CustomerId
+    JOIN DIM_Role ON DIM_Role.DIM_RoleId = DIM_Account.DIM_RoleId
+    JOIN DIM_ServiceDetails ON DIM_ServiceDetails.DIM_ServiceDetailsId = FACT_Revenue.DIM_ServiceDetailsId
+    JOIN DIM_Service ON DIM_Service.DIM_ServiceId = DIM_ServiceDetails.DIM_ServiceId
+    JOIN DIM_Movement ON DIM_Movement.DIM_MovementId = FACT_Revenue.DIM_MovementId
+    JOIN DIM_Status ON DIM_Status.DIM_StatusId = FACT_Revenue.DIM_StatusId
+    WHERE UPPER(DIM_Movement.MovementName) = 'INGRESO'
+    GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
+),
+vwServiceCost AS (
+    SELECT 
+        DIM_ServiceDetails.DIM_DateId,
+        DIM_Date.FiscalYear,
+        DIM_Date.FiscalMonth,
+        DIM_ServiceDetails.DIM_ServiceDetailsId,
+        DIM_Service.ServiceName,
+        DIM_ServiceDetails.ServiceDetailesType,
+        sum(DIM_ServiceDetails.amount) as BilledServiceRevenue
+    FROM DIM_ServiceDetails
+    JOIN DIM_Date ON DIM_Date.DIM_DateId = DIM_ServiceDetails.DIM_DateId
+    JOIN DIM_Service ON DIM_Service.DIM_ServiceId = DIM_ServiceDetails.DIM_ServiceId
+    GROUP BY 1,2,3,4,5,6
+),
+vwCustomerDetailedTransactions AS (
+    SELECT
+        vwServiceCost.DIM_DateId as ServiceDateCreated,
+        vwCustomerPayments.DIM_DateId as CustomerPaymentDate,
+        vwServiceCost.FiscalYear,
+        vwCustomerPayments.DIM_AccountId,
+        vwCustomerPayments.DIM_CustomerId,
+        vwCustomerPayments.DIM_ServiceDetailsId,
+        vwServiceCost.ServiceName,
+        vwServiceCost.ServiceDetailesType,
+        vwCustomerPayments.CustomerName, 
+        vwCustomerPayments.CustomerMiddleName,
+        vwCustomerPayments.CustomerLastName,
+        vwCustomerPayments.CustomerSecondLastName,
+        vwCustomerPayments.RoleName,
+        vwCustomerPayments.StatusName as BillStatus,
+        SUM(COALESCE(vwCustomerPayments.BilledRevenue,0)) as CustomerPaid,
+        SUM(COALESCE(vwCustomerPayments.BilledRevenue,0)) OVER (PARTITION BY vwCustomerPayments.DIM_ServiceDetailsId, vwCustomerPayments.DIM_AccountId ORDER BY vwCustomerPayments.DIM_DateId) as CustomerPaidTotal,
+        SUM(COALESCE(vwServiceCost.BilledServiceRevenue,0)) as TotalCost
+    FROM vwServiceCost
+    LEFT JOIN vwCustomerPayments ON vwCustomerPayments.DIM_ServiceDetailsId = vwServiceCost.DIM_ServiceDetailsId
+    GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+),
+vwCustomerRecords AS (
+    SELECT 
+        ServiceDateCreated,
+        CustomerPaymentDate,
+        FiscalYear,
+        DIM_AccountId,
+        DIM_CustomerId,
+        DIM_ServiceDetailsId,
+        ServiceName,
+        ServiceDetailesType,
+        CustomerName,
+        CustomerMiddleName,
+        CustomerLastName,
+        CustomerSecondLastName,
+        RoleName,
+        BillStatus,
+        CustomerPaid,
+        CustomerPaidTotal,
+        TotalCost,
+        TotalCost - CustomerPaidTotal as Pending,
+        CASE 
+            WHEN TotalCost - CustomerPaidTotal <= 0 THEN 'completo' 
+            ELSE 'pendiente' 
+        END as RealStatusHardcoded,
+        RANK() OVER (PARTITION BY DIM_CustomerId, DIM_ServiceDetailsId ORDER BY CustomerPaymentDate DESC) as Ranking
+    FROM vwCustomerDetailedTransactions
+)
+SELECT
+    vw.CustomerName, 
+    vw.CustomerMiddleName, 
+    vw.CustomerLastName, 
+    vw.CustomerSecondLastName,
+    vw.RoleName,
+    CASE 
+        WHEN clientes.CustomerEndDate = 's/n' THEN 'activo'
+        ELSE 'inactivo'
+    END AS StatusCuenta,
+    vw.RealStatusHardcoded AS StatusFactura,
+    vw.ServiceDetailesType,
+    vw.CustomerPaidTotal as amount,
+    CONCAT('20', SUBSTRING(vw.FiscalYear, 2, 2)) as YearPay, 
+    vw.CustomerPaymentDate as DIM_DateId,
+    vw.DIM_AccountId,
+    vw.DIM_CustomerId
+FROM vwCustomerRecords AS vw
+JOIN DIM_Customer as clientes ON clientes.DIM_CustomerId = vw.DIM_CustomerId 
+WHERE vw.ServiceName = 'panteon' 
+AND vw.Ranking = 1;
+
+
 -- Eliminamos la vista si existe, esto es solo si se quiere actualizar la vista
 --DROP VIEW IF EXISTS VISTA_PAGOS_AGUA;
 

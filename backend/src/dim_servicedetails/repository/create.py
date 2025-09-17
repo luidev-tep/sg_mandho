@@ -20,10 +20,11 @@ def insertar_registro(data: DIM_Details) -> None:
         DIM_ServiceId,
         ServiceDetailesType,
         amount,
+        DIM_StatusId,
         StartDate,
         EndDate
     ) VALUES (
-        ? , ? , ? , ? , ?, ?, ?
+        ? , ? , ? , ? , ?, ?, ?, ?
     ) """
     try:
         values = (
@@ -32,6 +33,7 @@ def insertar_registro(data: DIM_Details) -> None:
             data.DIM_ServiceId,
             data.serviceDetailesType,
             data.amount,
+            data.isOptional,
             data.StartDate,
             data.EndDate
         )

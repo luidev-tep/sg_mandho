@@ -38,10 +38,19 @@ class ServiceDetailsCrud:
                 - (400, str): If the data is invalid or a similar service already exists for the year.
                 - (404, str): If the specified service name is not found.
                 - (500, str): If an unexpected error occurs during the process.
+                
+                
+                {
+                "ServiceName": "agua",
+                "amount": 400,
+                "isOptional": True,
+                "serviceDetailesType": "faena cerro",
+                "year": 2025
+            }
         """
         float(service_details_json["amount"])
-        campos = ["ServiceName", "serviceDetailesType", "amount", "year", "ServiceState"] #Se debe agregar a la bd, Verificar logica de agregacion tambien
-        tipo_campos = [str, str, float, int]
+        campos = ["ServiceName", "serviceDetailesType", "amount", "year", "ServiceState", 'isOptional'] #Se debe agregar a la bd, Verificar logica de agregacion tambien
+        tipo_campos = [str, str, float, int, str, bool]
         is_valid = validate_data(service_details_json, campos, tipo_campos, "service details")
         if not is_valid:
             return 400, "Datos invalidos"
@@ -67,6 +76,11 @@ class ServiceDetailsCrud:
             has_Similar_service = valide_service_details(service_details_json)
             if has_Similar_service:
                 return 400, "Ya existe un servicio similar en el anio actual"
+            
+            if service_details_json['isOptional'] == True :
+                is_optional = 'status6'
+            else:
+                is_optional = 'status7'
 
             # servicio, detalle[0], starDate[1:7]
             startDate = str(handler_date.dateId)
@@ -76,14 +90,13 @@ class ServiceDetailsCrud:
                 "DIM_ServiceId": service_id,
                 "serviceDetailesType": service_details_json["serviceDetailesType"],
                 "amount": service_details_json["amount"],
+                "isOptional": is_optional,
                 # Modificar desde aquiiii
                 "StartDate": StartDate, # Estos aun no existen
                 "EndDate": EndDate # ni este sajsvnfk
             }
             print(f"Data format for service details: {data_format}")
             service_details = DIM_Details(**data_format)
-            
-            # SE DEJA PENDIENTE EL CREAR SERVICIO CORRECTAMENTE PARA QUE SE TERMINEN DE HACER LA PRUEBAS 
             insertar_registro(service_details)
             
             return 201, data_format["DIM_ServiceDetailsId"]

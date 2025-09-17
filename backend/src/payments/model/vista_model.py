@@ -71,9 +71,9 @@ class VistaModel:
                 CustomerSecondLastName: str,
                 StatusFactura: str,
                 amount: float,
-                FACT_RevenueId: str,
                 DIM_DateId: str,
-                DIM_AccountId: str
+                DIM_AccountId: str,
+                FACT_RevenueId: str
                 ) -> dict:
         """
         Construye una vista específica para un cliente con todas las columnas necesarias.
@@ -112,6 +112,7 @@ class VistaModel:
                 'DIM_DateId': 'date_789'
             }
         """
+        
         # Creamos el diccionario formateado con los mismos nombres de parámetros
         datos = {
             "CustomerName": CustomerName,
@@ -124,5 +125,6 @@ class VistaModel:
             "DIM_DateId": self.get_date(DIM_DateId) ,# Vienen como 2023/04/12
             "DIM_AccountId": DIM_AccountId
         }
+        print(datos)
 
         return datos

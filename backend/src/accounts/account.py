@@ -20,7 +20,7 @@ from src.dim_roles.role import Role
 from src.users.repository.delete import is_admin, defuncion_validation
 
 #Validaciones de pagos se llaman aqui
-from src.payments.repository.get_pending_pays import get_all_payments_pending, get_pending_pays
+from src.analytics_reports.Analitycs import Analitycs
 
 #Manejadro de los roles para cuenta, ya que es a donde esta asociado
 handler_role = Role()
@@ -106,28 +106,34 @@ class AccountCrud():
             
             
             """
-            pagos_gechos_pendientes = [get_pending_pays(account_json["customer_id"], service_name) for service_name in ["agua", "feria", "panteon", 'delegacion']]
+            data = {
+                'Dim_customerId': account_json['customer_id']
+            }
+            hanlder_analitycs = Analitycs()
+            status, mensaje , pagos_gechoss = hanlder_analitycs.get_analytics_per_customer(data)
             #print(pagos_gechos_pendientes)
-            if pagos_gechos_pendientes is None:
-                return 404, 'No se pudo obtener la informacion del usuario'
+            if status != 200:
+                return status, mensaje #No se pudo obtener la informaci
             
+            #print(pagos_gechoss)
             pendientes = ''
-            for categoria in pagos_gechos_pendientes:
+            pagos_gechos_pendientes = pagos_gechoss['pendientes']
 
-                if categoria == []:
-                        continue
-                
-                for pago in categoria:
-                    year = pago['year']
-                    services = pago['data']
+            if pagos_gechos_pendientes:
+                claves = pagos_gechos_pendientes.keys()
+                for comitiva in claves:
+
+                    if pagos_gechos_pendientes[comitiva] == []:
+                            continue
                     
-                    fila = f'Año {year}:  \n'
-                    for service in services:
-                        service_ype = service['serviceType']
-                        amount = service['amount']
-                        
-                        # Formato más legible y amigable
-                        fila += f'  Servicio de {service_ype} - Debe: $ {amount}\n'
+                    for servicio in pagos_gechos_pendientes[comitiva]:
+                        year = servicio['Year']
+                        service_ype = servicio['ServiceDetailesType']
+                        amount = servicio['amount']
+                        fila = f'Año {year}:  \n'
+                            
+                            # Formato más legible y amigable
+                        fila += f'  Servicio de {comitiva} - Tipo: {service_ype} - Debe: $ {amount}\n'
                         pendientes += fila
                 if any(pagos_gechos_pendientes):
                     return 404, f"El usuario aun tiene pagos pendientes Antes de poder cambiarse de cuenta: \n {pendientes}"

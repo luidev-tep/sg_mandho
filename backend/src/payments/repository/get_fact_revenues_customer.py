@@ -22,10 +22,9 @@ def get_query_base() -> str:
         vw.CustomerSecondLastName,
         vw.StatusFactura,
         vw.amount,
-        vw.FACT_RevenueId,
         vw.DIM_DateId,
         DIM_AccountId
-        from VISTA_PAGOS_[tabla] as vw
+        from VISTA_PAGOS_DETALLADO_[tabla] as vw
         """
 
 def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, service_type: str, Year: str) -> tuple[int, list[dict]]:
@@ -58,7 +57,7 @@ def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, serv
     handler_vista = VistaModel()
     query_base = get_query_base()
     query_base += f"""
-        where DIM_CustomerId = ? AND
+        where vw.DIM_CustomerId = ? AND
         vw.ServiceDetailesType = ? AND
         vw.YearPay = ?
         """
@@ -74,7 +73,7 @@ def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, serv
             return 200, []
 
         # Construimos los datos utilizando el modelo de vista
-        datos = [handler_vista.Buid_vista_by_customer(*row) for row in rows if row]  # Usamos unpacking para pasar los valores
+        datos = [handler_vista.Buid_vista_by_customer(*row, f'{row[-2]}{row[-1]}') for row in rows if row]  # Usamos unpacking para pasar los valores
 
         return 200, datos
 
