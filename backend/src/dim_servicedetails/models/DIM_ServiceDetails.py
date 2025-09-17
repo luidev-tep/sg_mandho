@@ -6,7 +6,15 @@ class DIM_Details:
     incluyendo su identificador, fechas, tipo, monto y el ID del servicio asociado.
     """
     
-    def __init__(self, DIM_ServiceDetailsId: str, DIM_DateId: int, DIM_ServiceId: str, serviceDetailesType: str, amount: float, StartDate: str, EndDate: str) -> None:
+    def __init__(self,
+        DIM_ServiceDetailsId: str,
+        DIM_DateId: int,
+        DIM_ServiceId: str,
+        serviceDetailesType: str,
+        amount: float,
+        StartDate: str,
+        EndDate: str,
+        isOptional: str) -> None:
         """
         Constructor de la clase DIM_Details.
 
@@ -24,6 +32,7 @@ class DIM_Details:
         self.DIM_ServiceId = DIM_ServiceId        
         self.serviceDetailesType = serviceDetailesType
         self.amount = amount
+        self.isOptional = isOptional
         self.StartDate = StartDate
         self.EndDate = EndDate
         
@@ -40,6 +49,7 @@ class DIM_Details:
             "DIM_ServiceId": self.DIM_ServiceId,
             "serviceDetailesType": self.serviceDetailesType,
             "amount": self.amount,
+            "isOptional": self.isOptional,
             "StartDate": self.StartDate,
             "EndDate": self.EndDate
         }

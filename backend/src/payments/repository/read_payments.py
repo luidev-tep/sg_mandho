@@ -37,26 +37,14 @@ class ReadPayment:
         vw.StatusCuenta,
         vw.StatusFactura,
         vw.ServiceDetailesType,
-        sum(vw.amount) as amount,
+        amount,
         vw.YearPay,
         vw.DIM_AccountId,
         vw.DIM_CustomerId
         FROM [tabla] as vw
 
         [filtros]
-
-        GROUP BY 
-        vw.CustomerName,
-        vw.CustomerMiddleName,
-        vw.CustomerLastName,
-        vw.CustomerSecondLastName,
-        vw.RoleName,
-        vw.StatusCuenta,
-        vw.StatusFactura,
-        vw.ServiceDetailesType,
-        vw.YearPay,
-        vw.DIM_AccountId,
-        vw.DIM_CustomerId"""
+        """
 
         self.agua = self.__Query_base.replace("[tabla]", "VISTA_PAGOS_AGUA")
         self.feria = self.__Query_base.replace("[tabla]", "VISTA_PAGOS_FERIA")

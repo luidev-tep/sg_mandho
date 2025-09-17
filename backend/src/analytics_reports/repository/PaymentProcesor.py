@@ -45,25 +45,12 @@ class PaymentProcessor(GetAnalytics):
         vw.StatusCuenta,
         vw.StatusFactura,
         vw.ServiceDetailesType,
-        sum(vw.amount) as amount,
+        vw.amount,
         vw.YearPay,
         vw.DIM_AccountId,
         vw.DIM_CustomerId
         FROM [tabla] as vw
         WHERE DIM_CustomerId = ?
-        GROUP BY 
-        vw.CustomerName,
-        vw.CustomerMiddleName,
-        vw.CustomerLastName,
-        vw.CustomerSecondLastName,
-        vw.RoleName,
-        vw.StatusCuenta,
-        vw.StatusFactura,
-        vw.ServiceDetailesType,
-        vw.YearPay,
-        vw.DIM_AccountId,
-        vw.DIM_CustomerId
-        ORDER by YearPay
         """
         
         pagos_completos = []

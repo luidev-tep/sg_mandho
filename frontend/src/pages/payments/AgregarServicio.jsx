@@ -74,7 +74,7 @@ function AgregarServicio() {
     try {
       console.log('Payload a enviar:', formData);
 
-      //const response = await generarServicio(formData);
+      const response = await generarServicio(formData);
       
       if (response) {
         setMensaje('Servicio creado exitosamente');
@@ -85,9 +85,9 @@ function AgregarServicio() {
         // Reset de verificación para próximas acciones
         setIsPasswordVerified(false);
       }
+
     } catch (error) {
       console.error('Error al crear servicio:', error);
-      // MODIFICACIÓN: Mostrar el mensaje de error específico del backend en lugar del genérico
       setMensaje(error.message || 'Error al crear el servicio. Intente nuevamente.');
       setIsError(true); // Es error
       // Reset de verificación en caso de error

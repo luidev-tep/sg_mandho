@@ -5,7 +5,7 @@ def test_insert_account():
     crud = AccountCrud()
     account_json = {
         "status": "estudiante",
-        "customer_id": "d3d688b5-ca9d-5e2c",
+        "customer_id": "9154e0f2-1f5f-5f2d",
         "start_date": "2025-01-01",
         "end_date": "s/n"
     }
