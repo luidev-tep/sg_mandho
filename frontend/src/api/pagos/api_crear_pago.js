@@ -7,19 +7,18 @@ const api = axios.create({
 
 export const crearRegistroPago = async (data) => {
     try {
-        // Validación corregida de campos requeridos
-        if (!data.DIM_AccountId || !data.DIM_CustomerId || !data.ServiceName || !data.DIM_OnwerCustomerId 
-            || !data.serviceDetailsType || !data.amount || !data.AnioPago || !data.FactAmount ) {
-            throw new Error('Faltan campos requeridos para crear el pago');
+        // Si 'data' es un array y está vacío, no hacemos la petición.
+        if (Array.isArray(data) && data.length === 0) {
+            return { success: true, message: "No hay registros para crear.", data: [] };
         }
 
-        console.log(data);
-
+        // El backend ahora maneja tanto un objeto como una lista,
+        // así que enviamos 'data' directamente.
+        console.log("Payload enviado a api/payment/create:", data);
         const response = await api.post('create/', data);
         
-        console.log("Respuesta del servidor:", response.data);
+        console.log("Respuesta del servidor al crear pago(s):", response.data);
         
-        // Devolvemos toda la respuesta, no solo los datos
         return {
             success: response.data.status || false,
             message: response.data.message ,
@@ -49,5 +48,3 @@ export const crearRegistroPago = async (data) => {
         throw new Error(errorMessage);
     }
 };
-
-

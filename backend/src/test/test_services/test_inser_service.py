@@ -11,10 +11,11 @@ def test_service():
     """
     handler_service = ServiceDetailsCrud()
     data = {
-    "serviceDetailesType": "cooperacion camino",
+    "serviceDetailesType": "camino de la vida",
     "ServiceName": "panteon",
     "year": 2025,
-    "amount": 200
+    "amount": 200,
+    "isOptional": True
 }
 
     response = handler_service.insert_service_details(data)

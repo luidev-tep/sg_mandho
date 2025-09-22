@@ -10,6 +10,7 @@ class CheckListModel:
         CustomerMiddleName (str): Segundo nombre del cliente.
         CustomerLastName (str): Primer apellido del cliente.
         CustomerSecondLastName (str): Segundo apellido del cliente.
+        CustomerFraction (str): Fraccionamiento o sector al que pertenece el cliente.
         RoleName (str): Nombre del rol o perfil del cliente en el sistema.
         DIM_AccountId (str): Identificador único de la cuenta del cliente en la dimensión correspondiente.
         DIM_CustomerId (str): Identificador único del cliente en la dimensión correspondiente.
@@ -19,12 +20,13 @@ class CheckListModel:
     """
     
     def __init__(self, CustomerName: str, 
-                 CustomerMiddleName: str, 
-                 CustomerLastName: str, 
-                 CustomerSecondLastName: str,
-                 RoleName: str, 
-                 DIM_AccountId: str,
-                 DIM_CustomerId: str):
+                     CustomerMiddleName: str, 
+                     CustomerLastName: str, 
+                     CustomerSecondLastName: str,
+                     CustomerFraction: str,
+                     RoleName: str, 
+                     DIM_AccountId: str,
+                     DIM_CustomerId: str):
         """
         Inicializa una nueva instancia del modelo CheckListModel.
         
@@ -33,6 +35,7 @@ class CheckListModel:
             CustomerMiddleName (str): Segundo nombre del cliente.
             CustomerLastName (str): Primer apellido del cliente.
             CustomerSecondLastName (str): Segundo apellido del cliente.
+            CustomerFraction (str): Fraccionamiento o sector del cliente.
             RoleName (str): Nombre del rol o perfil del cliente.
             DIM_AccountId (str): Identificador único de la cuenta del cliente.
             DIM_CustomerId (str): Identificador único del cliente.
@@ -41,6 +44,7 @@ class CheckListModel:
         self.CustomerMiddleName = CustomerMiddleName
         self.CustomerLastName = CustomerLastName
         self.CustomerSecondLastName = CustomerSecondLastName
+        self.CustomerFraction = CustomerFraction
         self.RoleName = RoleName
         self.DIM_AccountId = DIM_AccountId
         self.DIM_CustomerId = DIM_CustomerId
@@ -54,13 +58,14 @@ class CheckListModel:
                   Útil para conversión a JSON o para almacenamiento en bases de datos.
         
         Example:
-            >>> cliente = CheckListModel("Juan", "Carlos", "Pérez", "Gómez", "Admin", "ACC123", "CUST456")
+            >>> cliente = CheckListModel("Juan", "Carlos", "Pérez", "Gómez", "Sector A", "Admin", "ACC123", "CUST456")
             >>> cliente.to_dict()
             {
                 'CustomerName': 'Juan',
                 'CustomerMiddleName': 'Carlos',
                 'CustomerLastName': 'Pérez',
                 'CustomerSecondLastName': 'Gómez',
+                'CustomerFraction': 'Sector A',
                 'RoleName': 'Admin',
                 'DIM_AccountId': 'ACC123',
                 'DIM_CustomerId': 'CUST456'
@@ -71,6 +76,7 @@ class CheckListModel:
             "CustomerMiddleName": self.CustomerMiddleName,
             "CustomerLastName": self.CustomerLastName,
             "CustomerSecondLastName": self.CustomerSecondLastName,
+            "CustomerFraction": self.CustomerFraction,
             "RoleName": self.RoleName,
             "DIM_AccountId": self.DIM_AccountId,
             "DIM_CustomerId": self.DIM_CustomerId

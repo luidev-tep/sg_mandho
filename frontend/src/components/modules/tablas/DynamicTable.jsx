@@ -59,7 +59,7 @@ function DynamicTable({ filters, serviceName }) {
         'filters': backendFilters
       });
       
-      console.log('✅ Pagos cargados con éxito.', response.data);
+      //console.log('✅ Pagos cargados con éxito.', response.data);
 
       // Extraer los datos de servicios válidos si existen
       const lastItem = response.data[response.data.length - 1];

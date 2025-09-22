@@ -5,7 +5,7 @@ from src.dim_servicedetails.serviceDetails import ServiceDetailsCrud
 from src.dim_serviceonwers.dim_serviceOnwers import DIM_ServiceOnwersCrud
 
 # Se importa la funcion para obtener el id de detalles del servicio
-from src.dim_servicedetails.repository.show import get_service_detailsID
+from src.dim_servicedetails.repository.show import get_service_detailsID, get_amount_by_id  
 
 fact_revenue_handler = factRevenueCrud()
 dim_service_details_handler = ServiceDetailsCrud()
@@ -439,7 +439,7 @@ class PaymentCrud:
             return 500, "Error leyendo el check list", []
     
 
-    def create_check_list(self, data_json: dict):
+    def create_check_list_payments(self, payment_json: list):
         """
         Procesa y almacena un nuevo registro de checklist en la base de datos.
         
@@ -459,3 +459,31 @@ class PaymentCrud:
             - Definir el formato de retorno consistente con otras funciones
             - Agregar manejo de excepciones y logging de errores
         """
+        for data_json in payment_json:
+            data_json['amount'] = float(data_json['amount'])
+            data_json['FactAmount'] = float(data_json['FactAmount'])
+            data_json['AnioPago'] = str(data_json['AnioPago'])
+            fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
+            
+            type_fields = [str, str, str, str, str, str, str, str, float, float]
+            is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
+            
+            if not is_valid:
+                return 400, message
+            
+            #Validar si no existe otro pago pendiente 
+            is_valid, message = validate_payment.is_payment_active(data_json['DIM_CustomerId'], data_json['AnioPago'], data_json['ServiceName'], data_json['entrada'], data_json['serviceDetailsType'])
+            if not is_valid:
+                return 400, message
+            
+        try:
+            # Crear el registro de ingresos en la tabla de facturación
+            code, message = fact_revenue_handler.insert_many_register(payment_json)
+            
+            if code != 201:
+                return code, message
+            
+            return 201, "Pagos creados exitosamente"
+        except Exception as e:
+            print(e)
+            return 500, f"Error leyendo el check list: {str(e)}"
