@@ -14,6 +14,9 @@ from src.dim_servicedetails.services.validate_servicedatil import valide_service
 
 from src.dim_servicedetails.repository.create import insertar_registro
 
+
+from src.dim_servicedetails.repository.update import update_ServiceDetails
+
 class ServiceDetailsCrud:
     """Class to handle CRUD operations for service details."""
 
@@ -78,12 +81,13 @@ class ServiceDetailsCrud:
                 return 400, "Ya existe un servicio similar en el anio actual"
             
             if service_details_json['isOptional'] == True :
-                is_optional = 'status6'
-            else:
                 is_optional = 'status7'
+            else:
+                is_optional = 'status6'
 
             # servicio, detalle[0], starDate[1:7]
             startDate = str(handler_date.dateId)
+            #se creara un hash para el id
             data_format = {
                 "DIM_ServiceDetailsId": create_id([service_details_json['ServiceName'], service_details_json['serviceDetailesType'], startDate[2:7]]), # Testeado para que no de error
                 "DIM_DateId": handler_date.dateId,
@@ -91,18 +95,20 @@ class ServiceDetailsCrud:
                 "serviceDetailesType": service_details_json["serviceDetailesType"],
                 "amount": service_details_json["amount"],
                 "isOptional": is_optional,
-                # Modificar desde aquiiii
-                "StartDate": StartDate, # Estos aun no existen
-                "EndDate": EndDate # ni este sajsvnfk
+                "StartDate": StartDate,
+                "EndDate": EndDate
             }
             print(f"Data format for service details: {data_format}")
             service_details = DIM_Details(**data_format)
-            insertar_registro(service_details)
             
-            return 201, data_format["DIM_ServiceDetailsId"]
-        
+            result = insertar_registro(service_details)
+            
+            if result:
+                return 201, data_format["DIM_ServiceDetailsId"]
+            else:
+                return 500, "Error creando el servicio"
         except Exception as e:
-            return 500, f"Error creating service details: {e}"
+            return 500, f"Error creando el servicio: {e}"
     
 
     """
@@ -148,7 +154,16 @@ para el dim_dateid hazlo en este formato 20200101
             return 500, {}
         
     
-    def Update_dim_service_details(self, service_details_json: dict) -> tuple:
+    def Update_dim_service_details(self, dim_service_details_id: str, dim_status_id: str) -> tuple:
         """
         Funcion que actualiza el unico parametro modificable de dim_service_details
+        el parametro que se actualizara sera el dim_statusId, ya qi epasara no usado a usado
+        
         """
+        
+        response = update_ServiceDetails(dim_status_id, dim_service_details_id)
+        
+        if not response:
+            return 500, "Error actualizando el servicio"
+        
+        return 200, "Servicio actualizado exitosamente"

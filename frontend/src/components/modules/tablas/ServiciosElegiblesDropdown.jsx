@@ -14,10 +14,10 @@ function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess }
   // Imprimir en consola cuando lleguen los datos
   useEffect(() => {
     if (serviciosValidos && serviceName) {
-      console.log('📥 Datos recibidos en ServiciosElegiblesDropdown:');
-      console.log('serviceName:', serviceName);
-      console.log('serviciosValidos.servicios:', serviciosValidos.servicios);
-      console.log('serviciosValidos.usuarios:', serviciosValidos.usuarios);
+      // console.log('📥 Datos recibidos en ServiciosElegiblesDropdown:');
+      // console.log('serviceName:', serviceName);
+      // console.log('serviciosValidos.servicios:', serviciosValidos.servicios);
+       console.log('serviciosValidos.usuarios:', serviciosValidos.usuarios);
     }
   }, [serviciosValidos, serviceName]);
 

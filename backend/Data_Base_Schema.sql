@@ -49,6 +49,8 @@ CREATE TABLE DIM_Customer (
     CustomerFraction TEXT DEFAULT 's/n',
     CustomerAddress TEXT DEFAULT 's/n',
     CustomerNumberExt TEXT DEFAULT 's/n',
+    username TEXT DEFAULT 'n/a',
+    password TEXT,
     timestamp TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
     FOREIGN KEY (DIM_DateId) REFERENCES DIM_Date(DIM_DateId)
 );
@@ -56,7 +58,7 @@ CREATE TABLE DIM_Customer (
 -- Tabla DIM_Account
 CREATE TABLE DIM_Account (
     DIM_AccountId TEXT PRIMARY KEY,
-    DIM_DateId INTEGER,,
+    DIM_DateId INTEGER,
     DIM_CustomerId TEXT NOT NULL,
     DIM_RoleId TEXT NOT NULL,
     DIM_StatusId TEXT NOT NULL,
@@ -148,9 +150,9 @@ SELECT * FROM FACT_Revenue;
 --INSERSION DE DATOS PREDEFINIDOS EN DIM_STATUS
 INSERT INTO DIM_Status(DIM_StatusId, StatusName) VALUES ('status1', 'activo');
 INSERT INTO DIM_Status(DIM_StatusId, StatusName) VALUES ('status2', 'inactivo');
-INSERT INTO DIM_Status(DIM_StatusId, StatusName) VALUES ('status4', 'pagado');
+INSERT INTO DIM_Status(DIM_StatusId, StatusName) VALUES ('status4', 'completo');
 INSERT INTO DIM_Status(DIM_StatusId, StatusName) VALUES ('status5', 'pendiente');
-INSERT INTO DIM_Status(DIM_StatusId, StatusName) VALUES ('status3', 'desactivado'); 
+INSERT INTO DIM_Status(DIM_StatusId, StatusName) VALUES ('status3', 'trabajado');  --Se modifico este Status para ser el pago que si se crea pero no se paga
 
 -- Insertar roles en la tabla DIM_Role
 INSERT INTO DIM_Role (DIM_RoleId, RoleName, RoleType, RoleStartDate, RoleEndDate) 
@@ -182,7 +184,7 @@ VALUES ('e03b67a8-f9d7-5e9d', 'invalido', 'inactivo', '2000-01-01', '2100-01-01'
 
 
 -- Insertar registros en la tabla DIM_Movement Solo son 2 registros
-insert into DIM_Movement; 
+insert into DIM_Movement 
 (DIM_MovementId, MovementName) VALUES
 ('d3e7d32b-d440-5048', 'ingreso');
 insert into DIM_Movement 
@@ -212,6 +214,17 @@ insert into DIM_Service
 VALUES
 ('acf85e49-6bce-5a8b','delegacion');
 
+--SE AGREGARON 2 NUEVOS SERVICIOS LOS CUALES SERVIRAN PARA TERMINAR DE TENER A TODOS LOS USUARIOS ADMINISTRADORES Del SISTEMA
+insert into DIM_Service
+ (DIM_ServiceId,ServiceName)
+  VALUES
+   ('e9d33cc0-90a8-51fd','personas');
+
+insert into DIM_Service
+ (DIM_ServiceId,ServiceName)
+  VALUES
+   ('dd9bd03b-0180-54c6','delegado');
+
 
 -- Estos servicios se deberan renovar anualmente para que se mantengan actualizado, solo deberia cambia star, y endate
 --Registro de peuba metido en service details, SE DEBERA ACOMPLETAR COIN TODOS LOS TIPOS DE SERVICIO DE CADA COMITIVA
@@ -228,12 +241,12 @@ VALUES
 insert into DIM_ServiceDetails
 (DIM_ServiceDetailsId, DIM_DateId, DIM_ServiceId, ServiceDetailesType, amount, StartDate, EndDate)
 VALUES
-('cb6a2afc-1318-5658', '080c33d3-7f33-55d7', 'e2d33355-5186-597c', 'faenap', 300.0, '2025-01-01', '2025-12-31');
+('cb6a2afc-1318-5658', '080c33d3-7f33-55d7', 'e2d33355-5186-597c', 'faena', 300.0, '2025-01-01', '2025-12-31');
 
 insert into DIM_ServiceDetails
 (DIM_ServiceDetailsId, DIM_DateId, DIM_ServiceId, ServiceDetailesType, amount, StartDate, EndDate)
 VALUES
-('41ba58e0-500f-53ef', '080c33d3-7f33-55d7', 'e2d33355-5186-597c', 'cooperacionp', 400.0, '2025-01-01', '2025-12-31');
+('41ba58e0-500f-53ef', '080c33d3-7f33-55d7', 'e2d33355-5186-597c', 'cooperacion', 400.0, '2025-01-01', '2025-12-31');
 
 
 
@@ -412,6 +425,8 @@ WHERE
 
 select * from DIM_Date
 
+
+
 -- Ejemplo de la consulta que se haria para ver los pagos de lar personas
 -- Unidos por anio y por cuenta
 
@@ -424,24 +439,12 @@ vw.RoleName,
 vw.StatusCuenta,
 vw.StatusFactura,
 vw.ServiceDetailesType,
-sum(vw.amount) as amount,
+vw.amount,
 vw.YearPay,
 vw.DIM_AccountId,
 vw.DIM_CustomerId
 FROM VISTA_PAGOS_AGUA as vw --La tabla tamibien seria dinamic
 --Filtros irian aqui
-GROUP BY 
-vw.CustomerName,
-vw.CustomerMiddleName,
-vw.CustomerLastName,
-vw.CustomerSecondLastName,
-vw.RoleName,
-vw.StatusCuenta,
-vw.StatusFactura,
-vw.ServiceDetailesType,
-vw.YearPay,
-vw.DIM_AccountId,
-vw.DIM_CustomerId
 
 
 -- SE CREO UNA NUEVA VISTA LA CUAL SE PODRA UTILIZAR EN LAS CHECK LIST
@@ -451,6 +454,7 @@ SELECT
     c.CustomerMiddleName, 
     c.CustomerLastName, 
     c.CustomerSecondLastName,
+    c.CustomerFraction,
     r.RoleName, 
     a.DIM_AccountId,
     c.DIM_CustomerId

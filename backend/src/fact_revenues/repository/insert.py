@@ -57,3 +57,77 @@ def insert_fact_revenue(data_revenue: FACT_Revenue) -> bool:
         return False
     finally:
         object_conetion.close_conexion()
+        
+def insert_many_fact_revenues(data_revenue: list[FACT_Revenue]) -> bool:
+    """Inserta múltiples registros de ingresos en la tabla FACT_Revenue.
+
+    Esta función toma una lista de objetos de datos de ingresos y los inserta
+    en la base de datos de forma optimizada mediante `executemany`,
+    manejando la conexión y el commit de la transacción.
+
+    Args:
+        data_revenue (list[FACT_Revenue]): Una lista de objetos `FACT_Revenue`
+                                           que contienen los atributos necesarios para
+                                           la inserción, como `Fact_RevenueId`, `DIM_DateId`, etc.
+
+    Returns:
+        bool: Retorna True si todas las inserciones fueron exitosas y False en caso de error.
+              Maneja excepciones de `sqlite3.Error` para errores específicos de la base de datos.
+    """
+    object_conetion = Conexion()
+    try:
+        # Consulta SQL para la inserción de múltiples registros
+        query = """
+        INSERT INTO FACT_Revenue (
+            FACT_RevenueId, 
+            DIM_DateId, 
+            DIM_AccountId, 
+            DIM_ServiceDetailsId, 
+            DIM_MovementId, 
+            DIM_StatusId, 
+            amount
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """
+        
+        # Preparar todos los valores de los objetos en una lista de tuplas
+        valores = [
+            (
+                revenue.Fact_RevenueId,
+                revenue.DIM_DateId,
+                revenue.DIM_AccountId,
+                revenue.DIM_ServiceDetailsId,
+                revenue.DIM_MovementId,
+                revenue.DIM_StatusId,
+                revenue.amount,
+            )
+            for revenue in data_revenue
+        ]
+        
+        # Ejecutar todas las inserciones en una sola operación optimizada
+        object_conetion.cursor.executemany(query, valores)
+        object_conetion.save_changes()
+        
+        return True
+    except sqlite3.Error as e:
+        # Captura errores específicos de SQLite e imprime el mensaje de error
+        print(f"Error al insertar los registros: {str(e)}")
+        return False
+    finally:
+        # Asegurar que la conexión a la base de datos se cierre correctamente
+        object_conetion.close_conexion()
+        
+    # El siguiente bloque de código está comentado porque es un ejemplo de impresión
+    # y no forma parte de la lógica funcional de la función.
+    # print()
+    # """
+    # INFORMACIÓN DEL REGISTRO EN FACT_Revenue:
+    # -----------------------------------------
+    # ID de Factura Revenue:      {data_revenue.Fact_RevenueId}
+    # ID de Fecha:                {data_revenue.DIM_DateId}
+    # ID de Cuenta:               {data_revenue.DIM_AccountId}
+    # ID de Detalle de Servicio:  {data_revenue.DIM_ServiceDetailsId}
+    # ID de Movimiento:           {data_revenue.DIM_MovementId}
+    # ID de Estado:               {data_revenue.DIM_StatusId}
+    # Monto del Pago:             {data_revenue.amount}
+    # -----------------------------------------
+    # """

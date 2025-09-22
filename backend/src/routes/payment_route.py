@@ -13,32 +13,52 @@ service_details_options = ServiceDetailsCrud()
 
 payment_route = Blueprint('payment_route', __name__, url_prefix='/api/payment/')
 
+
 @payment_route.route('create/', methods=['POST'])
 def create_payment() -> Response:
     """
     Maneja la creación de un nuevo pago a través de una solicitud POST.
 
-    Este endpoint recibe los datos de un pago en formato JSON, los valida y
-    los procesa a través de la lógica de negocio de la clase `PaymentCrud`.
-    Devuelve una respuesta JSON con el estado de la operación.
+    Este endpoint recibe los datos de un pago en formato JSON y determina si se trata de un
+    pago único o de una lista de pagos masivos. Luego, delega el procesamiento a la
+    lógica de negocio de `payment_options`. Devuelve una respuesta JSON con el
+    estado de la operación, un mensaje y, opcionalmente, los datos de la respuesta.
 
     Returns:
         Response: Un objeto de respuesta de Flask que contiene un JSON con el
                   estado HTTP y un mensaje de éxito o error.
+
+    Raises:
+        Exception: Captura cualquier excepción genérica durante el procesamiento
+                   y devuelve una respuesta de error 500.
     """
     try:
         payment_json = request.json
         if not payment_json:
+            # Si el cuerpo de la solicitud JSON está vacío, se devuelve un error 400.
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
         
-        estado, mensaje, datos = payment_options.create_payment(payment_json)
-
+        estado = 200
+        mensaje = ""
+        datos = []
+        
+        # Se verifica si los datos recibidos son una lista para manejar pagos masivos
+        if isinstance(payment_json, list):
+            # Se llama a la función de creación de pagos masivos
+            estado, mensaje = payment_options.create_check_list_payments(payment_json)
+        else:
+            # Se llama a la función para crear un solo pago
+            estado, mensaje, datos = payment_options.create_payment(payment_json)
+                
+        # Si el estado está dentro del rango de éxito (200-205), se envía una respuesta exitosa
         if 200 <= estado <= 205:
             return send_success(mensaje, datos, estado)
         else:
+            # De lo contrario, se envía una respuesta de error con el estado y mensaje correspondientes
             return send_error(mensaje, estado)
             
     except Exception as e:
+        # Se captura cualquier excepción y se devuelve un error 500 con el mensaje de la excepción
         print(f"Error al crear el pago: {e}")
         return send_error(str(e), 500)
     
