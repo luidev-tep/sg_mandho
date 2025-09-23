@@ -1,7 +1,7 @@
 #Fichero el cual creara la instancia de flask # 
 from flask import Flask
 from flask_cors import CORS  # Importa CORS
-
+from flask_jwt_extended import JWTManager
 #HARCODEAR LAS URL
 import os
 
@@ -24,6 +24,8 @@ app.register_blueprint(search_route)
 app.register_blueprint(security_route)
 app.register_blueprint(payment_route)
 app.register_blueprint(analitycs_route)
+app.config['JWT_SECRET_KEY'] = os.environ.get('SECRET_KEY', 'No se conecto')
+jwt = JWTManager(app)
 # Desactivar las verificaciones CORS permitiendo todas las solicitudes
 # Configuración detallada de CORS
 CORS(app, resources={
