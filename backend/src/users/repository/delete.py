@@ -53,15 +53,22 @@ def defuncion_validation(DIM_CustomerId) -> bool:
         return False
     finally:
         handler_coencction.close_conexion()
-    
+
+
+
 def is_admin(DIM_CustomerId) -> bool:
     """Funcion la cual se encarga de verificar si el usuario a marcqr como fallecido es administrador"""
     handler_connection = Conexion()
     try:
         query = """SELECT r.RoleType 
-                    from DIM_Role as r, DIM_Account as a
-                    where r.DIM_RoleId = a.DIM_RoleId AND
-                    a.DIM_CustomerId = ?"""
+            from DIM_Role as r
+            JOIN DIM_Account as a on	
+            r.DIM_RoleId = a.DIM_RoleId
+            JOIN DIM_Status as st on
+            st.DIM_StatusId = a.DIM_StatusId
+            and st.StatusName = 'activo'
+            WHERE  a.DIM_CustomerId = ?
+            """
         
         handler_connection.cursor.execute(query, (DIM_CustomerId,))
         tipo_rol = handler_connection.cursor.fetchone()

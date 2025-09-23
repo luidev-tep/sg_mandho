@@ -75,8 +75,10 @@ class GetAnalytics:
             FROM FACT_Revenue as fac
             INNER JOIN DIM_ServiceDetails as serv 
                 ON serv.DIM_ServiceDetailsId = fac.DIM_ServiceDetailsId
-            WHERE serv.DIM_ServiceId = ?
+            WHERE serv.DIM_ServiceId = ? AND 
+            fac.dim_statusId in ('status4', 'status5')  
             ) as revenue_servicios ON d.DIM_DateId = revenue_servicios.DIM_DateId
+            
             WHERE 
             [filtros]
             GROUP BY d.FiscalYear, d.FiscalMonth
@@ -121,6 +123,7 @@ class GetAnalytics:
                 
                 # Construir cláusula WHERE dinámica
                 filtros = f"""
+                
                 (d.FiscalYear = ? AND d.FiscalMonth IN ({','.join(parametros)}))
                 OR (d.FiscalYear = ? AND d.FiscalMonth IN ({','.join(parametros2)}))
                 """
@@ -168,6 +171,9 @@ class GetAnalytics:
             list: Una lista de diccionarios con el formato
                   `[{"fraction": "Manzana A", "revenue": 15000}, ...]`.
                   Retorna una lista vacía en caso de error o si no hay datos.
+                  
+        ESTA QUERY AUN NO ES FUNCIONAL, YA QUE LA VISTA EN LA QUE SE BASA NO ES FUNCIONAL, YA QUE NO FILTRA POR LOS PAGOS PENDIENTES
+        Y HECHOS PERO FICTICIOS AL SER SALTABLES
         """
         query = """
             -- FUNCIONAL
@@ -181,6 +187,7 @@ class GetAnalytics:
                 ON vw.DIM_DateId = dat.DIM_DateId 
             WHERE (dat.FiscalMonth = ? OR dat.FiscalMonth IS NULL)
             AND (dat.FiscalYear = ? OR dat.FiscalYear IS NULL)
+            AND 
             GROUP BY cus.CustomerFraction
             ORDER BY cus.CustomerFraction;
         """

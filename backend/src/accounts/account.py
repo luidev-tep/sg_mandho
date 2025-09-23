@@ -13,7 +13,7 @@ from src.dim_status.status import DIM_status
 from src.accounts.repository.show import show_account
 from src.accounts.services.validate import convertir_a_formato_legible, validate_status, descativar_otra_cuenta, has_active_account
 
-#importacion de roles
+#importacion de roles 
 from src.dim_roles.role import Role
 
 #importacion de validaciones para saber si es administrador o usuario eliminado

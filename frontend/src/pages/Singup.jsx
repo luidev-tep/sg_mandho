@@ -19,7 +19,9 @@ function Signup() {
   const { dispatch } = useAuth();
   const navigate = useNavigate();
   const [recaptchaError, setRecaptchaError] = useState(null);
-  const RECAPTCHA_SITE_KEY = "6Lfah3MrAAAAAAJa92wl13WILgSPPJ9Ep6z41hY8";
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   const onSubmit = handleSubmit(async (data) => {
     if (!data.recaptcha) {
@@ -27,20 +29,26 @@ function Signup() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      const userData = await ObtenerUsuario(data.name);
-      console.log("Datos del usuario obtenidos:", userData.data);
+      console.log("Datos del formulario:", data);
+      const userData = await ObtenerUsuario(data);
+      console.log("Datos del usuario obtenidos:", userData);
 
       dispatch({ 
-        type: "SET_USER", 
-        payload: userData.data
+        type: "SET_USER_AND_TOKENS", 
+        payload: {
+          usuario: userData.data,
+          tokens: userData.tokens
+        }
       });
 
       navigate('/'); 
-
-      console.log("Usuario cargado en el estado global:", userData.data);
+      console.log("Usuario y tokens cargados en el estado global:", userData);
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   });
 
@@ -108,6 +116,42 @@ function Signup() {
                       <span className="text-red-500 text-sm">{errors.role.message}</span>
                     )}
                   </div>
+                  
+                  {/* Manzana */}
+                  <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="manzana">
+                      Manzana <span className="text-red-500">*</span>
+                    </label>
+                    <select 
+                      id="manzana" 
+                      className={`form-select dark:text-gray-800 w-full rounded-lg ${errors.manzana ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      {...register("manzana", { 
+                        required: 'La manzana es requerida',
+                        validate: value => [
+                          'tepetate', 
+                          'cerritos', 
+                          'garambullo', 
+                          'yhonda', 
+                          'centro', 
+                          'buenavista'
+                        ].includes(value) || 'Seleccione una manzana válida'
+                      })}
+                      disabled={isSubmitting}
+                    >
+                      <option value="">Seleccione una opción</option>
+                      <option value="tepetate">Tepetate</option>
+                      <option value="cerritos">Cerritos</option>
+                      <option value="garambullo">Garambullo</option>
+                      <option value="yhonda">Yhonda</option>
+                      <option value="centro">Centro</option>
+                      <option value="buenavista">Buena Vista</option>
+                    </select>
+                    {errors.manzana && (
+                      <span className="text-red-500 text-sm mt-1 block animate-fade-in">
+                        {errors.manzana.message}
+                      </span>
+                    )}
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="password">
@@ -145,8 +189,11 @@ function Signup() {
                   <button 
                     type="submit" 
                     className="w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-lg shadow-lg transition-all duration-300"
+                    disabled={isSubmitting}
                   >
-                    <span className="relative z-10">Ingresar</span>
+                    <span className="relative z-10">
+                      {isSubmitting ? 'Procesando...' : 'Ingresar'}
+                    </span>
                   </button>
                 </div>
               </form>
