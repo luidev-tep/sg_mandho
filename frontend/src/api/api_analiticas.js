@@ -8,7 +8,7 @@ const api = axios.create({
 export const GetAnalytics = async (data) => {
     try {
         // Validación de datos requeridos
-        if (!data.comitiva || !data.mes || !data.usuario || !data.anio) {
+        if (!data.comitiva || !data.mes || !data.anio) {
             throw new Error('Faltan datos requeridos para obtener los datos analíticos');
         }
                 // Convertir el año al formato 'Y25' (últimos 2 dígitos del año)

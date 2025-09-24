@@ -138,3 +138,51 @@ export const getPagosPendientes = async (data) => {
         throw new Error(errorMessage);
     }
 };
+
+// Función completa y funcional
+export const Get_servicios_disponibles = async (data) => {
+    try {
+        // Validación de campos requeridos
+        if (!data) {
+            throw new Error('Faltan campos requeridos para mostrar los servicios disponibles');
+        }
+
+        //console.log("Datos enviados a Get_servicios_disponibles:", data);
+        const response = await api.post('get_any_data/', data);
+
+        // Verificar si la respuesta tiene el formato esperado
+        if (!response.data) {
+            throw new Error('No se recibieron datos del servidor');
+        }
+
+        //console.log("Respuesta del servidor:", response.data);    
+
+        return {
+            success: true,
+            data: response.data.body || []
+        };
+    } catch (error) {
+        let errorMessage;
+
+        if (error.response) {
+            // El servidor respondió con un status fuera del rango 2xx
+            console.error("Error de respuesta:", error.response.data);
+            errorMessage = error.response.data?.message || 
+                          error.response.data?.error || 
+                          `Error ${error.response.status}: ${error.response.statusText}`;
+        } else if (error.request) {
+            // La petición fue hecha pero no se recibió respuesta
+            errorMessage = 'No se recibió respuesta del servidor';
+        } else {
+            // Error en la configuración de la petición
+            errorMessage = error.message || 'Error al configurar la petición';
+        }
+        
+        // En caso de error, retornamos success: false y el mensaje de error
+        return {
+            success: false,
+            message: errorMessage,
+            data: []
+        };
+    }
+};

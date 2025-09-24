@@ -94,9 +94,9 @@ class PaymentCrud:
         data_json['amount'] = float(data_json['amount'])
         data_json['FactAmount'] = float(data_json['FactAmount'])
         data_json['AnioPago'] = str(data_json['AnioPago'])
-        fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
+        fields_required = ['DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
 
-        type_fields = [str, str, str, str, str, str, str, str, float, float]
+        type_fields = [str, str, str, str, str, str, str, float, float]
 
         is_valid, message = validate_data(data_json, fields_required, type_fields, "payment")
 

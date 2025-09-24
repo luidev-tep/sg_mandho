@@ -52,12 +52,12 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
       }
     });
   };
-
+ 
   const handleConfirm = async () => {
     setIsSubmitting(true);
     setNotification({ show: false, message: '', type: 'success' });
 
-    if (!usuario || !usuario.DIM_CustomerId) {
+    if (!usuario || !usuario.DIM_ServiceOwnersId) {
       setNotification({ show: true, message: "Error: No se pudo obtener el ID del propietario. Vuelva a iniciar sesión.", type: 'error' });
       setIsSubmitting(false);
       return;
@@ -73,7 +73,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
         DIM_AccountId: user.DIM_AccountId,
         DIM_CustomerId: user.DIM_CustomerId,
         ServiceName: serviceName,
-        DIM_OnwerCustomerId: usuario.DIM_CustomerId,
+        DIM_OnwerCustomerId: usuario.DIM_ServiceOwnersId,
         serviceDetailsType: ServiceDetailType,
         amount: 0,
         AnioPago: anioActual,

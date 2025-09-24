@@ -8,7 +8,11 @@ payment_options = PaymentCrud()
 
 from src.dim_servicedetails.serviceDetails import ServiceDetailsCrud
 
+from src.payments.cash_cut import cashCutCrud
+
 service_details_options = ServiceDetailsCrud()
+
+hanlder_cash_cut = cashCutCrud()
 
 
 payment_route = Blueprint('payment_route', __name__, url_prefix='/api/payment/')
@@ -189,6 +193,12 @@ def get_any_data() -> Response:
         if 'pagosPendientes' in data_json and data_json['pagosPendientes']:
             estado, mensaje, datos = payment_options.get_cost(data_json['pagosPendientes'])
             print(f"Datos recibidos: {datos}")
+            
+        if 'servicios_corte_caja' in data_json and data_json['servicios_corte_caja']:
+            estado, datos = hanlder_cash_cut.get_service_chosen(data_json['servicios_corte_caja'])
+            mensaje = "Datos obtenidos correctamente"
+            print(f"Datos recibidos: {datos}")
+            
         # Aquí se pueden agregar más condiciones para otros tipos de servicios en el futuro
         # Ejemplo:
         # elif 'otro_servicio' in data_json:
@@ -209,6 +219,46 @@ def get_any_data() -> Response:
         print(f"Error al obtener el costo: {error_msg}")
         return send_error(error_msg, 500)
     
+
+@payment_route.route('cash_cut/', methods=['POST'])
+def cash_cut_route() -> Response:
+    """
+    Ruta para realizar un corte de caja.
+
+    Esta ruta acepta una solicitud POST con un cuerpo JSON que contiene los datos
+    necesarios para realizar un corte de caja de un servicio específico.
+    Delega la lógica principal a la clase `cashCutCrud`.
+
+    Args:
+        None (los datos se reciben del cuerpo de la solicitud HTTP).
+
+    Returns:
+        Response: Un objeto de respuesta HTTP.
+                  - Si el corte de caja es exitoso, devuelve un mensaje de éxito con estado 201.
+                  - Si hay un error de validación de datos o de lógica de negocio,
+                    devuelve un mensaje de error con el estado correspondiente (e.g., 400).
+                  - Si ocurre una excepción inesperada, devuelve un mensaje de error con estado 500.
+
+    Recibe los siguientes campos en el cuerpo JSON:
+        - DIM_ServiceDetailesType (str): El tipo de servicio (e.g., "energia", "telecomunicaciones").
+        - DIM_ServiceOwnersId (str): El ID del propietario del servicio.
+        - DIM_service (str): El nombre del servicio (e.g., "luz", "internet").
+    """
+    try:
+        data_json = request.json
+        if not data_json:
+            return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+        
+        estado, mensaje = hanlder_cash_cut.CashCut(data_json)
+        print(f"Estado: {estado}, Mensaje: {mensaje}")
+        if estado == 201:
+            return send_success(mensaje, None, estado)
+        else:
+            return send_error(mensaje, estado)
+    except Exception as e:
+        print(f"Error al obtener el costo: {e}")
+        return send_error(str(e), 500)
+
 
 @payment_route.route('generar_servicio/', methods=['POST'])
 def insert_new_service() -> Response:
@@ -243,3 +293,5 @@ def insert_new_service() -> Response:
         print(f"Error al obtener el costo: {e}")
         return send_error(str(e), 500)
     
+
+

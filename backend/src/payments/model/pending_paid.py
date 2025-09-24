@@ -86,3 +86,24 @@ class PendingPaidModel2:
             "serviceType": self.ServiceDetailesType,
             "amount": self.amount
         }
+        
+
+class CashCutModel:
+    """
+    Modelo de datos de un corte de caja
+    """
+    def __init__(self, DIM_CashCutId: str, DIM_ServiceDetailsId: str, DIM_DateId:int, DIM_ServiceOwnersId: str, DIM_CountRegisters: int) -> None:
+        self.DIM_CashCutId = DIM_CashCutId
+        self.DIM_ServiceDetailsId = DIM_ServiceDetailsId
+        self.DIM_DateId = DIM_DateId
+        self.DIM_ServiceOwnersId = DIM_ServiceOwnersId
+        self.DIM_CountRegisters = DIM_CountRegisters
+    
+    def to_dict(self) -> dict[str, str | int]:
+        return {
+            "DIM_CashCutId": self.DIM_CashCutId,
+            "DIM_ServiceDetailsId": self.DIM_ServiceDetailsId,
+            "DIM_DateId": self.DIM_DateId,
+            "DIM_ServiceOwnersId": self.DIM_ServiceOwnersId,
+            "DIM_CountRegisters": self.DIM_CountRegisters
+        }

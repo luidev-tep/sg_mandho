@@ -4,7 +4,7 @@ import UserImage from '../../images/user-40-02.jpg';
 
 function FintechIntro({ comitiva, mes, mes_format }) {
   const { state } = useAuth();
-  const nombreUsuario = state.usuario?.UserFullName || 'Usuario';
+  const nombreUsuario = state.usuario?.fullname || 'Usuario';
   const nombreComitiva = comitiva ? comitiva.charAt(0).toUpperCase() + comitiva.slice(1) : '';
     
   return (

@@ -55,6 +55,12 @@ class SecurityUsers:
                 if validacion1 and validacion2 and validacion4:
                     # Se remueve la contraseña del objeto que se retorna por seguridad.
                     del user['password']
+                    del user['username']
+                    del user['DIM_AccountId']
+                    del user['DIM_CustomerId']
+                    del user['StartDate']
+                    del user['EndDate']
+                    del user['StatusName']
                     return 200, "Usuario validado correctamente", user
                 else:
                     return 401, "Datos incorrectos", None

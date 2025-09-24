@@ -131,6 +131,22 @@ CREATE TABLE FACT_Revenue (
     FOREIGN KEY (DIM_StatusId) REFERENCES DIM_Status(DIM_StatusId)
 );
 
+
+-- Tabla DIM_CashCut    La cual almacenara el estado de los cortes de caja
+--Aqui se guardara infromacion de quien lo ejecito, cuantos registros se hicieron y el total
+CREATE TABLE DIM_CashCut (
+    DIM_CashCutId TEXT PRIMARY KEY,
+    DIM_ServiceDetailsId TEXT NOT NULL UNIQUE,
+	DIM_DateId INTEGER not NULL,
+	DIM_ServiceOwnersId TEXT not NULL,
+    DIM_CountRegisters int not null,
+	timestamp TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
+    FOREIGN KEY (DIM_ServiceDetailsId) REFERENCES DIM_ServiceDetails(DIM_ServiceDetailsId),
+	FOREIGN KEY  (DIM_DateId) REFERENCES DIM_Date(DIM_DateId)
+	FOREIGN KEY  (DIM_ServiceOwnersId) REFERENCES DIM_ServiceOwners(DIM_ServiceOwnersId)
+);
+
+
 -- Tablas de dimensiones
 SELECT * FROM DIM_Role;
 SELECT * FROM DIM_Status;
@@ -141,6 +157,8 @@ SELECT * FROM DIM_Service;
 SELECT * FROM DIM_ServiceDetails;
 SELECT * FROM DIM_ServiceOwners;
 SELECT * FROM DIM_Movement;
+SELECT * from DIM_CashCut;
+
 
 -- Tabla de hechos
 SELECT * FROM FACT_Revenue;

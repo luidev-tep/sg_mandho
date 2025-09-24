@@ -139,7 +139,7 @@ function Analytics() {
 
   // Efecto para cargar datos cuando cambia el mes o la comitiva
   useEffect(() => {
-    fetchAnalyticsData();
+    fetchAnalyticsData(); 
   }, [fetchAnalyticsData]);
 
   return (

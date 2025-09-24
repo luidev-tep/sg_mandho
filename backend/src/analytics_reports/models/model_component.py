@@ -80,3 +80,14 @@ class AnalythicsModels:
             'pendientes': pendientes,
             'porcentaje': porcentaje
             }
+        
+    def model_get_admins_data(self, fullname: str, RoleName: str, StartDate: str, EndDate: str) -> dict:
+        """
+        Modelo de Bd para presentar los datos de los administradores de una comitiva
+        """
+        return {
+            'fullname': fullname,
+            'RoleName': RoleName,
+            'StartDate': StartDate,
+            'EndDate': EndDate
+        }

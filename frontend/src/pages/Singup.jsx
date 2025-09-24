@@ -20,6 +20,8 @@ function Signup() {
   const navigate = useNavigate();
   const [recaptchaError, setRecaptchaError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState(null);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
@@ -30,23 +32,29 @@ function Signup() {
     }
 
     setIsSubmitting(true);
+    setApiError(null);
+    setLoginSuccess(false);
+
     try {
-      console.log("Datos del formulario:", data);
-      const userData = await ObtenerUsuario(data);
-      console.log("Datos del usuario obtenidos:", userData);
+      const response = await ObtenerUsuario(data);
 
       dispatch({ 
         type: "SET_USER_AND_TOKENS", 
         payload: {
-          usuario: userData.data,
-          tokens: userData.tokens
+          usuario: response.data,
+          tokens: response.tokens
         }
       });
 
-      navigate('/'); 
-      console.log("Usuario y tokens cargados en el estado global:", userData);
+      setLoginSuccess(true);
+      setTimeout(() => {
+        navigate('/');
+      }, 1500); // Espera 1.5 segundos antes de redirigir
+
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Error al iniciar sesión. Verifique sus credenciales.";
+      setApiError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -55,6 +63,7 @@ function Signup() {
   const onRecaptchaChange = (value) => {
     setValue('recaptcha', value);
     setRecaptchaError(null);
+    setApiError(null); // Limpiar error de API al cambiar reCAPTCHA
   };
 
   return (
@@ -75,6 +84,27 @@ function Signup() {
               <center><h1 className="text-3xl text-gray-800 dark:text-gray-100 font-bold mb-6">Bienvenido</h1></center>
 
               <form onSubmit={onSubmit}>
+                {/* Mensaje de éxito */}
+                {loginSuccess && (
+                  <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/50 border border-green-400 dark:border-green-700 text-green-900 dark:text-white rounded-lg text-center animate-fade-in">
+                    ¡Inicio de sesión exitoso! Redirigiendo...
+                  </div>
+                )}
+
+                {/* Mensaje de error de la API */}
+                {apiError && (
+                  <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-700 text-red-900 dark:text-white rounded-lg text-center animate-fade-in">
+                    {apiError}
+                  </div>
+                )}
+
+                {/* Mensaje de error de reCAPTCHA */}
+                {recaptchaError && (
+                  <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-700 text-red-900 dark:text-white rounded-lg text-center animate-fade-in">
+                    {recaptchaError}
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="name">
@@ -91,6 +121,7 @@ function Signup() {
                           message: 'Solo se permiten letras sin espacios'
                         }
                       })}
+                      onChange={() => setApiError(null)} // Limpiar error al escribir
                     />
                     {errors.name && (
                       <span className="text-red-500 text-sm">{errors.name.message}</span>
@@ -105,6 +136,7 @@ function Signup() {
                       id="role" 
                       className="text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-select w-full"
                       {...register("role", { required: 'Selecciona un rol' })}
+                      onChange={() => setApiError(null)} // Limpiar error al cambiar
                     >
                       <option value="">Selecciona un rol</option>
                       <option value="delegado">Delegado</option>
@@ -136,6 +168,7 @@ function Signup() {
                           'buenavista'
                         ].includes(value) || 'Seleccione una manzana válida'
                       })}
+                      onChange={() => setApiError(null)} // Limpiar error al cambiar
                       disabled={isSubmitting}
                     >
                       <option value="">Seleccione una opción</option>
@@ -169,6 +202,7 @@ function Signup() {
                           message: 'La contraseña debe tener al menos 8 caracteres'
                         }
                       })}
+                      onChange={() => setApiError(null)} // Limpiar error al escribir
                     />
                     {errors.password && (
                       <span className="text-red-500 text-sm">{errors.password.message}</span>
@@ -181,15 +215,12 @@ function Signup() {
                       sitekey={RECAPTCHA_SITE_KEY}
                       onChange={onRecaptchaChange}
                     />
-                    {recaptchaError && (
-                      <span className="text-red-500 text-sm block mt-1">{recaptchaError}</span>
-                    )}
                   </div>
 
                   <button 
                     type="submit" 
                     className="w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-lg shadow-lg transition-all duration-300"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || loginSuccess}
                   >
                     <span className="relative z-10">
                       {isSubmitting ? 'Procesando...' : 'Ingresar'}
