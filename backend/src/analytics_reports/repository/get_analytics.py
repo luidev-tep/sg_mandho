@@ -179,15 +179,33 @@ class GetAnalytics:
             -- FUNCIONAL
             SELECT 
                 cus.CustomerFraction,
-                IFNULL(SUM(VW.amount), 0) as revenue 
+                IFNULL(SUM(vw.amount), 0) as revenue 
             FROM DIM_Customer as cus 
-            LEFT JOIN [tabla] as vw 
+            LEFT JOIN (
+                SELECT 
+                    c.DIM_CustomerId,
+                    a.DIM_AccountId,
+                    f.DIM_DateId,
+                    s.ServiceName, --Se agrego este campo para validar rapidamnete si el servicio que se espera
+                    f.amount  -- Necesitas incluir el campo amount en la subconsulta
+                FROM DIM_Account as a
+                JOIN DIM_Customer as c ON 
+                    a.DIM_CustomerId = c.DIM_CustomerId
+                JOIN FACT_Revenue as f ON
+                    a.DIM_AccountId = f.DIM_AccountId
+                JOIN DIM_ServiceDetails as sv ON 
+                    sv.DIM_ServiceDetailsId = f.DIM_ServiceDetailsId
+                JOIN DIM_Service as s ON
+                    s.DIM_ServiceId = sv.DIM_ServiceId  -- Corregido: era 'SV' en mayúsculas
+                    AND s.ServiceName = ?
+                -- GROUP BY removido de la subconsulta para permitir la suma correcta
+            ) as vw 
                 ON vw.DIM_CustomerId = cus.DIM_CustomerId 
             LEFT JOIN DIM_Date as dat 
                 ON vw.DIM_DateId = dat.DIM_DateId 
             WHERE (dat.FiscalMonth = ? OR dat.FiscalMonth IS NULL)
-            AND (dat.FiscalYear = ? OR dat.FiscalYear IS NULL)
-            AND 
+                AND (dat.FiscalYear = ? OR dat.FiscalYear IS NULL)
+                -- Removido el AND colgante
             GROUP BY cus.CustomerFraction
             ORDER BY cus.CustomerFraction;
         """
@@ -197,9 +215,9 @@ class GetAnalytics:
             if not tabla_vista:
                 return []
             
-            query = query.replace("[tabla]", tabla_vista)
+            #query = query.replace("[tabla]", tabla_vista)
 
-            handler_conexion.cursor.execute(query, (mes, anio))
+            handler_conexion.cursor.execute(query, (comitiva,mes, anio))
             result = handler_conexion.cursor.fetchall()
             
             if not result:
@@ -343,4 +361,26 @@ class GetAnalytics:
         Returns:
             list: Una lista de diccionarios con los datos de los administradores.
         """
-        pass
+        query = """
+            SELECT 
+                fullname,
+                RoleName,
+                StartDate,
+                EndDate
+            FROM
+                SecurityUsers 
+                WHERE ServiceName = ? 
+        """
+        try:
+            handler_conexion = Conexion()
+            handler_conexion.cursor.execute(query, (comitiva,))
+            result = handler_conexion.cursor.fetchall()
+            if result is None:
+                return []
+            
+            return [handler_model.model_get_admins_data(*row) for row in result]
+        except Exception as e:
+            print(f"Error al obtener la informacion de la comitiva: {e}")
+            return []
+        finally:
+            handler_conexion.close_conexion()

@@ -3,6 +3,7 @@ class FACT_Revenue:
                   DIM_AccountId: str, DIM_ServiceDetailsId: str, 
                   DIM_MovementId:str, DIM_StatusId: str,
                     amount: float) -> None:
+        
         self.Fact_RevenueId = FACT_RevenueId
         self.DIM_DateId = DIM_DateId
         self.DIM_AccountId = DIM_AccountId
@@ -21,5 +22,8 @@ class FACT_Revenue:
             "DIM_StatusId": self.DIM_StatusId,
             "amount": self.amount
         }
+        
+    def __str__(self) -> str:
+        return str(self.to_dict())
     
     

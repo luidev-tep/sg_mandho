@@ -1,8 +1,9 @@
 // partials/customers/CustomersTable.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import DynamicTableItem from './DynamicTableItem';
 import ServiciosElegiblesDropdown from './ServiciosElegiblesDropdown';
 import { MostrarPagos } from '../../../api/pagos/api_mostrar_pago';
+import CorteCajaModal from './CorteCajaModal';
 
 function DynamicTable({ filters, serviceName }) {
   const [selectAll, setSelectAll] = useState(false);
@@ -14,6 +15,7 @@ function DynamicTable({ filters, serviceName }) {
   const [error, setError] = useState(null);
   const tableRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCorteCajaModalOpen, setIsCorteCajaModalOpen] = useState(false);
 
   const fetchCustomers = async () => {
     setIsLoading(true);
@@ -170,21 +172,41 @@ function DynamicTable({ filters, serviceName }) {
     }
   };
 
+  // Obtener tipos de servicio únicos de los resultados filtrados
+  const uniqueServiceDetailTypes = useMemo(() => {
+    const types = new Set(filteredCustomers.map(c => c.ServiceDetailesType).filter(Boolean));
+    return Array.from(types);
+  }, [filteredCustomers]);
+
+
   if (isLoading) return <div className="p-4 text-center">Cargando pagos...</div>;
   if (error) return <div className="p-4 text-center text-red-500">Error: {error}</div>;
 
   return (
     <div ref={tableRef} className="bg-transparent">
       <header className="px-5 py-4">
-        <div className="flex items-center">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-            Total de Pagos {serviceName} <span className="text-gray-400 dark:text-gray-500 font-medium">{filteredCustomers.length}</span>
-          </h2>
-          <ServiciosElegiblesDropdown 
-            serviciosValidos={serviciosValidos} 
-            serviceName={serviceName} 
-            onSuccess={fetchCustomers} // Pasar la función para recargar
-          />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-grow">
+            <h2 className="font-semibold text-gray-800 dark:text-gray-100">
+              Total de Pagos {serviceName} <span className="text-gray-400 dark:text-gray-500 font-medium">{filteredCustomers.length}</span>
+            </h2>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <ServiciosElegiblesDropdown 
+              serviciosValidos={serviciosValidos} 
+              serviceName={serviceName} 
+              onSuccess={fetchCustomers} // Pasar la función para recargar
+            />
+            <button 
+              onClick={() => setIsCorteCajaModalOpen(true)}
+              className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-gray-400 dark:focus:ring-offset-gray-800"
+            >
+              <svg className="w-4 h-4 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              <span className="whitespace-nowrap">Corte de Caja</span>
+            </button>
+          </div>
         </div>
       </header>
       <div className="w-full">
@@ -230,6 +252,14 @@ function DynamicTable({ filters, serviceName }) {
           })}
         </div>
       </div>
+      {isCorteCajaModalOpen && (
+        <CorteCajaModal
+          serviceName={serviceName}
+          serviceDetailTypes={uniqueServiceDetailTypes}
+          onClose={() => setIsCorteCajaModalOpen(false)}
+          onSuccess={fetchCustomers} // Recargar datos si el corte es exitoso
+        />
+      )}
     </div>
   );
 }

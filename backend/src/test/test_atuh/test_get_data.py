@@ -3,9 +3,9 @@ from src.security.security import  SecurityUsers
 def test_get_admin_account():
     hanlder = SecurityUsers()
     data = {
-        'username':"monseLopez",
+        'name':"monseLopez",
         'manzana': 'garambullo',
-        'RoleName': 'subdelegado',
+        'role': 'subdelegado',
         'password': '2006-11-01'
     }
     

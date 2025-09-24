@@ -42,8 +42,8 @@ class Analitycs:
                                    - Un diccionario con los datos de analíticas,
                                      o un diccionario vacío en caso de error.
         """
-        campos = ["comitiva", "mes", "usuario", "anio"]
-        tipo_campos = [str, str, str, str]
+        campos = ["comitiva", "mes", "anio"]
+        tipo_campos = [str, str, str]
         is_valid, message = validate_data(data_json, campos, tipo_campos, "analitycs")
         if not is_valid:
             return 400, message, {}
@@ -61,6 +61,8 @@ class Analitycs:
             data_analythics['dataCountUsers'] = {'manzanas': self.get_analytics.get_population_by_manzana()}
 
             data_analythics['dataUserBills'] = {'manzanas': self.get_analytics.get_data_payments(data_json['comitiva'], data_json['anio'])}
+            
+            data_analythics['dataServiceMembers'] = self.get_analytics.get_admins_data(data_json['comitiva'])
             
             return 200, 'Datos obtenidos correctamente', data_analythics
         except Exception as e:

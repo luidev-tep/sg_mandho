@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Transition from '../../../utils/Transition';
 import ServiciosElegiblesModal from './ServiciosElegiblesModal';
 
-function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess }) {
+function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess, onDataUpdate }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
@@ -17,7 +17,7 @@ function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess }
       // console.log('📥 Datos recibidos en ServiciosElegiblesDropdown:');
       // console.log('serviceName:', serviceName);
       // console.log('serviciosValidos.servicios:', serviciosValidos.servicios);
-       console.log('serviciosValidos.usuarios:', serviciosValidos.usuarios);
+      //console.log('serviciosValidos.usuarios:', serviciosValidos.usuarios);
     }
   }, [serviciosValidos, serviceName]);
 
@@ -51,7 +51,7 @@ function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess }
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedService(null);
-    onSuccess(); // Llamar a onSuccess al cerrar el modal
+    onDataUpdate(); // Llamar a onDataUpdate al cerrar el modal
   };
 
   if (!serviciosValidos || !serviciosValidos.servicios || serviciosValidos.servicios.length === 0) {
@@ -107,7 +107,6 @@ function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess }
           serviceName={serviceName}
           ServiceDetailType={selectedService}
           users={serviciosValidos.usuarios}
-          onClose={handleCloseModal}
           onSuccess={onSuccess}
         />
       )}

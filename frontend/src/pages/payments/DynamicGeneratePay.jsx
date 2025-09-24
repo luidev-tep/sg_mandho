@@ -10,6 +10,7 @@ import { crearRegistroPago } from '../../api/pagos/api_crear_pago.js';
 import { useAuth } from "../../utils/AuthContext.jsx";
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getPagosPendientes } from '../../api/pagos/api_get_costo_servicio.js';
+import ServiciosElegiblesDropdown from '../../components/modules/tablas/ServiciosElegiblesDropdown.jsx';
 
 // Componentes dinámicos (carga diferida)
 const COMPONENT_CONFIG = {
@@ -84,6 +85,7 @@ const DynamicGeneratePay = () => {
   const [pendingPayments, setPendingPayments] = useState([]); // Nuevo estado para pagos pendientes
   const [accountData, setAccountData] = useState(null);
   const [selectedYear, setSelectedYear] = useState('');
+  const [serviciosValidos, setServiciosValidos] = useState(null);
   const [yearSpecificData, setYearSpecificData] = useState(null); // Datos específicos del año seleccionado
   const [message, setMessage] = useState({ text: '', type: '' });
   const [showSuccessOptions, setShowSuccessOptions] = useState(false);
@@ -99,6 +101,10 @@ const DynamicGeneratePay = () => {
   const [isChildValid, setIsChildValid] = useState(false);
   const [isModuleChildValid, setIsModuleChildValid] = useState(false);
   const [isParentValid, setIsParentValid] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [isDropdownEnabled, setIsDropdownEnabled] = useState(false);
+
+
 
   // Configurar react-hook-form con validaciones Yup solo para campos del padre
   const { 
@@ -116,6 +122,7 @@ const DynamicGeneratePay = () => {
     amount: moduleData?.amount || 0 // Pasar el amount al contexto para las validaciones
   }
   });
+
 
   // Manejador para el cambio de año
   const handleYearChange = (e) => {
@@ -135,6 +142,40 @@ const DynamicGeneratePay = () => {
     }
     console.log('Año seleccionado:', year);
   };
+
+  // Función para actualizar la información de los servicios válidos y usuarios
+  const handleDataUpdate = useCallback(async () => {
+    if (accountData && accountData.customerId) {
+      setIsLoading(true);
+      try {
+        // Aquí deberías hacer la petición a la API para obtener la información actualizada
+        //const response = await tuFuncionParaObtenerServiciosValidos(accountData.customerId, moduleName);
+
+        // Luego, actualiza el estado local con la nueva información
+        //setServiciosValidos(response.data);
+      } catch (error) {
+        console.error('Error al actualizar la información:', error);
+        setError('Error al actualizar la información.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [accountData, moduleName]);
+
+  const handleServiciosValidosChange = useCallback((newServiciosValidos) => {
+    //console.log("🚀 ~ file: DynamicGeneratePay.jsx:168 ~ handleServiciosValidosChange ~ newServiciosValidos:", newServiciosValidos)
+    setServiciosValidos(newServiciosValidos);
+    //if (newServiciosValidos && newServiciosValidos.length > 0) {
+      setIsDropdownEnabled(true);
+   // } else {
+   //   setIsDropdownEnabled(false);
+   // }
+  }, []);
+
+  const handleUsersChange = useCallback((newUsers) => {
+    //console.log("🚀 ~ file: DynamicGeneratePay.jsx:174 ~ handleUsersChange ~ newUsers:", newUsers)
+    setUsers(newUsers);
+  }, []);
 
   // Efecto para validar el formulario padre
   useEffect(() => {
@@ -161,6 +202,7 @@ const DynamicGeneratePay = () => {
     };
     fetchCostoServicio();
   }, [isChildValid, accountData, moduleName]);
+
 
   // Nuevo efecto para obtener los pagos pendientes usando getAmount
   useEffect(() => {
@@ -384,6 +426,20 @@ const DynamicGeneratePay = () => {
                 </label>
                 {renderAccountComponent()}
               </div>
+
+              <ServiciosElegiblesDropdown
+                  serviciosValidos={serviciosValidos}
+                  serviceName={moduleName}
+                  onSuccess={handleServiciosValidosChange}
+                  onDataUpdate={handleDataUpdate}
+                />
+
+
+              
+              
+              
+              
+
 
               {/* Campo Año de Pago - Ahora es un selector y está reubicado */}
               <div className="mb-6">

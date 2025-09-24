@@ -42,7 +42,7 @@ function DropdownProfile({ align }) {
         <img className="w-10 h-10 rounded-full" src={UserAvatar} width="40" height="40" alt="User" />
         <div className="flex items-center truncate">
           <span className="truncate ml-2 text-base font-medium text-gray-600 dark:text-gray-100 group-hover:text-gray-800 dark:group-hover:text-white">
-            {state.usuario?.UserFullName || "Usuario"}
+            {state.usuario?.fullname || "Usuario"}
           </span>
           <svg className="w-4 h-4 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500" viewBox="0 0 12 12">
             <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
@@ -67,10 +67,10 @@ function DropdownProfile({ align }) {
         >
           <div className="pt-1 pb-2 px-4 mb-1 border-b border-gray-200 dark:border-gray-700/60">
             <div className="font-medium text-lg text-gray-800 dark:text-gray-100">
-              {state.usuario?.UserFullName || "Usuario"}
+              {state.usuario?.fullname || "Usuario"}
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-              {state.usuario?.StatusName || "Rol desconocido"}
+              {state.usuario?.RoleName || "Rol desconocido"}
             </div>
           </div>
           <ul>
