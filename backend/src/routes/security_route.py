@@ -26,18 +26,38 @@ security_route = Blueprint('security_route', __name__, url_prefix='/api/security
 @security_route.route('login/', methods=['POST'])
 def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Response, Lit...:
     """
-    Obtiene la información de un usuario específico por su ID de la URL.
+    Endpoint principal para la autenticación de usuarios y generación de tokens JWT.
 
-    Args:
-        user_id (int): El ID del usuario a buscar, extraído de la URL.
+    Este endpoint maneja el proceso de inicio de sesión de un usuario. Espera recibir
+    credenciales de usuario (probablemente nombre de usuario/correo y contraseña)
+    en el cuerpo JSON de la solicitud.
+
+    Flujo de ejecución:
+    1. **Validación de Datos:** Verifica si se recibió el cuerpo JSON.
+    2. **Autenticación (security_options.authenticate_user):** Llama a la lógica de negocio
+       para verificar las credenciales del usuario.
+    3. **Manejo de Error de Autenticación:** Si la autenticación falla (estado != 200),
+       retorna un error con el mensaje y estado correspondientes.
+    4. **Generación de JWT:** Si la autenticación es exitosa, se generan dos tokens:
+       - **Access Token:** Token de corta duración utilizado para proteger las rutas de la API.
+         Incluye el `DIM_ServiceOwnersId` como `identity` y añade **claims adicionales**:
+         'role', 'service', y 'fraction' del usuario.
+       - **Refresh Token:** Token de larga duración utilizado únicamente para obtener
+         un nuevo access token cuando este expire. También incluye las mismas claims.
+    5. **Respuesta:** Empaqueta los datos del usuario (`user_data`) y los tokens JWT
+       generados en un solo diccionario y los retorna en una respuesta de éxito (200).
+
+    JSON Body esperado (ejemplo):
+    {
+      "username": "usuarioejemplo",
+      "password": "mi_contraseña_segura"
+      // La parte de reCAPTCHA está actualmente comentada para deshabilitar temporalmente
+      // la validación de bots, pero su estructura de validación se mantiene en los comentarios.
+    }
 
     Returns:
-        dict: Información del usuario.
-
-    Por el momento esta funcion aun no se implementara sin embargo, se mandaran los datos del ususario que funga como administrador
-    y se retornara un mensaje de que se obtuvo la informacion correctamente.
-    ESTA FUNCION ES SOLAMENTE DE TESTEO YA QUE NO RESPETA LA SEGURIDAD Y LA LOGICA IMPLEMENTADA ES SOLO PARA UNA 
-    PARTE DEL NEGOCIO SE DEBE MOFICIAR DESPUES
+        Response: Un objeto de respuesta de Flask con JSON que contiene los datos del
+                  usuario autenticado y sus tokens de acceso y refresco.
     """
     
     try:
@@ -119,25 +139,31 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
 @role_required('comitiva')
 def validar_password() -> tuple[Any]:
     """
-    Endpoint para validar una contraseña.
+    Endpoint para validar una contraseña de forma aislada.
 
-    Esta función actúa como una barrera de seguridad, verificando si la contraseña
-    proporcionada en la solicitud POST coincide con la contraseña predefinida.
-    
+    Este endpoint se utiliza para verificar una contraseña específica (hardcodeada
+    como 'qwerty' en la lógica actual) para una funcionalidad secundaria, como
+    una doble verificación de seguridad antes de una acción crítica (ej. un corte de caja).
+
+    Restricción de Acceso:
+    - Solo usuarios con el rol **'comitiva'** pueden acceder a esta ruta (debido al decorador `@role_required('comitiva')`).
+
+    Flujo de ejecución:
+    1. **Validación de Datos:** Verifica si se recibió el cuerpo JSON y extrae la clave 'password'.
+    2. **Validación de Lógica:** Compara la contraseña recibida con la contraseña predefinida.
+    3. **Manejo de Resultado:**
+       - Si es **incorrecta**, retorna un mensaje de error, pero con un estado **200** para
+         indicar que el servidor procesó la solicitud exitosamente, pero el resultado
+         de la validación es negativo.
+       - Si es **correcta**, retorna un mensaje de éxito con un objeto `{'data': True}`.
+
+    JSON Body esperado:
+    {
+      "password": "la_contraseña_a_validar"
+    }
+
     Returns:
-        tuple[Any]: Una tupla que contiene la respuesta HTTP. Si la contraseña es
-                    correcta, devuelve un mensaje de éxito. Si es incorrecta,
-                    devuelve un mensaje de error con un código de estado 200 para
-                    indicar una respuesta válida del servidor. En caso de error
-                    interno o datos faltantes, devuelve un mensaje de error apropiado.
-    
-    HTTP Methods:
-        POST: Se utiliza para enviar la contraseña a validar en el cuerpo de la solicitud JSON.
-              El cuerpo de la solicitud debe ser un JSON con la clave 'password'.
-              Ejemplo:
-              {
-                "password": "la_contraseña_a_validar"
-              }
+        Response: Un objeto de respuesta de Flask que indica si la contraseña es válida o no.
     """
     try:
         request_data = request.json
@@ -161,12 +187,43 @@ def validar_password() -> tuple[Any]:
 @security_route.route('refresh_token/', methods=['POST'])
 @jwt_required(refresh=True) # Usar el decorador correcto para refresh tokens
 def refresh_token_fn() -> tuple[Any]:
+    """
+    Endpoint para generar un nuevo Access Token usando un Refresh Token.
+
+    Esta ruta se utiliza para prolongar la sesión de un usuario sin obligarlo a
+    reingresar sus credenciales.
+
+    Restricción de Acceso:
+    - Requiere un **Refresh Token** válido en el encabezado `Authorization` (debido al decorador `@jwt_required(refresh=True)`).
+
+    Flujo de ejecución:
+    1. **Extracción de Claims:** Utiliza `get_jwt_identity()` para obtener el ID del usuario (`current_user`)
+       y `get_jwt()` para obtener todas las claims (`current_claims`) del token de refresco.
+    2. **Validación de Claims:** Verifica que el claim 'service' exista en el token.
+    3. **Generación de Nuevo Token:** Crea un **nuevo Access Token** utilizando:
+       - El ID del usuario como `identity`.
+       - Las claims existentes ('role', 'service', 'fraction') como `additional_claims`.
+       *Nota: No genera un nuevo Refresh Token; solo el Access Token es actualizado.*
+    4. **Respuesta:** Retorna el nuevo Access Token en una respuesta de éxito (200).
+
+    JSON Body esperado:
+    - El cuerpo JSON de la solicitud puede estar vacío (`{}`).
+
+    Returns:
+        Response: Un objeto de respuesta de Flask con JSON que contiene el nuevo
+                  `access_token` en el campo `data`.
+    """
     try:
         print(f"Se refresco el token ")
         # 1. Obtener el ID del usuario actual y las claims del refresh token
         current_user = get_jwt_identity()
         current_claims = get_jwt()  # Obtiene todas las claims del token actual
-        
+        print(f"El usuario actual es: {current_user}")
+        print(f"Las claims del token actual son: {current_claims}")
+        service = current_claims.get('service')
+        if not service:
+            return send_error("No se encontro el servicio", 400)
+            
         # 2. Crear un NUEVO access token (de corta duración) con las claims
         new_access_token = create_access_token(
             identity=current_user,

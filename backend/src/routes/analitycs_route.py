@@ -12,32 +12,56 @@ payment_options = PaymentCrud()
 # Creación de un Blueprint para las rutas de analíticas
 analitycs_route = Blueprint('analitycs_route', __name__, url_prefix='/api/analitycs/')
 
+from flask_jwt_extended import jwt_required,  get_jwt
+
+
 @analitycs_route.route('get_analytics/', methods=['POST'])
+@jwt_required()
 def get_analythics_by_service() -> tuple[Response, Literal[404]] | Any | tuple[Response,Literal[500]] | tuple[Response, Literal[200]]:
     """
-    Endpoint para obtener datos de analíticas por comitiva.
+    Endpoint para obtener datos de analíticas filtradas por servicio/comitiva, mes y año.
 
-    Recibe un JSON con los filtros de búsqueda a través de una petición POST.
-    Valida los datos y, si son correctos, invoca la lógica de negocio para
-    recopilar y devolver las analíticas correspondientes al servicio.
+    Recibe filtros específicos en el cuerpo JSON de una petición POST para consultar
+    datos analíticos (ej. reportes mensuales, desempeño de un servicio).
 
-    Se espera un JSON con la siguiente estructura:
+    Restricción de Acceso:
+    - Requiere autenticación JWT (`@jwt_required`).
+    - Solo usuarios con el rol **'delegado'** o **'comitiva'** están autorizados para acceder a esta ruta.
+
+    Flujo de ejecución interno:
+    1. **Autorización:** Extrae el rol del usuario de las claims del JWT. Si el rol no es
+       'delegado' o 'comitiva', retorna un error 403 (Prohibido).
+    2. **Validación de Datos:** Verifica que el cuerpo de la solicitud JSON no esté vacío.
+    3. **Lógica de Negocio:** Llama a `handler_analythics.get_analytics_per_month(data)` para
+       ejecutar la consulta. Esta función retorna el estado HTTP, un mensaje y los datos.
+    4. **Respuesta:**
+       - Si el estado de la lógica de negocio es de éxito (200 a 205), retorna el resultado
+         con `send_success`.
+       - Si el estado es de error, retorna el mensaje de error con `send_error`.
+    5. **Manejo de Excepciones:** Captura cualquier error inesperado y retorna un error 500
+       (Error Interno del Servidor).
+
+    JSON Body esperado:
     {
-        "comitiva": "agua", 
-        "mes": "M01", 
-        "usuario": "uuid_del_usuario",
-        "anio": "Y25"
+        "comitiva": "str",      // Nombre o identificador del servicio/comitiva a consultar.
+        "mes": "str",           // Mes para el filtro (ej. "M01" para enero).
+        "usuario": "str",       // UUID del usuario (posiblemente para restringir o auditar).
+        "anio": "str"           // Año para el filtro (ej. "Y25" para 2025).
     }
 
     Returns:
-        Union[tuple[Response, int], Any]:
-            - Una tupla con un objeto Response y un código de estado HTTP 400
-              si los datos son incorrectos.
-            - Una tupla con un objeto Response y un código de estado HTTP 200
-              si la operación es exitosa, incluyendo los datos de las analíticas.
-            - Una tupla con un objeto Response y un código de estado HTTP 500
-              en caso de un error interno del servidor.
+        Response: Un objeto de respuesta de Flask con JSON que indica el resultado:
+                  - 200/205 (Éxito) y los datos de las analíticas.
+                  - 400 (Datos faltantes).
+                  - 403 (Permiso denegado por rol).
+                  - 500 (Error interno).
     """
+    claims = get_jwt()
+    user_role = claims.get('role')
+    if user_role == 'delegado' or user_role == 'comitiva':
+        pass
+    else:
+        return send_error("No tienes permiso para buscar", 403)
     try:
         data = request.json
 
@@ -53,7 +77,7 @@ def get_analythics_by_service() -> tuple[Response, Literal[404]] | Any | tuple[R
             return send_success(mensaje, datos, estado)
         else:
             return send_error(mensaje, estado)
-            
+        
     except Exception as e:
         # Manejo de errores inesperados del servidor
         print(f"Error al obtener la informacion de la comitiva: {e}")

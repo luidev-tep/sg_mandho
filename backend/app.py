@@ -2,6 +2,7 @@
 from flask import Flask
 from flask_cors import CORS  # Importa CORS
 from flask_jwt_extended import JWTManager
+from datetime import timedelta
 #HARCODEAR LAS URL
 import os
 
@@ -25,6 +26,10 @@ app.register_blueprint(security_route)
 app.register_blueprint(payment_route)
 app.register_blueprint(analitycs_route)
 app.config['JWT_SECRET_KEY'] = os.environ.get('SECRET_KEY', 'No se conecto')
+# Configuración de los tiempos de expiración [5]
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes = 15)  # Access token expira después de 15 minutos
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days = 1)   # Refresh token expira después de 30 días
+
 jwt = JWTManager(app)
 # Desactivar las verificaciones CORS permitiendo todas las solicitudes
 # Configuración detallada de CORS

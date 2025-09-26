@@ -1,7 +1,4 @@
 import axios from "axios";
-//Se improta para poder enviar los tojkens adecuadamente
-import axiosInstance from "./axiosInstance";
-
 const api = axios.create({   
     baseURL: 'http://127.0.0.1:5000/api/security/'
 });

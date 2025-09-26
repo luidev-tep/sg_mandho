@@ -20,12 +20,43 @@ from flask_jwt_extended import jwt_required,  get_jwt, get_jwt_identity
 @account_route.route('create/', methods=['POST'])
 @jwt_required()
 def crate_account() -> tuple[Response, Literal[400]] | tuple[Response, Any] | tuple[Response, Literal[500]]:
-    """Enpoint el cual servira para crear una nueva cuenta
-    debe recibir algunos datos, asi como el ID de la persona
+    """
+    Endpoint para crear una nueva cuenta de cliente.
 
-    Terminar de documentar dosctring
-    
-        """
+    Este endpoint recibe los datos necesarios para crear una nueva cuenta a través
+    de una solicitud POST en formato JSON.
+
+    Restricción de Acceso:
+    - Requiere autenticación JWT (`@jwt_required`).
+    - Solo los usuarios con el rol **'delegado'** o **'subdelegado'** están autorizados
+      para crear cuentas.
+
+    Flujo de ejecución interno:
+    1. **Autorización:** Extrae el rol del usuario de las claims del JWT. Si el rol no
+       es 'delegado' o 'subdelegado', retorna un error 403 (Prohibido).
+    2. **Validación de Datos:** Verifica que el cuerpo de la solicitud JSON no esté vacío.
+    3. **Lógica de Negocio:** Llama a `account_options.insert_account(account_json)` para
+       procesar la creación de la cuenta. Esta función de la capa de negocio se encarga de
+       la inserción en la base de datos.
+    4. **Respuesta:**
+       - Si la operación de inserción es exitosa (estado 200 a 205), retorna un mensaje
+         de éxito.
+       - Si la inserción falla por cualquier motivo (ej. datos incorrectos), retorna un
+         mensaje de error con el estado correspondiente.
+    5. **Manejo de Excepciones:** Si ocurre un error inesperado, captura la excepción
+       y retorna un error 500 (Error Interno del Servidor).
+
+    JSON Body esperado (ejemplo):
+    {
+        "person_id": "str",      // El ID de la persona a la que se le asociará la cuenta.
+        "account_type": "str",   // Tipo de cuenta (ej. "agua", "luz").
+        // ... otros datos relevantes para la cuenta.
+    }
+
+    Returns:
+        Response: Un objeto de respuesta de Flask con JSON que indica el resultado de la
+                  operación.
+    """
     claims = get_jwt()
     user_role = claims.get('role')
     if user_role == 'delegado' or user_role == 'subdelegado':
@@ -53,16 +84,39 @@ def crate_account() -> tuple[Response, Literal[400]] | tuple[Response, Any] | tu
 @jwt_required()
 def read_account() -> tuple[Response, Literal[400]] | tuple[Response, int] | tuple[Response, Literal[500]] | None:
     """
-    En este endpoint se se enviara al frontend la informacion de las cuenta
-    , se quiere hacer que tenga 2 mods, uno con el id de la persona para solo mostrar un registro, y otro, con el
-    que solamente sea para enviar todas las cuentas 
-    Args:
-        account_json (dict): Un diccionario que contiene la información del usuario. El cual puede ir vacio, lo que significa que se queiren ver las cuentas en general
-        
-    Returns:
-        llama a la funcion send_error o send_success las cuales no son mas que un acortador de codigo
-        pero en si esas funciones se encargan de enviar el mensaje en formato json
+    Endpoint para leer información de una o varias cuentas.
 
+    Este endpoint tiene dos modos de operación, determinados por el contenido del
+    cuerpo de la solicitud JSON:
+    - **Lectura específica:** Si el JSON contiene un `account_id` u otro filtro
+      específico, se retorna la información de esa única cuenta.
+    - **Lectura masiva:** Si el JSON está vacío, se retorna la información de
+      todas las cuentas.
+
+    Restricción de Acceso:
+    - Requiere autenticación JWT (`@jwt_required`).
+    - Solo usuarios con el rol **'delegado'**, **'subdelegado'** o **'comitiva'**
+      pueden acceder a esta ruta.
+
+    Flujo de ejecución interno:
+    1. **Autorización:** Extrae el rol del usuario del JWT y verifica si está autorizado.
+    2. **Validación de Datos:** Verifica que se haya recibido un cuerpo JSON.
+    3. **Lógica de Negocio:** Llama a `account_options.read_account(account_json)`
+       para ejecutar la consulta a la base de datos.
+    4. **Respuesta:** Retorna una respuesta de éxito con los datos encontrados o una
+       respuesta de error si la búsqueda falla.
+    5. **Manejo de Excepciones:** Captura cualquier excepción y retorna un error 500.
+
+    JSON Body esperado (ejemplo):
+    - Para buscar una cuenta específica:
+      { "account_id": "12345abcde" }
+    - Para buscar todas las cuentas:
+      { }
+
+    Returns:
+        Response: Un objeto de respuesta de Flask con JSON que contiene los datos
+                  de la(s) cuenta(s) en caso de éxito o un mensaje de error si
+                  la solicitud no cumple con los requisitos o falla.
     """
     claims = get_jwt()
     user_role = claims.get('role')
