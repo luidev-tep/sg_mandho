@@ -3,8 +3,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Transition from '../utils/Transition';
 import UserAvatar from '../images/user-avatar-32.png';
-import { useAuth } from '../utils/AuthContext';
-
+import { useAuth } from '../utils/AuthContext'; // Mantenemos la importación del contexto
+import { detenerRenovacionAutomatica } from '../api/api_auth'; // Importamos la función desde su origen
+ 
 function DropdownProfile({ align }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const trigger = useRef(null);
@@ -25,9 +26,11 @@ function DropdownProfile({ align }) {
 
   // Función para cerrar sesión
   const cerrarSesion = () => {
-    dispatch({ type: "CLEAR_USER" });             // Limpia estado global
-    localStorage.removeItem("usuario");           // Elimina del localStorage
-    navigate("/Signup");                          // Redirige al login
+    detenerRenovacionAutomatica();      // 1. Detiene la renovación automática
+    dispatch({ type: "CLEAR_USER" });   // 2. Limpia el estado global de la aplicación
+    localStorage.removeItem("usuario"); // 3. Elimina datos del usuario del localStorage
+    localStorage.removeItem("tokens");  // 4. Elimina los tokens del localStorage
+    navigate("/Signup");                // 5. Redirige a la página de login
   };
 
   return (

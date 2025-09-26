@@ -4,6 +4,12 @@ from src.dim_dates.dim_date import DIM_DATE
 from src.security.repository.user_info import get_user_info
 from src.utils.id_generator import create_id
 
+
+from functools import wraps
+from flask import abort
+from flask_jwt_extended import jwt_required, get_jwt, verify_jwt_in_request
+
+
 from src.utils.validate_data import validate_data
 class SecurityUsers:
     def authenticate_user(self, data_user: dict[str, str]) -> tuple[int, str, dict | None]:
@@ -68,4 +74,28 @@ class SecurityUsers:
             except Exception as e:
                 print(e)
                 return 500, str(e), None
+            
+#Se ha puesto el decorador como como una funcion py no como un metodo para poder usarlo en cualquier blueprint
 
+
+def role_required(required_role) :#-> Callable[..., _Wrapped[Callable[..., Any], Any, Callable[...:
+    # Definición del decorador externo que acepta el rol requerido
+    def decorator(fn):
+        @wraps(fn)
+        # Se asegura de que el JWT esté presente y sea válido
+        @jwt_required() 
+        def wrapper(*args, **kwargs):
+            # Obtiene todas las claims (el payload decodificado) del token JWT actual
+            verify_jwt_in_request() # Verifica la presencia del JWT [6]
+            claims = get_jwt() # Obtiene las claims del token [7, 15]
+            print("Claims obtenidas del JWT:", claims) # Depuración: Muestra las claims obtenidas
+            # Asume que el rol se guardó en la claim "role"
+            user_role = claims.get('role', 'user') # Si no hay rol, asume 'user' [7]
+            
+            # Lógica de verificación: ¿El rol del usuario coincide con el rol requerido?
+            if user_role != required_role:
+                # Si el rol no coincide, se devuelve un error 403 (Prohibido) [6, 7]
+                abort(403, description="Forbidden: Insufficient privileges")
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator

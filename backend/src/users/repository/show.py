@@ -148,8 +148,8 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
         if fechas_cond:
             query += f" AND {fechas_cond}"
             valores.extend(fechas_values)
-        # print("[DEBUG] Query generado:", query)
-        # print("[DEBUG] Valores:", valores)
+        #print("[DEBUG] Query generado:", query)
+        #print("[DEBUG] Valores:", valores)
         conecion.cursor.execute(query, tuple(valores))
         registros = conecion.cursor.fetchall()
         data_format = []
@@ -172,7 +172,7 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
             
             data_format.append(persona)
 
-        print(f" Se encontraron {len(data_format)} registros")
+        #print(f" Se encontraron {len(data_format)} registros")
         return data_format
 
     except Exception as e:

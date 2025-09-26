@@ -37,8 +37,8 @@ export const validatePassword = async (data) => {
             // El servidor respondió con un status fuera del rango 2xx
             console.error("Error de respuesta:", error.response.data);
             errorMessage = error.response.data?.message || 
-                          error.response.data?.error || 
-                          `Error ${error.response.status}: ${error.response.statusText}`;
+                error.response.data?.error || 
+                `Error ${error.response.status}: ${error.response.statusText}`;
         } else if (error.request) {
             // La petición fue hecha pero no se recibió respuesta
             errorMessage = 'No se recibió respuesta del servidor';

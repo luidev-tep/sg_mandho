@@ -74,7 +74,7 @@ def get_status_serviceDetailes_type(year: int, service_name: str, serviceDetaile
     try:
         #print(f"los datos que llegaron: servicio {service_name}, anio {year}, tipo {serviceDetailes_type}")
         if from_service == "is_service_valid":
-            print("entro a is_service_valid")
+            #print("entro a is_service_valid")
             query = query.replace("[servicio_filtro]", "WHERE ServiceDetailesType = ?")
             query = query.replace("[campo_adicioanl]", "")
         
@@ -83,7 +83,7 @@ def get_status_serviceDetailes_type(year: int, service_name: str, serviceDetaile
         
         
         elif from_service == "get_check_list_valids":
-            print("entro a get_check_list_valids")
+            #print("entro a get_check_list_valids")
             query = query.replace("[servicio_filtro]", " ")
             query = query.replace("[campo_adicioanl]", "sv.ServiceDetailesType , ")
             

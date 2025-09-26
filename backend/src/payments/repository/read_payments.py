@@ -266,7 +266,7 @@ class ReadPayment:
             # print("#"*100)
             # print([registro for registro in registros if registro])
             # print("#"*100)
-            print('Se encontraron registro en el servicio: ', service_name, ' con estos filtros: ', filters, 'y estos valores: ', values)
+            #print('Se encontraron registro en el servicio: ', service_name, ' con estos filtros: ', filters, 'y estos valores: ', values)
             return registros
         except Exception as e:
             print(f"Error al construir los filtros: {e}")

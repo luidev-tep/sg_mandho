@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/analitycs/'
-});
+import axiosInstance from "./axiosInstance";
 
 
 export const GetAnalytics = async (data) => {
@@ -17,7 +13,7 @@ export const GetAnalytics = async (data) => {
                 console.log("Datos para la petición de analytics:", { ...data, anio: formattedYear });
                 
                 // Enviar los datos en el cuerpo de la petición POST
-                const response = await api.post('get_analytics/', {
+                const response = await axiosInstance.post('analitycs/get_analytics/', {
                     comitiva: data.comitiva,
                     mes: data.mes,
                     usuario: data.usuario,

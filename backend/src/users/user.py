@@ -123,8 +123,7 @@ class UserCrud:
         
         respuesta,mensaje = validate_data(data_json, campos_requeridos, tipo_campos, "user") # <--- Retorna boleano y el mensaje del error
         if respuesta:
-            
-            if data_json["id_user"] and data_json['filters'] == {}:
+            if data_json["id_user"]:
                 # Caso 1: Solo hay id_user - Buscar información específica de un usuario
                 # Solamente se pasa el valor, ya no se pasa el diccionario
                 datos = get_user(data_json["id_user"])
@@ -154,7 +153,7 @@ class UserCrud:
                     return 404, "No se encontraron resultados con estos filtros", []
                 
             else:
-                return 400, "El id_user y filters son mutuamente excluyentes", []
+                return 400, "Error al intentar mostrar a un usuario", []
             
         else:
             return 400, mensaje, []

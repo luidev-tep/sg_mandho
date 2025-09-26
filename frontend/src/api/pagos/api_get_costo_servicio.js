@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/payment/'
-});
+import axiosInstance from "./axiosInstance";
 
 export const GetCostoServicio = async (DIM_CustomerId, moduleName) => {
     try {
@@ -17,7 +13,7 @@ export const GetCostoServicio = async (DIM_CustomerId, moduleName) => {
         };
 
         //console.log("Los datos llegaron correctamente a Api.js en MostrarPagos", data);
-        const response = await api.post('get_cost/', data);
+        const response = await axiosInstance.post('payment/get_cost/', data);
 
         //console.log("Respuesta del servidor:", response.data);
 
@@ -56,7 +52,7 @@ export const getAmount = async (data) => {
             throw new Error('Faltan datos requeridos para obtener el monto');
         }
         //console.log("Los datos llegaron correctamente a Api.js en getAmount", data);
-        const response = await api.post('get_any_data/', data);
+        const response = await axiosInstance.post('payment/get_any_data/', data);
 
         // Verificar si la respuesta tiene el formato esperado
         if (!response.data) {
@@ -103,7 +99,7 @@ export const getPagosPendientes = async (data) => {
             throw new Error('Faltan datos requeridos para obtener los pagos pendientes');
         }
         console.log("Datos enviados a getPAgosPendientes:", data);
-        const response = await api.post('get_any_data/', data);
+        const response = await axiosInstance.post('payment/get_any_data/', data);
 
         // Verificar si la respuesta tiene el formato esperado
         if (!response.data || !response.data.body) {
@@ -148,7 +144,7 @@ export const Get_servicios_disponibles = async (data) => {
         }
 
         //console.log("Datos enviados a Get_servicios_disponibles:", data);
-        const response = await api.post('get_any_data/', data);
+        const response = await axiosInstance.post('payment/get_any_data/', data);
 
         // Verificar si la respuesta tiene el formato esperado
         if (!response.data) {

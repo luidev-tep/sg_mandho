@@ -65,7 +65,7 @@ def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, serv
         quwery_base = query_base.replace("[tabla]", serviceName.upper())
         values = (DIM_CustomerId, service_type, str(Year))
 
-        print(quwery_base , values)
+        #print(quwery_base , values)
         handler_conexion.cursor.execute(quwery_base, values)
         rows = handler_conexion.cursor.fetchall()
 

@@ -219,11 +219,11 @@ class PaymentCrud:
                     print(f"Error al leer los pagos: {data}")
                     return code, "Error a la hora de aplicar filtros", []
                 
-                print(f"tamaanio de data: {len(data)}")
+                #print(f"tamaanio de data: {len(data)}")
                 #Codigo para obtener el check list
                 servicios_validos = get_check_list_valids(filters['filters']['DIM_Date'], filters['serviceName'])
                 
-                print(f"Servicios validos: {servicios_validos}") 
+                #print(f"Servicios validos: {servicios_validos}") 
                 if servicios_validos: 
                     status, mensaje_query, check_lista_data = self.get_check_list_table() 
                     

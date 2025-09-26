@@ -1,12 +1,18 @@
 import requests  # Necesitarás esta librería para hacer la petición a Google
 import os        # Para manejar variables de entorno de forma segura
 
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, create_refresh_token
+from flask_jwt_extended import (
+    jwt_required,
+    get_jwt_identity,
+    get_jwt,
+    create_access_token,
+    create_refresh_token
+)
 from typing import Any
 from flask import Blueprint, request
 from src.users.user import UserCrud
 from src.routes.handle_message import send_error, send_success
-from src.security.security import SecurityUsers
+from src.security.security import SecurityUsers, role_required
 
 user_options = UserCrud()
 security_options = SecurityUsers()
@@ -76,8 +82,22 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
             return send_error(mensaje, estado)
         
         #Logica de generacion de JWT
-        access_token = create_access_token(identity=user_data['DIM_ServiceOwnersId'])
-        refresh_token = create_refresh_token(identity=user_data['DIM_ServiceOwnersId'])
+        access_token = create_access_token(
+            identity=user_data['DIM_ServiceOwnersId'],
+            additional_claims={
+            "role": user_data['RoleName'],
+            "service": user_data['ServiceName'],
+            "fraction": user_data['CustomerFraction']
+                        }
+            )
+        refresh_token = create_refresh_token(
+            identity=user_data['DIM_ServiceOwnersId'],
+            additional_claims={
+            "role": user_data['RoleName'],
+            "service": user_data['ServiceName'],
+            "fraction": user_data['CustomerFraction']
+                        }
+            )
         #Es la mejor forma de enviar la informacion ya que no se cambia nada, slamente se modifica el diccionario interno
         data = {
             'data': user_data,
@@ -96,6 +116,7 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
 
 
 @security_route.route('validate_password/', methods=['POST'])
+@role_required('comitiva')
 def validar_password() -> tuple[Any]:
     """
     Endpoint para validar una contraseña.
@@ -115,7 +136,7 @@ def validar_password() -> tuple[Any]:
               El cuerpo de la solicitud debe ser un JSON con la clave 'password'.
               Ejemplo:
               {
-                  "password": "la_contraseña_a_validar"
+                "password": "la_contraseña_a_validar"
               }
     """
     try:
@@ -131,6 +152,31 @@ def validar_password() -> tuple[Any]:
             return send_error("La contrasenia es incorrecta, intentelo de nuevo", 200)
         
         return send_success("Validacion completa", {'data': True}, 200)
+    except Exception as e:
+        print(e)
+        return send_error(str(e), 500)
+    
+
+
+@security_route.route('refresh_token/', methods=['POST'])
+@jwt_required(refresh=True) # Usar el decorador correcto para refresh tokens
+def refresh_token_fn() -> tuple[Any]:
+    try:
+        print(f"Se refresco el token ")
+        # 1. Obtener el ID del usuario actual y las claims del refresh token
+        current_user = get_jwt_identity()
+        current_claims = get_jwt()  # Obtiene todas las claims del token actual
+        
+        # 2. Crear un NUEVO access token (de corta duración) con las claims
+        new_access_token = create_access_token(
+            identity=current_user,
+            additional_claims={
+                "role": current_claims.get('role'),
+                "service": current_claims.get('service'),
+                "fraction": current_claims.get('fraction')
+            }
+        )
+        return send_success("Token actualizado", {'data': new_access_token}, 200)
     except Exception as e:
         print(e)
         return send_error(str(e), 500)

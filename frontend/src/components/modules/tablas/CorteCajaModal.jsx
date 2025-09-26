@@ -146,8 +146,8 @@ function CorteCajaModal({ serviceName, serviceDetailTypes, onClose, onSuccess })
         {/* Cuerpo */}
         <div className="p-6">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Se generará un corte de caja para el servicio de <span className="font-bold text-indigo-500">{serviceName}</span>.
-            Seleccione el tipo de servicio sobre el cual desea realizar el corte.
+            Terminar el servicio <span className="font-bold text-indigo-500">{serviceName}</span>.
+            Seleccione el tipo de servicio sobre el cual desea terminar la operación.
           </p>
           {renderContent()}
         </div>

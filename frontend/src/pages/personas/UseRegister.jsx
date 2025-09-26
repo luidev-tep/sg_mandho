@@ -190,7 +190,7 @@ function UserRegister() {
         const requestData = {
           data: dataConFecha
         };
-
+        console.log("Datos enviados al endpoint front:", requestData);
         const response = await AgregarUsuario(requestData);
 
         console.log("Respuesta del endpoint front:", response.id);

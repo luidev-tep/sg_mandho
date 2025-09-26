@@ -1,11 +1,11 @@
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { ObtenerUsuario } from '../api/api_auth';
+import { ObtenerUsuario, iniciarRenovacionAutomatica } from '../api/api_auth';
 import AuthImage from "../images/auth-image.jpg";
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
-
+ 
 function Signup() {
   const { 
     register, 
@@ -31,7 +31,7 @@ function Signup() {
       return;
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true); 
     setApiError(null);
     setLoginSuccess(false);
 
@@ -45,6 +45,9 @@ function Signup() {
           tokens: response.tokens
         }
       });
+
+      // Iniciar la renovación automática del token
+      iniciarRenovacionAutomatica();
 
       setLoginSuccess(true);
       setTimeout(() => {
