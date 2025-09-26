@@ -30,7 +30,7 @@ function AccountTableItem(props) {
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
       {/* Checkbox */}
-      <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap w-px">
+      {/* <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap w-px">
         <div className="flex items-center">
           <label className="inline-flex">
             <span className="sr-only">Select</span>
@@ -45,12 +45,11 @@ function AccountTableItem(props) {
         </div>
       </td>
       
-      {/* ID de Cuenta */}
+      {/* ID de Cuenta *
       <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
         <div className="text-left font-medium text-sky-600 dark:text-sky-400 text-sm">
-          {props.id.substring(0, 8)}...
         </div>
-      </td>
+      </td> */}
       
       {/* Cliente */}
       <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">

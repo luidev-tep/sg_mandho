@@ -9,16 +9,21 @@ payment_options = PaymentCrud()
 from src.dim_servicedetails.serviceDetails import ServiceDetailsCrud
 
 from src.payments.cash_cut import cashCutCrud
+from src.security.security import SecurityUsers, role_required
 
+from flask_jwt_extended import jwt_required,  get_jwt, get_jwt_identity
 service_details_options = ServiceDetailsCrud()
 
 hanlder_cash_cut = cashCutCrud()
 
 
+security_options = SecurityUsers()
+
 payment_route = Blueprint('payment_route', __name__, url_prefix='/api/payment/')
 
 
-@payment_route.route('create/', methods=['POST'])
+@payment_route.route('create/', methods=['POST']) 
+@role_required('comitiva')
 def create_payment() -> Response:
     """
     Maneja la creación de un nuevo pago a través de una solicitud POST.
@@ -67,7 +72,10 @@ def create_payment() -> Response:
         return send_error(str(e), 500)
     
 
+
+#Se debe testear esta funcion para ver que ususario podra acceder a cual comitiva
 @payment_route.route('read/', methods=['POST'])
+@jwt_required()
 def read_payment() -> Response:
     """
     Maneja la lectura de un pago a través de una solicitud POST.
@@ -86,11 +94,37 @@ def read_payment() -> Response:
         Response: Un objeto de respuesta de Flask que contiene un JSON con
                   el estado HTTP y los datos del pago o un mensaje de error.
     """
+    claims = get_jwt()
+    user_role = claims.get('role')
+    user_service = claims.get('service', '').strip().lower()
+
+    payment_json = request.json
+    print(f"Rol del usuario: {user_role}, Servicio asignado: {user_service}")
+
+    if not payment_json:
+        return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+    
+    request_service_name = payment_json.get('serviceName', '')
+    print(f"Servicio solicitado en la petición: {request_service_name}")
+    if user_role == 'delegado':
+        # Usuario delegado: Acceso total. No se aplica ningún filtro.
+        # Por ejemplo: query = query.filter(Pago.estado == 'pendiente').all() 
+        if not request_service_name:
+            return send_error("Se debe especificar un servicio", 400)
+        
+    elif user_role == 'comitiva':
+        if not user_service:
+            return send_error("Se debe especificar un servicio", 400)
+            # Usuario comitiva: Solo puede ver pagos de su propio servicio.
+        print(f"Comparando servicio del usuario '{user_service}' con el solicitado '{request_service_name}' El resultado es {user_service==request_service_name}")
+        if not request_service_name:
+            payment_json['serviceName'] = user_service
+            request_service_name = user_service
+        elif request_service_name != user_service: 
+            return send_error("No autorizado para ver pagos de este servicio", 403)
+    else:
+        return send_error("Rol de usuario no autorizado para crear pagos", 403)
     try:
-        payment_json = request.json
-        if not payment_json:
-            return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
-            
         if 'filters' in payment_json:
             estado, mensaje, datos = payment_options.read_payments(payment_json)
 
@@ -112,7 +146,9 @@ def read_payment() -> Response:
         return send_error(str(e), 500)
     
 #get_cost
+
 @payment_route.route('get_cost/', methods=['POST'])
+@role_required('comitiva')
 def get_cost() -> Response:
     """
     Maneja la obtención del costo de un servicio o producto a través de una solicitud POST.
@@ -146,8 +182,8 @@ def get_cost() -> Response:
         return send_error(str(e), 500)
     
 
-
 @payment_route.route('get_any_data/', methods=['POST'])
+@jwt_required()
 def get_any_data() -> Response:
     """
     Endpoint para obtener datos diversos del sistema que no requieren procesamiento complejo.
@@ -220,7 +256,9 @@ def get_any_data() -> Response:
         return send_error(error_msg, 500)
     
 
+
 @payment_route.route('cash_cut/', methods=['POST'])
+@role_required('comitiva')
 def cash_cut_route() -> Response:
     """
     Ruta para realizar un corte de caja.
@@ -261,6 +299,7 @@ def cash_cut_route() -> Response:
 
 
 @payment_route.route('generar_servicio/', methods=['POST'])
+@role_required('comitiva')
 def insert_new_service() -> Response:
     """
     Maneja la obtención del costo de un servicio o producto a través de una solicitud POST.

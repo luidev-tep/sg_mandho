@@ -38,10 +38,9 @@ function Onboarding04() {
                     Usuario insertado correctamente <span className="ml-2">🙌</span>
                   </h1>
                   
-                  {/* Mensaje con ID (opcional) */}
-                  <p className="text-gray-600 dark:text-gray-300 mb-2 text-center">
+                  {/* Mens                  {/* <p className="text-gray-600 dark:text-gray-300 mb-2 text-center">
                     ID del usuario: <span className="font-mono font-bold">{id}</span>
-                  </p>
+                  </p>aje con ID (opcional) */}
                   
                   <p className="text-gray-600 dark:text-gray-300 mb-8 text-center">
                     El usuario ha sido registrado exitosamente en el sistema.

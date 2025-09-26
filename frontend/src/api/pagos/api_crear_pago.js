@@ -1,9 +1,5 @@
 //src/api/pagos/api_crear_pago.js
-import axios from "axios";
-
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/payment/'
-});
+import axiosInstance from "./axiosInstance";
 
 export const crearRegistroPago = async (data) => {
     try {
@@ -15,7 +11,7 @@ export const crearRegistroPago = async (data) => {
         // El backend ahora maneja tanto un objeto como una lista,
         // así que enviamos 'data' directamente.
         console.log("Payload enviado a api/payment/create:", data);
-        const response = await api.post('create/', data);
+        const response = await axiosInstance.post('payment/create/', data);
         
         console.log("Respuesta del servidor al crear pago(s):", response.data);
         
@@ -57,7 +53,7 @@ export const CorteDeCaja = async (data) => {
         }
 
         //console.log("Datos enviados a CorteDeCaja:", data);
-        const response = await api.post('cash_cut/', data);
+        const response = await axiosInstance.post('payment/cash_cut/', data);
         
         console.log("Respuesta del servidor al crear corte de caja:", response.data);
         

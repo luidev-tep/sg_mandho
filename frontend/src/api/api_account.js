@@ -1,10 +1,9 @@
-import axios from "axios";
+import axiosInstance from "./axiosInstance";
 import { id } from "date-fns/locale/id";
 
 // Instancia de Axios con la URL base configurada
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/account/'
-});
+// Ya no se necesita una instancia local, usaremos la centralizada
+// con el interceptor que inyecta el token de autorización.
 
 /*
 Formato en el que se tienen que enviar los datos cuando se crea una nueva cuenta es el siguiente:
@@ -57,7 +56,7 @@ export const crearCuenta = async (data) => {
       throw new Error('Fecha de inicio es requerida');
     }
 
-    const response = await api.post('create/', data);
+    const response = await axiosInstance.post('account/create/', data);
     
     return {
       success: true,
@@ -114,7 +113,7 @@ export const MostrarCuentas = async (filters) => {
     }
     console.log("Desde api account, mostrar cuentas")
     console.log(id_user)
-    const response = await api.post('read/', { id_user });
+    const response = await axiosInstance.post('account/read/', { id_user });
     
     // Si la respuesta es un array vacío o no tiene body
     if (Array.isArray(response.data) && response.data.length === 0) {

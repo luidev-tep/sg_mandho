@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/payment/'
-});
+import axiosInstance from "./axiosInstance";
 
 export const MostrarPagos = async (data) => {
     try {
@@ -12,7 +8,8 @@ export const MostrarPagos = async (data) => {
         }
 
         //console.log("Los datos llegaron correctamente a Api.js en MostrarPagos", data);
-        const response = await api.post('read/', data);
+        // Usamos la instancia centralizada y la ruta relativa al baseURL
+        const response = await axiosInstance.post('payment/read/', data);
 
         //console.log("Respuesta del servidor:", response.data);
 

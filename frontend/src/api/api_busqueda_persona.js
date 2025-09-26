@@ -1,8 +1,6 @@
 import axios from "axios";
+import axiosInstance from "./axiosInstance";
 
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/search/'
-})
 /**
  * Realiza una búsqueda de clientes en el servidor basada en un término de búsqueda
  * y transforma los resultados en un formato estandarizado para el frontend.
@@ -66,7 +64,7 @@ export const buscarClientes = async (query, signal = null) => {
     }
 
     // Realizar petición GET con manejo de cancelación
-    const response = await api.get('search_client/', config);
+    const response = await axiosInstance.get('search/search_client/', config);
 
     // Transformar la respuesta del servidor
     return response.data.results.map(cliente => ({

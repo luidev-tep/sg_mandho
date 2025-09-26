@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/payment/'
-});
+import axiosInstance from "./axiosInstance";
 
 // Función para generar servicio - Completamente funcional
 
@@ -25,7 +21,7 @@ export const generarServicio = async (data) => {
         }
 
         console.log("Datos enviados a generarServicio:", data);
-        const response = await api.post('generar_servicio/', data);
+        const response = await axiosInstance.post('payment/generar_servicio/', data);
 
         // Verificar si la respuesta tiene el formato esperado
         if (!response.data) {

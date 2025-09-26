@@ -1,11 +1,9 @@
-import axios from "axios";
+import axiosInstance from "./axiosInstance";
 import { validate_edit_account } from "./api_account";
 import { crearCuenta } from "./api_account";
 import { isValid } from "date-fns/isValid";
-// Instancia de Axios con la URL base configurada
-const api = axios.create({
-    baseURL: 'http://127.0.0.1:5000/api/user/'
-});
+// Ya no se necesita una instancia local, usaremos la centralizada
+// con el interceptor que inyecta el token de autorización.
 
 
 /**
@@ -49,17 +47,25 @@ const api = axios.create({
  */
 export const AgregarUsuario = async (data) => { 
     try {
-        // 1. Crear el usuario primero
-        const userResponse = await api.post('create_user/', data, {
+        console.log("AgregarUsuario Hola desde api_user.js");
+        console.log("Data recibida en AgregarUsuario:", data);
+        
+        // 1. Crear el usuario primero - AGREGANDO HEADERS COMO EN MostrarUsuarios
+        const userResponse = await axiosInstance.post('user/create_user/', data, {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }
         });
 
-        if (!userResponse.data || userResponse.data.status !== 'success') {
+        if (!userResponse.data) {
+            throw new Error('No se recibieron datos del backend');
+        }
+
+        if (userResponse.data.status !== 'success') {
             throw new Error(userResponse.data?.message || 'Error al crear el usuario');
         }
+        
         // Obtener ID del usuario creado
         const userId = userResponse.data.body.id;
         if (!userId) {
@@ -88,46 +94,15 @@ export const AgregarUsuario = async (data) => {
         }
     } catch (error) {
         console.error("Error en AgregarUsuario:", error);
-        throw error;
+        
+        // Priorizamos el mensaje del backend si está disponible - COMO EN MostrarUsuarios
+        const errorMessage = error.response?.data?.message 
+            || error.message 
+            || 'Error al crear el usuario';
+        
+        throw new Error(errorMessage);
     }
 }
-
-/**
- * Realiza una petición GET a la API para obtener todos los datos de pruba
- * Simplemente funciona para saber si la conexion se ha establecido correctamente
- * Cabe aclar que esta funcion solo es de pruevba ya que no actualmente aun no exites toda la infraestructura
- * 
- * @returns {Promise<AxiosResponse<any>>} Promesa que se resuelve con la respuesta de la API
- */
-export const getAlldata = () => {
-    // Usa 'api.get' en lugar de 'axios.get'
-    // La URL 'read/' se unirá a la baseURL: 'http://127.0.0.1:5000/api/read/'
-    return api.post('read_user/', {
-        //withCredentials: true, // Solo si usas cookies/sesión
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        data: {
-            id_user: '-LON-CERR-322h2fwiu',
-            filters: {}
-        }
-    });
-};
-
-export const EnviarCredenciass = (data) => { 
-    
-    // Agrega 'data' como parámetro para enviar el cuerpo de la petición
-    // Usa 'api.post' en lugar de 'axios.post'
-    console.log("Los datos llegaron correctamente a Api.js en EnviarCredenciass",data);
-    return api.post('auth/', data, { // Pasa 'data' como segundo argumento
-        //withCredentials: true, // Solo si usas cookies/sesión
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-    });
-};
 
 
 /**
@@ -138,7 +113,9 @@ export const EnviarCredenciass = (data) => {
  */
 
 export const MostrarUsuarios = (data) => {
-    return api.post('read_user/', data, {
+    // console.log("MostrarUsuarios Hola desde api_user.js");
+    // console.log("Data recibida en MostrarUsuarios:", data);
+    return axiosInstance.post('user/read_user/', data, {
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -175,7 +152,7 @@ export const MostrarUsuarios = (data) => {
 export const EditarUsuario = async (data) => {
     try {
         // Primero actualizar el usuario
-        const updateResponse = await api.post('update_user/', data, {
+        const updateResponse = await axiosInstance.post('user/update_user/', data, {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -232,7 +209,7 @@ export const DesactivarUsuario = (DIM_CustomerId) => {
         return Promise.reject(new Error("ID de usuario no proporcionado"));
     }
 
-    return api.patch('delete_user/', {
+    return axiosInstance.patch('user/delete_user/', {
         DIM_CustomerId: DIM_CustomerId
     }).then(response => {
         
@@ -282,7 +259,7 @@ export const GenerarReporteUsuario = (Dim_customerId) => {
         return Promise.reject(new Error("ID de usuario no proporcionado"));
     }
 
-    return api.get('gat_data/', {  // Cambiado de 'get_data/' a 'gat_data/'
+    return axiosInstance.get('user/gat_data/', {  // Cambiado de 'get_data/' a 'gat_data/'
         params: {
             Dim_customerId: Dim_customerId
         }
