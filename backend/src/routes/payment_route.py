@@ -1,3 +1,12 @@
+
+"""
+Módulo: payment_route.py
+Descripción:
+    Define las rutas (Blueprints) para las operaciones relacionadas con la gestión
+    de pagos, costos de servicios y cortes de caja dentro de la API.
+    Utiliza Flask, JWT para seguridad y clases CRUD para la lógica de negocio.
+"""
+
 from flask import Blueprint, request, Response
 from src.routes.handle_message import send_error, send_success
 
@@ -11,7 +20,7 @@ from src.dim_servicedetails.serviceDetails import ServiceDetailsCrud
 from src.payments.cash_cut import cashCutCrud
 from src.security.security import SecurityUsers, role_required
 
-from flask_jwt_extended import jwt_required,  get_jwt, get_jwt_identity
+from flask_jwt_extended import jwt_required,  get_jwt
 service_details_options = ServiceDetailsCrud()
 
 hanlder_cash_cut = cashCutCrud()
@@ -23,30 +32,55 @@ payment_route = Blueprint('payment_route', __name__, url_prefix='/api/payment/')
 
 
 @payment_route.route('create/', methods=['POST']) 
-@role_required('comitiva')
+@jwt_required()
 def create_payment() -> Response:
     """
-    Maneja la creación de un nuevo pago a través de una solicitud POST.
+    Endpoint para crear uno o varios pagos.
 
-    Este endpoint recibe los datos de un pago en formato JSON y determina si se trata de un
-    pago único o de una lista de pagos masivos. Luego, delega el procesamiento a la
-    lógica de negocio de `payment_options`. Devuelve una respuesta JSON con el
-    estado de la operación, un mensaje y, opcionalmente, los datos de la respuesta.
+    Maneja la creación de un nuevo pago o una lista de pagos masivos a través de una solicitud POST.
+    Requiere autenticación JWT y que el rol del usuario sea 'comitiva' y que el pago
+    corresponda al servicio asignado al usuario.
+
+    JSON body esperado:
+    - Para un pago único: Dict con los datos del pago (incluyendo 'ServiceName').
+    - Para pagos masivos: Lista de dicts, donde cada dict es un pago.
 
     Returns:
-        Response: Un objeto de respuesta de Flask que contiene un JSON con el
-                  estado HTTP y un mensaje de éxito o error.
+        Response: Un objeto de respuesta de Flask con JSON que contiene el
+                  estado de la operación (200-205 para éxito, otros para error),
+                  un mensaje y, opcionalmente, los datos de la respuesta.
 
     Raises:
-        Exception: Captura cualquier excepción genérica durante el procesamiento
-                   y devuelve una respuesta de error 500.
+        Exception: Captura cualquier excepción genérica y devuelve una respuesta de error 500.
     """
-    try:
-        payment_json = request.json
-        if not payment_json:
-            # Si el cuerpo de la solicitud JSON está vacío, se devuelve un error 400.
-            return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+
+    claims = get_jwt()
+    user_role = claims.get('role')
+    user_service = claims.get('service', '').strip().lower()
+
+    payment_json = request.json
+
+    if not payment_json:
+        return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+    
+    request_service_name = payment_json.get('ServiceName', '')
+    # print(f"------IMPRIMIENTO INFORMACION DEBUG------")
+    # print(f"Rol del usuario: {user_role}")
+    # #print(f"Fraccion del usuario: {user_fraction}")
+    # print(f"Datos recibidos en la solicitud: {payment_json}")
+    # print(f"Servicio solicitado en la petición: {request_service_name}, compara {user_service} con {request_service_name} = {user_service==request_service_name}")
+    if user_role != 'comitiva':
+        return send_error("No tienes permiso para crear pagos", 403)
+    
+    if not request_service_name:
+            return send_error("Se debe especificar un servicio al crear pago", 400)
         
+    if not user_service:
+            return send_error("Se debe especificar un servicio", 400)
+    
+    if request_service_name != user_service: 
+        return send_error("No autorizado para crear pagos de este servicio", 403)
+    try:
         estado = 200
         mensaje = ""
         datos = []
@@ -72,40 +106,39 @@ def create_payment() -> Response:
         return send_error(str(e), 500)
     
 
-
 #Se debe testear esta funcion para ver que ususario podra acceder a cual comitiva
 @payment_route.route('read/', methods=['POST'])
 @jwt_required()
 def read_payment() -> Response:
     """
-    Maneja la lectura de un pago a través de una solicitud POST.
+    Endpoint para la lectura de pagos con filtros.
 
-    Este endpoint recibe los datos necesarios para identificar los pagos
-    devuelve la información del pago correspondiente.
+    Permite obtener un solo pago, todos los pagos o filtrar los pagos por criterios
+    específicos. Aplica restricciones de acceso basadas en el rol del usuario:
+    - 'delegado': Acceso total, puede ver cualquier servicio (requiere 'serviceName' en el filtro).
+    - 'comitiva': Solo puede ver pagos de su servicio asignado.
 
-    Ya que servira, para obtenenr un solo pago, obtener todos los pagos o
-    filtrar los pagos por ciertos criterios.
+    JSON body esperado (al menos uno de estos):
+    - filters: dict con criterios de filtrado para búsquedas generales.
+    - DIM_CustomerId: str para obtener pagos asociados a un cliente específico.
+    - serviceName: str (opcional, si no está en 'comitiva', se usa el asignado al user).
 
-    Args:{
-            filters: dict, "filtros para la busqueda de la informacion de la persona" 
-            //Este endpoind sera solo para la infromacion en general puesto que deben haver algunos filtros especificos 
-        }
     Returns:
-        Response: Un objeto de respuesta de Flask que contiene un JSON con
-                  el estado HTTP y los datos del pago o un mensaje de error.
+        Response: Objeto de respuesta de Flask con JSON que contiene los datos del
+                  pago(s) o un mensaje de error.
     """
     claims = get_jwt()
     user_role = claims.get('role')
     user_service = claims.get('service', '').strip().lower()
 
     payment_json = request.json
-    print(f"Rol del usuario: {user_role}, Servicio asignado: {user_service}")
+    #print(f"Rol del usuario: {user_role}, Servicio asignado: {user_service}")
 
     if not payment_json:
         return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
     
     request_service_name = payment_json.get('serviceName', '')
-    print(f"Servicio solicitado en la petición: {request_service_name}")
+    #print(f"Servicio solicitado en la petición: {request_service_name}")
     if user_role == 'delegado':
         # Usuario delegado: Acceso total. No se aplica ningún filtro.
         # Por ejemplo: query = query.filter(Pago.estado == 'pendiente').all() 
@@ -116,7 +149,7 @@ def read_payment() -> Response:
         if not user_service:
             return send_error("Se debe especificar un servicio", 400)
             # Usuario comitiva: Solo puede ver pagos de su propio servicio.
-        print(f"Comparando servicio del usuario '{user_service}' con el solicitado '{request_service_name}' El resultado es {user_service==request_service_name}")
+        #print(f"Comparando servicio del usuario '{user_service}' con el solicitado '{request_service_name}' El resultado es {user_service==request_service_name}")
         if not request_service_name:
             payment_json['serviceName'] = user_service
             request_service_name = user_service
@@ -151,19 +184,20 @@ def read_payment() -> Response:
 @role_required('comitiva')
 def get_cost() -> Response:
     """
-    Maneja la obtención del costo de un servicio o producto a través de una solicitud POST.
+    Endpoint para obtener el costo de un servicio o producto.
 
-    Este endpoint recibe los datos necesarios para calcular el costo y
-    devuelve el costo correspondiente.
+    Recibe los parámetros necesarios para que la lógica de negocio calcule el costo
+    correspondiente (e.g., el costo actual de un servicio para un cliente).
+    Requiere que el usuario tenga el rol 'comitiva'.
 
-    Args:{
-            serviceName: str, "Nombre del servicio o producto"
-            DIM_CustomerId: str, "ID del cliente"
-            //Este endpoind sera solo para la infromacion en general puesto que deben haver algunos filtros especificos 
-        }
+    JSON body esperado:
+    - serviceName: str, "Nombre del servicio o producto"
+    - DIM_CustomerId: str, "ID del cliente"
+    (Los campos exactos dependen de la implementación de 'payment_options.get_cost')
+
     Returns:
-        Response: Un objeto de respuesta de Flask que contiene un JSON con
-                  el estado HTTP y el costo calculado o un mensaje de error.
+        Response: Objeto de respuesta de Flask con JSON que contiene el
+                  costo calculado o un mensaje de error.
     """
     try:
         cost_json = request.json
@@ -214,6 +248,12 @@ def get_any_data() -> Response:
     Returns:
         Response: Objeto de respuesta Flask con el formato JSON estándar de la API
     """
+    claims = get_jwt()
+    user_role = claims.get('role')
+    if user_role == 'delegado' or user_role == 'comitiva' or user_role == 'subdelegado':
+        pass
+    else:
+        return send_error("No tienes permiso para obtener datos", 403)
     try:
         # Validar que se recibieron datos JSON en el cuerpo de la solicitud
         data_json = request.json

@@ -13,43 +13,33 @@ user_route = Blueprint('user_route', __name__)
 
 from flask_jwt_extended import jwt_required,  get_jwt, get_jwt_identity
 
-"""
-Si los entopins llegan a no funcionar probar agregando un / Slash
-"""
 @user_route.route('/api/user/create_user/', methods=['POST'])
 @jwt_required()
 def create_user():# -> tuple[Any, Literal[400]] | tuple | tuple[Any, Literal[500]]:
     """
-    Este endpoint se encargara de crear un nuevo usuario aunque no tiene argumentos si se conecta mediante
-    la api create
-    
-    Args:
-        user_json (dict): Un diccionario que contiene la información del usuario.
-    
-    Returns:
-        llama a la funcion send_error o send_success las cuales no son mas que un acortador de codigo
-        pero en si esas funciones se encargan de enviar el mensaje en formato json
-    
-        Se debe cambiar esta parte ya que la api ahira reuqiere obligatoriamente estos campos
-        USUARIO VALIDO 
-        {
-        "success": true,
-        "id": "12345abcde",  // El ID del usuario creado
-        "message": "Usuario registrado exitosamente"
-        }
+    Endpoint para crear un nuevo usuario.
 
-        USUARIO NO VALIDO
-        {
-        "success": false,
-        "message": "El o EL ERROR QUE HAYA HABIDO ya está registrado",
-        "errors": {
-            "email": "El correo ya existe"
-                }
-        }
-        dict: Un diccionario con la respuesta de la API, incluyendo:
-            - el estado de la petición (por ejemplo, 200 para éxito).
-            - el mensaje de éxito o de error.
-    //Funciona para subdelegados, se tiene que verificar si funciona para delegados
+    Este endpoint se encarga de la creación de un nuevo usuario a partir de los datos
+    recibidos en el cuerpo de una solicitud POST. Requiere autenticación JWT.
+    La creación está restringida a usuarios con los roles 'delegado' o 'subdelegado'.
+
+    - Si el rol es 'subdelegado', se valida que el usuario esté creando a alguien
+      en su misma "fracción" (manzana) para mantener la seguridad y el control de acceso.
+    - Delega la lógica de negocio a la función `user_options.insert_user`.
+
+    JSON Body esperado:
+    {
+      "data": {
+        "manzana": "str", // La fracción o manzana del usuario a crear
+        // ... otros campos del usuario
+      }
+    }
+
+    Returns:
+        Response: Un objeto de respuesta de Flask que contiene un JSON con el
+                  estado de la operación, un mensaje y los datos de la respuesta.
+                  - Éxito: Retorna un JSON con el ID del usuario creado.
+                  - Error: Retorna un JSON con el mensaje de error y el estado HTTP.
     """
     claims = get_jwt()
     user_role = claims.get('role')
@@ -100,24 +90,29 @@ def create_user():# -> tuple[Any, Literal[400]] | tuple | tuple[Any, Literal[500
 @jwt_required()
 def read_information() -> tuple[Any, Literal[400]] | tuple[Any, Literal[200]] | tuple | tuple[Any, Literal[500]]:
     """
-    Este endpoint se centra en manejar 2 casos principales, la lectura de todos los uaurios o de uno solo, 
-    Funcionamiento:
-        Dentro del post se deben agregar los campos dentro del json los caules son el id_usuario, y el filtro
-        ambis son mutuamente excluyentes, por lo qu eno pueden venir los 2 cargados, por ejemplo, el usuario,
-        puede venir solo como texto vacio, y el filtro el cual es un diccionariio, pueder venir vacio tambien o con sus
-        filtros aplicados
-    
-    Args: 
-        data_json (dict): Un diccionario que contiene la información del usuario.
-        El diccionario puede tener la siguiente estructura:
-        {
-            id_user: str, "id del usuario",
-            filters: dict, "filtros para la busqueda de la informacion de la persona"
-        }
-    Returns:
-        Retorna un json con la informacion solicitada dependiendo si es solo un usuario o si es la informacion de mas personas
+    Endpoint para la lectura de información de usuarios con filtros.
 
-        Esta ruta aun no es funcional para delegados, se debe mostrar correctamente
+    Permite obtener la información de uno o varios usuarios. El cuerpo de la solicitud
+    debe incluir un ID de usuario o un diccionario de filtros para la búsqueda.
+    Los campos 'id_user' y 'filters' son mutuamente excluyentes.
+
+    Las restricciones de acceso se aplican de la siguiente manera:
+    - Usuarios 'delegado' y 'comitiva' tienen acceso a la información completa.
+    - Usuarios 'subdelegado' solo pueden consultar usuarios de su misma "fracción".
+
+    JSON Body esperado:
+    {
+      "id_user": "str", // ID del usuario, si se quiere buscar a uno en específico.
+      "filters": {
+          "CustomerFraction": "str", // La fracción a la que pertenece el usuario
+          // ... otros campos para filtrar
+      }
+    }
+
+    Returns:
+        Response: Un objeto de respuesta de Flask con un JSON que contiene los datos
+                  solicitados en caso de éxito o un mensaje de error si la
+                  solicitud no cumple con los requisitos o falla.
     """
     claims = get_jwt()
     user_role = claims.get('role')
@@ -134,7 +129,7 @@ def read_information() -> tuple[Any, Literal[400]] | tuple[Any, Literal[200]] | 
     # Extraemos los filtros de la solicitud. Si no existen, usamos un diccionario vacío.
     filters = request_data.get('filters', {})
 
-    if user_role == 'delegado':
+    if user_role == 'delegado' or user_role == 'comitiva':
         pass
     elif user_role == 'subdelegado':
         # Forzamos que el filtro de fracción sea el del subdelegado para seguridad.
@@ -160,22 +155,28 @@ def read_information() -> tuple[Any, Literal[400]] | tuple[Any, Literal[200]] | 
 @user_route.route("/api/user/update_user/", methods=["POST"])
 @jwt_required()
 def update_info_user() -> tuple[Any]:
-    """Endpoint para actualizar la información de un usuario.
+    """
+    Endpoint para actualizar la información de un usuario.
 
-    Este endpoint espera recibir datos en formato JSON a través de una solicitud POST.
-    Llama a la función `user_options.edit_user` para procesar la actualización del usuario
-    con los datos proporcionados.
+    Este endpoint espera recibir los datos a actualizar en formato JSON a través
+    de una solicitud POST. Requiere autenticación JWT y que el usuario tenga
+    el rol 'delegado' o 'subdelegado'.
 
-    - Si la solicitud JSON está vacía, devuelve un error 400.
-    - Si la actualización en `user_options.edit_user` es exitosa (códigos de estado 200-206),
-      responde con un mensaje de éxito.
-    - Si la actualización falla, devuelve un mensaje de error específico y el código de estado
-      correspondiente.
-    - Si ocurre una excepción inesperada, captura el error y devuelve una respuesta 500.
+    - Delega la lógica de actualización a la función `user_options.edit_user`.
+    - Retorna una respuesta de éxito si la operación fue exitosa, o un mensaje
+      de error con el estado HTTP correspondiente en caso de fallo.
+
+    JSON Body esperado:
+    {
+      "id_user": "str", // ID del usuario a actualizar.
+      "data": {
+        "nombre": "nuevo_nombre",
+        // ... otros campos a modificar
+      }
+    }
 
     Returns:
-        tuple[Any, int]: Una tupla que contiene la respuesta (éxito o error) y el código de
-        estado HTTP.
+        Response: Un objeto de respuesta de Flask con el resultado de la operación.
     """
     claims = get_jwt()
     user_role = claims.get('role')
@@ -204,8 +205,21 @@ def update_info_user() -> tuple[Any]:
 @jwt_required()
 def userDefuncion() -> tuple[Any, Literal[400]] | tuple | tuple[Any, Literal[500]]:
     """
-    Funcion para manejar la defuncion de un usuario, Se recibira un ID con esta informacion se haran los cambios en las tablas y se
-    devolvera el mismo registro con la informacion cambiada en fecha de defuncion
+    Endpoint para manejar la "defunción" de un usuario.
+
+    Este endpoint, utilizando el método PATCH, permite actualizar un registro de usuario
+    para marcarlo como "fallecido", lo que podría incluir el registro de una fecha
+    de defunción. Requiere autenticación JWT y que el usuario tenga el rol 'delegado' o 'subdelegado'.
+    Delega la lógica principal a la función `user_options.defuncion_user`.
+
+    JSON Body esperado:
+    {
+      "id_user": "str", // ID del usuario a marcar como fallecido
+    }
+
+    Returns:
+        Response: Un objeto de respuesta de Flask con el resultado de la operación,
+                  incluyendo el registro del usuario modificado.
     """
     claims = get_jwt()
     user_role = claims.get('role')
@@ -235,7 +249,20 @@ def userDefuncion() -> tuple[Any, Literal[400]] | tuple | tuple[Any, Literal[500
 @jwt_required()
 def get_data_customer_payments() -> tuple[dict, int]:
     """
-    Funcion para manejar la defuncion de un usuario
+    Endpoint para obtener datos de pagos de un cliente específico.
+
+    Este endpoint permite obtener la información de los pagos asociados a un cliente
+    dado su ID. Se realiza a través de una solicitud GET.
+    Requiere autenticación JWT y es accesible para los roles 'delegado', 'subdelegado'
+    y 'comitiva'.
+
+    Parámetros de la URL (Query Parameters):
+    - Dim_customerId: El ID del cliente del cual se desean obtener los datos.
+
+    Returns:
+        Response: Un objeto de respuesta de Flask con los datos del cliente y sus pagos
+                  en caso de éxito, o un mensaje de error si el ID del cliente no
+                  fue proporcionado o si la búsqueda falla.
     """
     claims = get_jwt()
     user_role = claims.get('role')

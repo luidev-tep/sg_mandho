@@ -11,8 +11,10 @@ personas = UserCrud()
 
 search_route = Blueprint('search_route', __name__,url_prefix='/api/search/')
 
+from flask_jwt_extended import jwt_required,  get_jwt, get_jwt_identity
 #Recordar poner el / si es que los enpoins dan error
 @search_route.route("search_client/", methods=["GET"])
+@jwt_required()
 def busqueda_tiempo_real() -> tuple[Response, Literal[400]] | Response | tuple[Response, Literal[500]]:
     """
     Endpoint para búsqueda en tiempo real de clientes/usuarios.
@@ -84,6 +86,13 @@ def busqueda_tiempo_real() -> tuple[Response, Literal[400]] | Response | tuple[R
         ]
     }
     """
+    claims = get_jwt()
+    user_role = claims.get('role')
+    if user_role == 'delegado' or user_role == 'subdelegado' or user_role == 'comitiva':
+        pass
+    else:
+        return send_error("No tienes permiso para buscar", 403)
+    
     # 1. Validación del parámetro de búsqueda
     search_term = request.args.get('q', '').lower().strip()
 
