@@ -26,21 +26,6 @@ function AccountTableItem(props) {
 
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-      {/* Checkbox */}
-      <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap w-px">
-        <div className="flex items-center">
-          <label className="inline-flex">
-            <span className="sr-only">Select</span>
-            <input 
-              id={props.FACT_RevenueId} 
-              className="form-checkbox h-4 w-4" 
-              type="checkbox" 
-              onChange={props.handleClick} 
-              checked={props.isChecked} 
-            />
-          </label>
-        </div>
-      </td>
       
       {/* Estado de Factura con fondo de color */}
       <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">

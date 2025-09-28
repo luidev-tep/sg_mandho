@@ -24,10 +24,10 @@ function PaymentsTableModal({ id_user, serviceName, onClose , service_type, Year
         'Year': Year
       };
       
-      console.log('Filtros para pagos:', filters);
+      //console.log('Filtros para pagos:', filters);
       const response = await MostrarPagos(filters);
       
-      console.log('Respuesta del backend:', response);
+      //console.log('Respuesta del backend:', response);
       
       // CORRECCIÓN: Verificar la estructura de la respuesta correctamente
       if (response?.success === "success" && Array.isArray(response.data)) {
@@ -112,20 +112,6 @@ function PaymentsTableModal({ id_user, serviceName, onClose , service_type, Year
         <table className="table-auto w-full dark:text-gray-300">
           <thead className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20 border-t border-b border-gray-100 dark:border-gray-700/60">
             <tr>
-              <th className="px-3 py-3 whitespace-nowrap w-10">
-                <div className="flex items-center justify-center">
-                  <label className="inline-flex">
-                    <span className="sr-only">Select all</span>
-                    <input 
-                      className="form-checkbox" 
-                      type="checkbox" 
-                      checked={selectAll} 
-                      onChange={handleSelectAll} 
-                      disabled={pagos.length === 0}
-                    />
-                  </label>
-                </div>
-              </th>
               <th className="px-4 py-3 whitespace-nowrap text-left">
                 <div className="font-semibold">Estado</div>
               </th>

@@ -76,41 +76,8 @@ class AccountCrud():
         else:
             #print("Se hizo la tercera opcion")
             valido = True
-            #VALIDACIONES DE PAGOS PENDIENTES EMPIEZAN AQUI
-            #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
-            #SE TIENE QUE MODIFICAR AQUI SI ES QUE SE QUIERE SER MAS FELXIBLE A LA HORA DE ACTUALIZAR LA INFORMACION
-            """
-            pagos_pendientes = get_all_payments_pending(account_json["customer_id"])
-
-            if pagos_pendientes is None:
-                return 404, 'No se pudo obtener la informacion del usuario'
-            
-            pendientes = ''
-            for pago in pagos_pendientes:
-                if pago == {}:
-                    continue
-
-                year = pago['year']
-                services = pago['data']
-                
-                for service in services:
-                    service_name = service['ServiceName']
-                    service_type = service['serviceType']
-                    
-                    # Formato más legible y amigable
-                    fila = f'Año {year}: Servicio de {service_name} - Tipo: {service_type}\n'
-                    pendientes += fila
-            
-            if pagos_pendientes:
-                return 404, f"El usuario aun tiene pagos pendientes cambiarse de cuenta: \n {pendientes}"
-            
-            
-            """
-            data = {
-                'Dim_customerId': account_json['customer_id']
-            }
             hanlder_analitycs = Analitycs()
-            status, mensaje , pagos_gechoss = hanlder_analitycs.get_analytics_per_customer(data)
+            status, mensaje , pagos_gechoss = hanlder_analitycs.get_analytics_per_customer({'Dim_customerId':  account_json['customer_id']})
             #print(pagos_gechos_pendientes)
             if status != 200:
                 return status, mensaje #No se pudo obtener la informaci
@@ -138,6 +105,7 @@ class AccountCrud():
                 if any(pagos_gechos_pendientes):
                     return 404, f"El usuario aun tiene pagos pendientes Antes de poder cambiarse de cuenta: \n {pendientes}"
         
+        #return 200, "Esta prueba fue satisfactoria y "  
 
         #Creamos la instancia de clases que se ingresaran a la bd
         dim_date = DIM_DATE()

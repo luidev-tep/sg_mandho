@@ -136,7 +136,7 @@ function CustomersTable({ filters }) {
   if (error) return <div className="p-4 text-center text-red-500">Error: {error}</div>;
 
   return (
-    <div ref={tableRef} className="bg-white dark:bg-gray-800 shadow-xs rounded-xl relative">
+    <div ref={tableRef} className="bg-transparent">
       <header className="px-5 py-4">
         <h2 className="font-semibold text-gray-800 dark:text-gray-100">
           Total de Usuarios <span className="text-gray-400 dark:text-gray-500 font-medium">
@@ -144,67 +144,35 @@ function CustomersTable({ filters }) {
           </span>
         </h2>
       </header>
-      <div>
-        <div className="overflow-x-auto">
-          <table className="table-auto w-full dark:text-gray-300">
-            {/* Table header */}
-            <thead className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20 border-t border-b border-gray-100 dark:border-gray-700/60">
-              <tr>
-                {/* Columna Imagen */}
-                <th className="px-3 py-3 whitespace-nowrap w-10">
-                  <div className="flex items-center justify-center">
-                    <p className="hidden md:block">Imagen</p>
-                    <p className="md:hidden">Img</p>
-                  </div>
-                </th>
+      <div className="w-full">
+        {/* Encabezado (visible en md y superior) */}
+        <div className="hidden md:grid md:grid-cols-8 md:gap-4 bg-gray-50 dark:bg-gray-700/50 font-semibold text-xs uppercase text-gray-500 dark:text-gray-400 p-2 rounded-t-lg border-b border-gray-200 dark:border-gray-700">
+          <div className="text-center">Avatar</div>
+          <div className="md:col-span-2">Nombre Completo</div>
+          <div className="text-center">Manzana</div>
+          <div>Dirección</div>
+          <div className="text-center">Nacimiento</div>
+          <div className="text-center">Defunción</div>
+          <div className="text-center">Acciones</div>
+        </div>
 
-                {/* Resto de columnas */}
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
-                  <div className="font-semibold">Nombre</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left hidden md:table-cell">
-                  <div className="font-semibold">Apellidos</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-center">
-                  <div className="font-semibold hidden md:block">Manzana</div>
-                  <div className="font-semibold md:hidden">Mz</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-center hidden lg:table-cell">
-                  <div className="font-semibold">Dirección</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
-                  <div className="font-semibold hidden md:block">Fecha nacimiento</div>
-                  <div className="font-semibold md:hidden">Nac.</div>
-                </th>
-                <th className="px-2 md:px-4 py-3 whitespace-nowrap text-left">
-                  <div className="font-semibold hidden md:block">Fecha Defunción</div>
-                  <div className="font-semibold md:hidden">Def.</div>
-                </th>
-                <th className="px-2 py-3 whitespace-nowrap w-20 text-center">
-                  <span className="font-semibold">Acciones</span>
-                </th>
-              </tr>
-            </thead>
-            
-            {/* Table body */}
-            <tbody className="text-sm divide-y divide-gray-100 dark:divide-gray-700/60">
-              {filteredCustomers.map(customer => (
-                <Customer
-                  key={customer.id_user}
-                  id={customer.id_user}
-                  image={customer.image}
-                  name={customer.first_name + ' ' + customer.second_name}
-                  last_name={customer.last_name + ' ' + customer.second_last_name}
-                  birth_date={customer.date_of_birth}
-                  manzana={customer.manzana}
-                  address={customer.street + ' ' + customer.number_ext}
-                  date_of_end={customer.date_user_end}
-                  handleClick={handleClick}
-                  isChecked={isCheck.includes(customer.id_user)}
-                />
-              ))}
-            </tbody>
-          </table>
+        {/* Cuerpo de la tabla */}
+        <div className="space-y-2 md:space-y-0 pb-24">
+          {filteredCustomers.map(customer => (
+            <Customer
+              key={customer.id_user}
+              id={customer.id_user}
+              image={customer.image}
+              name={customer.first_name + ' ' + customer.second_name}
+              last_name={customer.last_name + ' ' + customer.second_last_name}
+              birth_date={customer.date_of_birth}
+              manzana={customer.manzana}
+              address={customer.street + ' ' + customer.number_ext}
+              date_of_end={customer.date_user_end}
+              handleClick={handleClick}
+              isChecked={isCheck.includes(customer.id_user)}
+            />
+          ))}
         </div>
       </div>
     </div>

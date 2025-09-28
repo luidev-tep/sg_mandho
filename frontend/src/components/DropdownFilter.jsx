@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Transition from '../utils/Transition';
-
 /**
  * Componente DropdownFilter
  * 
@@ -145,7 +144,7 @@ return (
               </li>
             ))}
           </ul>
-        </div>
+        </div> 
         <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/30 flex justify-between space-x-3">
           <button 
             className="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"

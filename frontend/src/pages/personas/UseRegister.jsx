@@ -9,6 +9,7 @@ import OnboardingImage from "../../images/onboarding-image.jpg";
 import { AgregarUsuario } from "../../api/api_user";
 import { AgregarFechaActual } from '../../utils/add_date';
 import { AgregarFechaFinVacio } from "../../utils/add_date";
+import { useAuth } from "../../utils/AuthContext"; // Import useAuth
 
 /*
   This JavaScript function, capitalizeFirstLetter, takes a string as input and returns a new string
@@ -22,6 +23,26 @@ const capitalizeFirstLetter = (value) => {
 
 // Agregar fecha de inicio y fecha de fin, ya que estqa no se estan agregando \
 // en las data del json
+// Definir todas las opciones de manzana posibles
+const allManzanaOptions = [
+  { value: 'tepetate', label: 'Tepetate' },
+  { value: 'cerritos', label: 'Cerritos' },
+  { value: 'garambullo', label: 'Garambullo' },
+  { value: 'yhonda', label: 'Yhonda' },
+  { value: 'centro', label: 'Centro' },
+  { value: 'buenavista', label: 'Buena Vista' },
+];
+
+// Función para obtener el esquema de validación de manzana dinámicamente
+const getManzanaSchema = (userRole, userFraction) => {
+  const allowedManzanas = userRole === 'subdelegado' && userFraction
+    ? [userFraction]
+    : allManzanaOptions.map(option => option.value);
+
+  return yup.string()
+    .required('La manzana es requerida')
+    .oneOf(allowedManzanas, 'Seleccione una manzana válida');
+};
 
 // Esquema de validación
 const schema = yup.object().shape({
@@ -78,6 +99,7 @@ const schema = yup.object().shape({
       'buenavista'
     ], 'Seleccione una manzana válida'),
   
+  // La validación de manzana se definirá dinámicamente en el componente
 calle: yup.string()
   .required('La calle es requerida')
   .transform(value => value ? value.trim() : value) // Eliminar espacios al inicio/final
@@ -162,6 +184,19 @@ function UserRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const { state } = useAuth(); // Get auth state
+  const { usuario } = state;
+  const userRole = usuario?.RoleName?.toLowerCase();
+  const userFraction = usuario?.CustomerFraction?.toLowerCase();
+
+  // Crear el esquema de validación dinámico para la manzana
+  const dynamicSchema = yup.object().shape({
+    ...schema.fields, // Mantener los campos existentes del esquema base
+    manzana: getManzanaSchema(userRole, userFraction), // Sobrescribir la validación de manzana
+  });
+
+  const filteredManzanaOptions = userRole === 'subdelegado' ? allManzanaOptions.filter(option => option.value === userFraction) : allManzanaOptions;
   
   const { 
     register, 
@@ -169,7 +204,11 @@ function UserRegister() {
     formState: { errors },
     setValue
   } = useForm({
-    resolver: yupResolver(schema)
+    resolver: yupResolver(dynamicSchema), // Usar el esquema dinámico
+    defaultValues: {
+      // Establecer el valor por defecto de manzana si el usuario es un subdelegado
+      manzana: (userRole === 'subdelegado' && userFraction) ? userFraction : '',
+    }
   });
 
   const onSubmit = async (formData) => {
@@ -248,7 +287,7 @@ function UserRegister() {
                     </svg>
                     <span>{submitError}</span>
                   </div>
-                )}
+                )} 
 
                 <div className="flex-1">
                   <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col">
@@ -360,17 +399,17 @@ function UserRegister() {
                         </label>
                         <select 
                           id="manzana" 
-                          className={`form-select dark:text-gray-800 w-full rounded-lg ${errors.manzana ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                          {...register("manzana")}
-                          disabled={isSubmitting}
-                        >
+                          className={`form-select dark:text-gray-800 w-full rounded-lg ${errors.manzana ? 'border-red-500' : 'border-gray-300'} ${(isSubmitting || (userRole === 'subdelegado' && userFraction)) ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                          {...register("manzana")} // Usar register aquí
+                          // Deshabilitar si es subdelegado y ya tiene una fracción asignada
+                          disabled={isSubmitting || (userRole === 'subdelegado' && userFraction)} 
+                        > 
                           <option value="">Seleccione una opción</option>
-                          <option value="tepetate">Tepetate</option>
-                          <option value="cerritos">Cerritos</option>
-                          <option value="garambullo">Garambullo</option>
-                          <option value="yhonda">Yhonda</option>
-                          <option value="centro">Centro</option>
-                          <option value="buenavista">Buena Vista</option>
+                          {filteredManzanaOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
                         </select>
                         {errors.manzana && (
                           <span className="text-red-500 text-sm mt-1 block animate-fade-in">
