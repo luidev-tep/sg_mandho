@@ -1,11 +1,14 @@
 // ActionMenu.jsx
 import React, { useState, useRef } from 'react';
+import { useAuth } from '../../../utils/AuthContext';
 import AccountsTableModal from '../../accounts/AccounsTable';
 import PaymentsTableModal from './PagosUsuario';
 import FinishPayment from '../TerminarPago';
 //import DesactivateModal from './DesactivateModal';
 
 function ActionMenu({ onUpdate, id_user, serviceName, props }) {
+  const { state } = useAuth();
+  const userRole = state.usuario?.RoleName?.toLowerCase();
   const [isOpen, setIsOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [desactivateUserOpen, setDesactivateUserOpen] = useState(false);
@@ -49,16 +52,18 @@ function ActionMenu({ onUpdate, id_user, serviceName, props }) {
           >
             Ver detalles de pago
           </button>
-          <button
-            className="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDesactivateUserOpen(true);
-              setIsOpen(false);
-            }}
-          >
-            Terminar Pago
-          </button>
+          {userRole !== 'delegado' && (
+            <button
+              className="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDesactivateUserOpen(true);
+                setIsOpen(false);
+              }}
+            >
+              Terminar Pago
+            </button>
+          )}
           <button
             className="block w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             onClick={(e) => {
@@ -72,7 +77,6 @@ function ActionMenu({ onUpdate, id_user, serviceName, props }) {
         </div>
       )}
 
-
       {/* Modal de Edición (sin cambios) */}
       {editModalOpen && (
         <PaymentsTableModal
@@ -85,7 +89,6 @@ function ActionMenu({ onUpdate, id_user, serviceName, props }) {
           
         />
       )}
-
 
       {desactivateUserOpen && (
         <FinishPayment 

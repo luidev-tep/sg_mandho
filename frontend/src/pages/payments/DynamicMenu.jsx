@@ -5,11 +5,14 @@ import DateSelect from '../../components/modules/DateSelectPayment.jsx';
 import FilterButton from '../../components/DropdownFilter.jsx';
 import DynamicTable from '../../components/modules/tablas/DynamicTable.jsx';
 import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../../utils/AuthContext.jsx';
 
 function DynamicMenu() {
   const { moduleName } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filters, setFilters] = useState({});
+  const { state } = useAuth();
+  const userRole = state.usuario?.RoleName?.toLowerCase();
   const filterOptions = [
     { label: 'Cerritos', value: 'cerritos' },
     { label: 'Centro', value: 'centro' },
@@ -106,23 +109,25 @@ function DynamicMenu() {
                 </div>
 
                 {/* Add button */}
-                <Link
-                  to={`/modulos/crear_pago/${moduleName}`}
-                  className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-                >
-                  <span className="flex items-center">
-                    <span className="mr-2 text-lg">+</span>
-                    <span className="text-sm sm:text-base">Agregar Nuevo Pago</span>
-                  </span>
-                </Link>
+                {userRole === 'comitiva' && (
+                  <Link
+                    to={`/modulos/crear_pago/${moduleName}`}
+                    className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                  >
+                    <span className="flex items-center">
+                      <span className="mr-2 text-lg">+</span>
+                      <span className="text-sm sm:text-base">Agregar Nuevo Pago</span>
+                    </span>
+                  </Link>
+                )}
 
                 <Link
-                  to={`/modulos/generar_reporte/${moduleName}`}
+                  to={`/Analytics/${moduleName}`}
                   className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 >
                   <span className="flex items-center">
                     <span className="mr-2 text-lg">+</span>
-                    <span className="text-sm sm:text-base">Generar (No funciona)</span>
+                    <span className="text-sm sm:text-base">Panel de Control</span>
                   </span>
                 </Link>
               </div>

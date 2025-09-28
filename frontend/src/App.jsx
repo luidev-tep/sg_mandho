@@ -13,7 +13,7 @@ import Signup from './pages/Singup.jsx';
 import CompanyProfile from './pages/CompanyProfile.jsx';
 import Analytics from './pages/Analytics.jsx';
 import ModalPage from './pages/ModalPage.jsx';
-import DynamicModule from './pages/DynamicModule.jsx';
+//import DynamicModule from './pages/DynamicModule.jsx';
 
 //Personas modulo
 import Customers from './pages/personas/Customers.jsx'; 
@@ -70,7 +70,7 @@ function App() {
           <Route path="/Signup" element={<Signup />} />
           <Route path="/CompanyProfile" element={<CompanyProfile />} />
           <Route path="/ModalPage" element={<ModalPage />} />
-          <Route path="/modulo/:moduleName" element={<DynamicModule />} />
+          {/* <Route path="/modulo/:moduleName" element={<DynamicModule />} /> */}
 
           <Route path="/personas/registro_exito/:id" element={<UserSucces />} />
           <Route path="/personas/registro" element={<UserRegister />} />
