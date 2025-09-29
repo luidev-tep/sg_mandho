@@ -42,15 +42,15 @@ function FinishPayment({onClose, onUpdate, props }) {
     dim_customer_id,
     status_factura // Nueva prop para verificar el estado del pago
   } = props;
-
+  
   // Verificar si el servicio ya está pagado
   const isAlreadyPaid = status_factura === 'completo';
 
   // Actualizar cantidad faltante cuando amountTotal cambie
   useEffect(() => {
-    if (amountTotal && amount) {
+    if (amountTotal && typeof amount === 'number') {
       const faltante = amountTotal - amount;
-      setCantidadFaltante(faltante > 0 ? faltante : 0);
+      setCantidadFaltante(faltante >= 0 ? faltante : 0);
     }
   }, [amountTotal, amount]);
 

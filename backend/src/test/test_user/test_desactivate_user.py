@@ -8,4 +8,4 @@ def test_descativate_user() -> None:
     estado , mensaje, informacion = user_options.defuncion_user(data)
 
     print(f"""El estado {estado}  Mensaje: {mensaje}, la informacion {informacion}""")
-    assert estado == 403
+    assert estado == 409

@@ -1,6 +1,6 @@
 from src.payments.payment import PaymentCrud
 
-from src.payments.repository.get_pending_pays import get_all_payments_pending
+from src.payments.payment import PaymentCrud
 
 
 def test_get_cost_service_year():

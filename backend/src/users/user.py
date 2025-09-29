@@ -19,11 +19,9 @@ from src.users.repository.edit import edit_user
 from src.users.repository.delete import set_defuncion, defuncion_validation, is_admin
 from src.accounts.account import AccountCrud
 
-
-#Importacion para saber si un usuario tiene aun pagos activos para no poder matarlo
-from src.payments.repository.get_pending_pays import get_all_payments_pending, get_pending_pays
-
 from src.analytics_reports.Analitycs import Analitycs
+
+hanlder_analitycs = Analitycs()
 
 #importacion para verificar si la persona a marcar como morida ya no tien eningun pago activo
 class UserCrud:
@@ -237,66 +235,29 @@ class UserCrud:
         
         if not defuncion_validation(defuncion_data["DIM_CustomerId"]): #Para verificar si el usuario ya esta marcado como defuncion
             return 403, "El usuario ya se encuentra como defuncion", {}
-        
+        #VALIDACIONES DE PAGOS PENDIENTES AQUI
 
-        """
-        SE HA COMENTADO ESTA PARTE YA QUE NO SEA UTILIZADA
-        #VALIDACIONES DE PAGOS PENDIENTES EMPIEZAN AQUI
-        #Aqui se tiene que probar la funcion para saber si se obtienen todo los pagos pendientes
-        #pagos_pendientes = get_all_payments_pending(defuncion_data["DIM_CustomerId"])
-        
-        pagos_pendientes = [{}, {}, {}, {}]
-        if pagos_pendientes is None:
+        result = hanlder_analitycs.get_analytics_per_customer({"Dim_customerId": defuncion_data["DIM_CustomerId"]})
+        #print(result)
+        if result[0] != 200:
             return 404, 'No se pudo obtener la informacion del usuario', {}
-        
         pendientes = ''
-        for pago in pagos_pendientes:
-            if pago == {}:
-                continue
-
-            year = pago['year']
-            services = pago['data']
-            
-            for service in services:
-                service_name = service['ServiceName']
-                service_type = service['serviceType']
+        service_name = list(result[2]['pendientes'].keys())
+        pendientes_paids = result[2]['pendientes']
+        for service in service_name:
+            fila = f'Servicio: {service}\n'
+            for registro in pendientes_paids[service]:
+                year = registro['Year']
+                servicesDetailesType = registro['ServiceDetailesType']
+                amount = registro['amount']
                 
                 # Formato más legible y amigable
-                fila = f'Año {year}: Servicio de {service_name} - Tipo: {service_type}\n'
+                fila += f'Año: {year}  Servicio de {servicesDetailesType} - Debe: $ {amount}\n'
                 pendientes += fila
+                fila = ''
         
-        if pagos_pendientes:
-            return 404, f"El usuario aun tiene pagos pendientes: \n {pendientes}", {}
-        """
-        
-        pagos_gechos_pendientes = [get_pending_pays(defuncion_data["DIM_CustomerId"], service_name) for service_name in ["agua", "feria", "panteon", 'delegacion']]
-
-        if pagos_gechos_pendientes is None:
-            return 404, 'No se pudo obtener la informacion del usuario', {}
-        
-        pendientes = ''
-        for categoria in pagos_gechos_pendientes:
-
-            if categoria == []:
-                    continue
-            
-            for pago in categoria:
-                year = pago['year']
-                services = pago['data']
-                
-                fila = f'Año {year}:  \n'
-                for service in services:
-                    service_ype = service['serviceType']
-                    amount = service['amount']
-                    
-                    # Formato más legible y amigable
-                    fila += f'  Servicio de {service_ype} - Debe: $ {amount}\n'
-                    pendientes += fila
-        
-        if any(pagos_gechos_pendientes):
-            return 404, f"El usuario aun tiene pagos pendientes: \n {pendientes}", {}
-        
-        #VALIDACIONES DE PAGOS PENDIENTES TERMINAN AQUI
+        if any(pendientes):
+            return 409, f"El usuario aun tiene pagos pendientes: \n {pendientes}", {}
         
         set_defuncion(defuncion_data["DIM_CustomerId"])
         
@@ -341,7 +302,6 @@ class UserCrud:
                     }
                   }
         """
-        hanlder_analitycs = Analitycs()
         try:
             #print  ('Antes de la logica principal: el id es', dim_customer_id)
             data = {

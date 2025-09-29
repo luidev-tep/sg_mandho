@@ -16,14 +16,14 @@ function ActionMenu({ onUpdate, id_user }) {
   const handleEditClick = (e) => {
     e.stopPropagation();
     setEditModalOpen(true);
-    setIsOpen(false);
+    setIsOpen(false); 
   };
 
   return (
-    <div className="relative" ref={menuRef}>
-      {/* Botón del menú (sin cambios) */}
+    <div className="relative w-full" ref={menuRef}>
+      {/* Botón del menú */}
       <button
-        className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 rounded-full"
+        className="w-full flex items-center justify-center text-white"
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);

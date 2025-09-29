@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Literal
 from src.utils.validate_data import validate_data
 from src.fact_revenues.Fact_revenue import factRevenueCrud 
@@ -12,11 +13,10 @@ dim_service_details_handler = ServiceDetailsCrud()
 handler_dim_service_owner = DIM_ServiceOnwersCrud()
 
 #importaciones para Buscar un pago pendiente
-from src.accounts.account import AccountCrud
 from src.payments.repository.get_pending_pays import get_pending_pays
 from datetime import datetime
 from src.dim_service.DIM_Service import DIM_Service
-from src.dim_servicedetails.repository.show import get_service_detailsId_by_ServiceId
+from src.users.repository.show import get_user_register_creation
 
 #importaciones de mostrar pagos
 from src.payments.repository.read_payments import ReadPayment
@@ -275,14 +275,33 @@ class PaymentCrud:
             # Intenta obtener los pagos pendientes usando los datos del JSON.
             data = get_pending_pays(data_json['DIM_CustomerId'], data_json['ServiceName'])
             
-            # Si la función get_pending_pays retorna None, significa que no se encontraron
-            # pagos pendientes. Se imprime un mensaje y se retorna un código 400.
+
+            #Se deben filtrar aqui por los pagos. Ya que tecnicamente el cliente no debe pagar 
+            #pagos de servicios los cuales aun no ha creado
+            fecha_str = get_user_register_creation(data_json['DIM_CustomerId'])
+            # La fecha viene como '2025-07-20'. Obtener el anio con libreria Time (usaremos datetime).
+            try:
+                #print(f"La fecha obtenida es: {fecha_str}")
+                # Convertir la cadena de fecha a un objeto datetime
+                fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d')
+                # Extraer el año
+                anio_registro = fecha_obj.year
+            except (ValueError, TypeError) as e:
+                # Manejo de error si el formato de la fecha es incorrecto o si es None
+                print(f"Error al procesar la fecha: {e}")
+                anio_registro = None # O el valor por defecto que consideres adecuado
             if data is None:
                 print(f"Error al obtener los pagos pendientes: {data}")
                 return 400, "No se encontraron pagos pendientes", []
             
+            data_format = [register for register in data if register['year'] >= anio_registro]
+
+            #print(f"Data format: {data_format}")
+            
             # Si todo es correcto, retorna un código 200 con la lista de pagos.
-            return 200, "Datos obtenidos satisfactoriamente", data
+            # Asi ya se sigue la logica correcta, ya que no tiene sentido que se agregen pagos pendientes
+            # a un cliente que aun no se haya registrado
+            return 200, "Datos obtenidos satisfactoriamente", data_format
         
         except Exception as e:
             # Captura cualquier excepción que ocurra durante el proceso, imprime el error

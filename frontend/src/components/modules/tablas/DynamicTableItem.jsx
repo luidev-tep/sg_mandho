@@ -76,7 +76,7 @@ function DynamicTableItem(props) {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> 
             </div>
 
             {/* --- Vista de Tabla para Tablet y Escritorio --- */}
