@@ -18,7 +18,7 @@ class Analitycs:
             get_analytics (GetAnalytics): Instancia de la clase GetAnalytics
                                           para interactuar con el repositorio de datos.
         """
-        self.get_analytics = GetAnalytics()
+        self.get_analytics = GetAnalytics() 
         self.payment_processor = PaymentProcessor()
 
 

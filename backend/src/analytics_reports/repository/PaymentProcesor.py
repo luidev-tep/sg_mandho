@@ -2,8 +2,6 @@ from src.analytics_reports.repository.get_analytics import GetAnalytics
 from src.utils.conexion import Conexion
 from src.payments.model.vista_model import VistaModel
 
-from src.payments.repository.get_pending_pays import get_all_payments_pending
-
 
 class PaymentProcessor(GetAnalytics):
     """
@@ -20,6 +18,9 @@ class PaymentProcessor(GetAnalytics):
         Esta función ejecuta consultas SQL para cada comitiva (agua, feria, panteon, delegación)
         y procesa los resultados para clasificarlos según su estado de factura.
 
+        SI EL ESTAD DE PAGO CAMBIA SE DEBE AGREGAR COMO ESTADO COMPLETO O TRABAJADO. sE SUPONE QUE ES DE UNA VISTA
+        POR LO QUE NO DEBERIA ESTAR ESTE PROBELMA
+
         Args:
             dim_customerId (str): El ID del cliente para el cual se buscan los datos.
 
@@ -35,22 +36,36 @@ class PaymentProcessor(GetAnalytics):
         """
         handler_conexion = Conexion()
         handler_vista = VistaModel()
-        query = """
-        SELECT
-        vw.CustomerName,
-        vw.CustomerMiddleName,
-        vw.CustomerLastName,
-        vw.CustomerSecondLastName,
-        vw.RoleName,
-        vw.StatusCuenta,
-        vw.StatusFactura,
-        vw.ServiceDetailesType,
-        vw.amount,
-        vw.YearPay,
-        vw.DIM_AccountId,
-        vw.DIM_CustomerId
-        FROM [tabla] as vw
-        WHERE DIM_CustomerId = ?
+        query = f"""
+            SELECT
+                vw.CustomerName,
+                vw.CustomerMiddleName,
+                vw.CustomerLastName,
+                vw.CustomerSecondLastName,
+                vw.RoleName,
+                vw.StatusCuenta,
+                vw.StatusFactura,
+                vw.ServiceDetailesType,
+                (sd.amount - vw.amount) as amount, -- Restar el amount de la vista del amount de la subconsulta
+                vw.YearPay,
+                vw.DIM_AccountId,
+                vw.DIM_CustomerId
+            FROM [tabla] as vw
+            JOIN (
+                SELECT 
+                    strftime(Year) as year,
+                    ServiceDetailesType,
+                    amount
+                FROM DIM_ServiceDetails -- Asumiendo que esta es la tabla correcta
+                JOIN DIM_Service as s on
+                DIM_ServiceDetails.DIM_ServiceId = s.DIM_ServiceId 
+                AND ServiceName = ?
+                JOIN DIM_Date as d on
+                DIM_ServiceDetails.DIM_DateId = d.DIM_DateId 
+            ) as sd ON
+                sd.ServiceDetailesType = vw.ServiceDetailesType AND
+                vw.YearPay = sd.Year
+            WHERE vw.DIM_CustomerId = ?
         """
         
         pagos_completos = []
@@ -62,7 +77,8 @@ class PaymentProcessor(GetAnalytics):
                 continue
                 
             current_query = query.replace("[tabla]", tabla)
-            handler_conexion.cursor.execute(current_query, (dim_customerId,))
+            service = self.select_service(tabla)
+            handler_conexion.cursor.execute(current_query, (service, dim_customerId))
             result = handler_conexion.cursor.fetchall()
             
             # print(f"Se está ejecutando la tabla {tabla}")
@@ -78,7 +94,7 @@ class PaymentProcessor(GetAnalytics):
             pendientes_count = 0
             for pago in pagos_crudo:
                 pago_formateado = self._formatear_pago(pago, "get_all_data_payments")
-                if pago['StatusFactura'] == 'completo':
+                if pago['StatusFactura'] == 'completo' or pago['StatusFactura'] == 'trabajado':
                     pagos_completos.append((comitiva, pago_formateado))
                     completos_count += 1
                 elif pago['StatusFactura'] == 'pendiente':
@@ -92,94 +108,36 @@ class PaymentProcessor(GetAnalytics):
         new_pagos_pendientes = self.__format_to_dict(pagos_pendientes)
             
         return {'completos': new_pagos_completos, 'pendientes': new_pagos_pendientes}
-
-    def get_all_pending_payments(self, DIM_customerId: int) -> dict:
+    
+    def select_service(self, view_name: str) -> str | None:
         """
-        Obtiene todos los pagos pendientes de un usuario, aplicando reglas de negocio
-        específicas para el servicio de agua.
-
-        Filtra los pagos pendientes según la regla de negocio que requiere que los servicios
-        de agua deben tener ambos tipos ('tomas' y 'consumo') para el mismo año, de lo
-        contrario se eliminan todos los servicios de agua de ese año.
+        Selecciona la comitiva correspondiente según el nombre de la vista.
 
         Args:
-            DIM_customerId (int): El ID del usuario.
+            view_name (str): Nombre de la vista (e.g., 'VISTA_PAGOS_AGUA').
 
         Returns:
-            dict: Diccionario donde las claves son las comitivas y los valores son listas
-                  de pagos pendientes formateados y filtrados según las reglas de negocio.
+            str | None: Nombre de la comitiva ('agua', 'feria', 'panteon', 'delegacion').
+                        Retorna None si la comitiva no es reconocida.
 
         Example:
-            >>> pendientes = processor.get_all_pending_payments(12345)
-            >>> print(pendientes['agua'])
-            [{'Year': 2024, 'ServiceDetailesType': 'tomas', 'amount': 150.0}]
+            view_name = 'VISTA_PAGOS_AGUA'
+            output = self.select_service(view_name) # Retorna 'agua'
         """
-        # Obtener todos los pagos pendientes (esta función debe estar definida en otra parte)
-        pagos_fatantes = get_all_payments_pending(DIM_customerId, "get_all_payments_pending")
-        
-        if not pagos_fatantes:
-            return {}
+        view_name_lower = view_name.lower()
+        if "agua" in view_name_lower:
+            return "agua"
+        elif "feria" in view_name_lower:
+            return "feria"
+        elif "panteon" in view_name_lower:
+            return "panteon"
+        elif "delegacion" in view_name_lower:
+            return "delegacion"
+        return None
 
-        # print('Total de pago pendientes')
-        # i = 0
-        # for pago in pagos_fatantes:
-        #     if pago['ServiceName'] == 'delegacion':
-        #         i += 1
-        # print('Total de pagos de delegacion', i)
-        # 1. Agrupar todos los pagos por año para facilitar la validación
-        grouped_by_year = {}
-        for pago in pagos_fatantes:
-            year = pago['year']
-            if year not in grouped_by_year:
-                grouped_by_year[year] = []
-            grouped_by_year[year].append(pago)
-
-        # 2. Aplicar la lógica de filtrado para el servicio de agua
-        for year, services_in_year in grouped_by_year.items():
-            # Identificar los servicios de agua de este año
-            water_services = [s for s in services_in_year if s['ServiceName'] == 'agua']
-            
-            if not water_services:
-                continue
-                
-            # Obtener los tipos de servicio de agua presentes
-            water_types_present = {s['serviceType'] for s in water_services}
-            
-            # Regla de negocio: deben estar AMBOS, 'tomas' y 'consumo'
-            if water_types_present != {'tomas', 'consumo'}:
-                # Eliminar todos los servicios de 'agua' para este año
-                grouped_by_year[year] = [s for s in services_in_year if s['ServiceName'] != 'agua']
-            
-            
-
-        # 3. Reconstruir la lista de pagos filtrados
-        pagos_filtrados = []
-        for year_data in grouped_by_year.values():
-            pagos_filtrados.extend(year_data)
-
-        # 4. Formatear la información final agrupada por comitiva
-        pagos_fatantes_crudo = {}
-        for comitiva in self.comitivas:
-            pagos_coincidentes = []
-            for pago in pagos_filtrados:
-                if pago['ServiceName'] == comitiva:
-                    pagos_coincidentes.append(
-                        self._formatear_pago(pago, "get_all_payments_pending")
-                    )
-            
-            if pagos_coincidentes:
-                pagos_fatantes_crudo[comitiva] = pagos_coincidentes
-        
-        # print ('Pafos por comitiva')
-        # for comitiva, pagos in pagos_fatantes_crudo.items():
-        #     print(f"Comitiva: {comitiva} | Pagos: {len(pagos)}")
-        
-        return pagos_fatantes_crudo
-        
     def _formatear_pago(self, pago: dict, from_message: str) -> dict:
         """
         Formatea los datos de pago según el contexto de llamada.
-
         Args:
             pago (dict): Diccionario con los datos del pago. Debe contener:
                 - Para 'get_all_data_payments': 'YearPay', 'ServiceDetailesType', 'amount'
@@ -187,10 +145,8 @@ class PaymentProcessor(GetAnalytics):
             from_message (str): Contexto de llamada que determina el formato:
                 - "get_all_data_payments": Formato para datos completos de pagos
                 - "get_all_payments_pending": Formato para pagos pendientes
-
         Returns:
             dict: Pago formateado con las claves 'Year', 'ServiceDetailesType', 'amount'
-
         Raises:
             ValueError: Si el contexto de llamada no es reconocido
         """

@@ -180,3 +180,27 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
         raise
 
 
+def get_user_register_creation(dim_customer_id: str) -> str | None:
+    """
+    Funcion para optener la informacion de un usuario en especifico
+    Args:
+        id_user (str, optional): Id del usuario. Defaults to None.
+    Returns:
+        list: Con el registro encontrado o error en caso contrario
+    """
+
+    print(f"Id de usuario: {dim_customer_id}")
+    object_conection = Conexion() 
+    
+    try:
+        query = """SELECT CustomerStartDate FROM DIM_Customer WHERE DIM_CustomerId = ?"""
+        object_conection.cursor.execute(query, (dim_customer_id,))
+        registros = object_conection.cursor.fetchall()
+        
+        return registros[0][0]
+    except sqlite3.Error as e:
+        print(f"Error al realizar la consulta: {e}")
+    finally:
+        object_conection.close_conexion()
+
+

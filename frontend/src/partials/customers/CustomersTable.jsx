@@ -102,6 +102,11 @@ function CustomersTable({ filters }) {
 
   }, [searchTerm, allCustomers]);
 
+  // Función para formatear el nombre - reemplazar 'n/a' con espacio vacío
+  const formatName = (name) => {
+    return name && name.toLowerCase() === 'n/a' ? '' : name;
+  };
+
   // Función optimizada para actualizar cliente
   const handleUpdateCustomer = (updatedCustomer) => {
     //console.log("Datos del usuario actualizado:", updatedCustomer);
@@ -144,6 +149,8 @@ function CustomersTable({ filters }) {
     }
   };
 
+
+
   if (isLoading) return <div className="p-4 text-center">Cargando usuarios...</div>;
   if (error) return <div className="p-4 text-center text-red-500">Error: {error}</div>;
 
@@ -170,22 +177,30 @@ function CustomersTable({ filters }) {
 
         {/* Cuerpo de la tabla */}
         <div className="space-y-2 md:space-y-0 pb-24">
-              {filteredCustomers.map(customer => (
-                <Customer
-                  key={customer.id_user}
-                  id={customer.id_user}
-                  image={customer.image}
-                  name={customer.first_name + ' ' + customer.second_name}
-                  last_name={customer.last_name + ' ' + customer.second_last_name}
-                  birth_date={customer.date_of_birth}
-                  manzana={customer.manzana}
-                  address={customer.street + ' ' + customer.number_ext}
-                  date_of_end={customer.date_user_end}
-                  handleClick={handleClick}
-                  isChecked={isCheck.includes(customer.id_user)}
-                  onEditSuccess={handleUpdateCustomer}
-                />
-              ))}
+              {filteredCustomers.map(customer => {
+                const firstName = formatName(customer.first_name);
+                const secondName = formatName(customer.second_name);
+                
+                // Construir el nombre completo, evitando espacios extra cuando secondName está vacío
+                const fullName = `${firstName}${secondName ? ' ' + secondName : ''}`;
+                
+                return (
+                  <Customer
+                    key={customer.id_user}
+                    id={customer.id_user}
+                    image={customer.image}
+                    name={fullName}
+                    last_name={customer.last_name + ' ' + customer.second_last_name}
+                    birth_date={customer.date_of_birth}
+                    manzana={customer.manzana}
+                    address={customer.street + ' ' + customer.number_ext}
+                    date_of_end={customer.date_user_end}
+                    handleClick={handleClick}
+                    isChecked={isCheck.includes(customer.id_user)}
+                    onEditSuccess={handleUpdateCustomer}
+                  />
+                );
+              })}
         </div>
       </div>
     </div>
