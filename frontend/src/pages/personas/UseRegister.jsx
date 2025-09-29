@@ -135,7 +135,7 @@ n_exterior: yup.string()
       'Vecino', 'Ranchero', 'Invalido'
     ], 'Estado no válido'),
 
-  fecha_nacimiento: yup
+fecha_nacimiento: yup
     .mixed()
     .required('La fecha de nacimiento es requerida')
     .test('is-valid-date', 'La fecha de nacimiento no es válida', (value) => {
@@ -161,13 +161,39 @@ n_exterior: yup.string()
       const minDate = new Date(1940, 0, 1);
       return date >= minDate;
     })
-    .test('max-date', 'La fecha de nacimiento no puede ser posterior a la fecha actual', (value) => {
+    .test('max-date', 'Debe tener al menos 5 años de edad', (value) => {
       if (!value) return true;
       const date = new Date(value);
       const today = new Date();
-      return date <= today;
+      const minAgeDate = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
+      return date <= minAgeDate;
     }),
-});
+  estadoPersona: yup
+    .string()
+    .required('El estado de la persona es requerido')
+    .test('age-restriction', 'Las personas menores de 15 años solo pueden ser Estudiante o Invalido', function(value) {
+      const fechaNacimiento = this.parent.fecha_nacimiento;
+      if (!fechaNacimiento || !value) return true;
+      
+      const birthDate = new Date(fechaNacimiento);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const dayDiff = today.getDate() - birthDate.getDate();
+      
+      // Calcular edad exacta
+      let exactAge = age;
+      if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+        exactAge--;
+      }
+      
+      // Si es menor de 15 años, solo puede ser Estudiante o Invalido
+      if (exactAge < 15) {
+        return value === 'Estudiante' || value === 'Invalido';
+      }
+      
+      return true;
+    }),});
 
 /**
  * Componente de registro de usuarios.
@@ -475,7 +501,11 @@ function UserRegister() {
                             } ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
                             type="date"
                             {...register("fecha_nacimiento")}
-                            max={new Date().toISOString().split('T')[0]}
+                            max={(() => {
+                              const date = new Date();
+                              date.setFullYear(date.getFullYear() - 5);
+                              return date.toISOString().split('T')[0];
+                            })()}
                             disabled={isSubmitting}
                           />
                           
@@ -534,7 +564,6 @@ function UserRegister() {
                           )}
                         </div>
                       </div>
-
                       <div className="flex-1">
                         {/* Espacio para otro campo si es necesario */}
                       </div>
