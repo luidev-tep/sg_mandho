@@ -17,6 +17,9 @@ from src.security.security import SecurityUsers, role_required
 user_options = UserCrud()
 security_options = SecurityUsers()
 
+
+from src.security.repository.get_onwers_info import get_securyty_users_info
+
 security_route = Blueprint('security_route', __name__, url_prefix='/api/security/')
 
 # 1. Obtener información de la URL como PARÁMETROS DE RUTA
@@ -181,8 +184,6 @@ def validar_password() -> tuple[Any]:
     except Exception as e:
         print(e)
         return send_error(str(e), 500)
-    
-
 
 @security_route.route('refresh_token/', methods=['POST'])
 @jwt_required(refresh=True) # Usar el decorador correcto para refresh tokens
@@ -214,12 +215,9 @@ def refresh_token_fn() -> tuple[Any]:
                   `access_token` en el campo `data`.
     """
     try:
-        print(f"Se refresco el token ")
         # 1. Obtener el ID del usuario actual y las claims del refresh token
         current_user = get_jwt_identity()
         current_claims = get_jwt()  # Obtiene todas las claims del token actual
-        print(f"El usuario actual es: {current_user}")
-        print(f"Las claims del token actual son: {current_claims}")
         service = current_claims.get('service')
         if not service:
             return send_error("No se encontro el servicio", 400)
@@ -237,4 +235,82 @@ def refresh_token_fn() -> tuple[Any]:
     except Exception as e:
         print(e)
         return send_error(str(e), 500)
+    
+@security_route.route('admin_onwer/', methods=['POST'])
+@role_required('delegado')
+def get_onwer_info():
+    """
+    Endpoint principal de la API de administración de usuarios (Owners/Propietarios).
+    
+    Este endpoint está protegido y solo es accesible por usuarios con el rol **'delegado'**
+    (@role_required('delegado')). Sirve como un punto de entrada unificado para dos
+    funcionalidades críticas: la consulta de la lista de administradores y la creación de uno nuevo.
+
+    El tipo de operación a realizar se determina examinando las claves en el cuerpo
+    de la solicitud JSON (`request.json`):
+
+    1.  **Consulta de Administradores (GET-like functionality):**
+        - Se activa si el JSON contiene la clave **'get_onwers_info'** con un valor `True`.
+        - Llama a `get_securyty_users_info()` para obtener la lista de todos los administradores
+          registrados (limpiando campos sensibles como la contraseña).
+        - Retorna un código 200/404.
+
+    2.  **Creación de un Nuevo Administrador (POST functionality):**
+        - Se activa si el JSON contiene la clave **'create_onwer'** con un diccionario anidado.
+        - Llama a `security_options.insert_new_Onwer()`, la cual ejecuta el flujo transaccional
+          completo: validación de elegibilidad del cliente, validación de unicidad de rol,
+          validación de contraseña, y persistencia de datos.
+        - Retorna códigos 201 (creación exitosa), 400 (error de validación de datos/contraseña),
+          409 (conflicto de unicidad/elegibilidad), o 500 (error interno).
+
+    Args:
+        Ninguno explícito (recibe datos a través de `request.json` del framework).
+
+    Returns:
+        Response: Una respuesta HTTP (JSON) utilizando las funciones de utilidad `send_success` o
+                  `send_error`, que contienen el código de estado, el mensaje y, opcionalmente, los datos.
+
+    Excepciones manejadas:
+        - `KeyError`: Si falta algún campo obligatorio esperado en el diccionario anidado. Retorna 400.
+        - `Exception`: Cualquier otro error de ejecución no capturado. Retorna 500.
+    """
+    try:
+        # Validar que se recibieron datos JSON en el cuerpo de la solicitud
+        data_json = request.json
+        if not data_json:
+            return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+
+        print(f"Datos recibidos: {len(data_json)}")
+        datos = None
+        estado = None
+        mensaje = None
+        # Procesar solicitud de costo de servicio por año
+        if 'get_onwers_info' in data_json and data_json['get_onwers_info']:
+            datos = get_securyty_users_info() #Esta funcion va directamente la repositorio a traer la informacion de los usuarios
+            if datos:
+                estado = 200
+                mensaje = "Datos obtenidos correctamente"
+            else:
+                estado = 404
+                mensaje = "No se encontraron datos"
+
+        if 'create_onwer' in data_json and data_json['create_onwer']:
+            estado, mensaje = security_options.insert_new_Onwer(data_json['create_onwer'])
+            print(f"Datos recibidos: {datos}")
+        
+
+        if 200 <= estado <= 205:
+            return send_success(mensaje, datos, estado)
+        else:
+            return send_error(mensaje, estado)
+                
+    except KeyError as e:
+        error_msg = f"Campo obligatorio faltante en los datos: {e}"
+        print(f"Error de validación: {error_msg}")
+        return send_error(error_msg, 400)
+    except Exception as e:
+        error_msg = f"Error interno al procesar la solicitud: {e}"
+        print(f"Error al obtener el costo: {error_msg}")
+        return send_error(error_msg, 500)
+        
 

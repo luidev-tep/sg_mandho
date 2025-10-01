@@ -178,12 +178,12 @@ function Customers() {
                 </Link>
 
                 <Link
-                  to="/personas/registro"
+                  to="/modulos/administradores"
                   className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 >
                   <span className="flex items-center">
                     <span className="mr-2 text-lg">+</span>
-                    <span className="text-sm sm:text-base">Generar (No funciona)</span>
+                    <span className="text-sm sm:text-base">Generar (No funciona)</span> 
                   </span>
                 </Link>
               </div>

@@ -189,7 +189,6 @@ class UserCrud:
         
         format_data = to_edit(data_edit)
         
-        #SE MODIFICO AQUI. eSTA VALIDACIONES DEBRAS REVISARSE EN EL FUTURO
         if is_admin(data_edit["DIM_CustomerId"]):
             return 403, "No se pueden editar los datos de un administrador", {}
         
@@ -203,8 +202,6 @@ class UserCrud:
         
         #Obtener el nuevo ususario para regresarlo en la respuesta
         new_user = get_user(data_edit["DIM_CustomerId"])
-        
-        
 
         return 201, "El usuario se ha actualizado correctamente", new_user
         

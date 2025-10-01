@@ -76,6 +76,7 @@ class AccountCrud():
         else:
             #print("Se hizo la tercera opcion")
             valido = True
+            
             hanlder_analitycs = Analitycs()
             status, mensaje , pagos_gechoss = hanlder_analitycs.get_analytics_per_customer({'Dim_customerId':  account_json['customer_id']})
             #print(pagos_gechos_pendientes)
@@ -103,8 +104,7 @@ class AccountCrud():
                         fila += f'  Servicio de {comitiva} - Tipo: {service_ype} - Debe: $ {amount}\n'
                         pendientes += fila
                 if any(pagos_gechos_pendientes):
-                    return 404, f"El usuario aun tiene pagos pendientes Antes de poder cambiarse de cuenta: \n {pendientes}"
-        
+                    return 409, f"El usuario aun tiene pagos pendientes Antes de poder cambiarse de cuenta: \n {pendientes}"
         #return 200, "Esta prueba fue satisfactoria y "  
 
         #Creamos la instancia de clases que se ingresaran a la bd

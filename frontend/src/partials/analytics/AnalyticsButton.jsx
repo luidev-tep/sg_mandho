@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ModuleButton from './ModuleBoton';
+import { useAuth } from '../../utils/AuthContext';
 
 function AnalyticsButton({ comitiva }) {
- const moduleOptionsMap = {
+  const { state } = useAuth();
+  const { usuario } = state;
+  const moduleOptionsMap = {
    panteon: [
      { path: "/modulos/generar_reporte/panteon", label: "Generar Reporte", isReport: true },
      { path: "/modulos/panteon", label: "Ver Registros" },
@@ -12,10 +15,10 @@ function AnalyticsButton({ comitiva }) {
      { path: "/modulos/crear_servicio/panteon", label: "Agregar servicio" }
    ], 
    personas: [
-     { path: "/modulos/generar_reporte/personas", label: "Generar Reporte", isReport: true },
      { path: "/personas/usuarios", label: "Lista de personas" },
      { path: "/cuentas/cuenta", label: "Crear cuenta" },
      { path: "/personas/registro", label: "Agregar persona" },
+     { path: "/modulos/generar_reporte/personas", label: "Generar Reporte", isReport: true },
      { path: "/modulos/crear_servicio/personas", label: "Agregar servicio" }
    ],
    agua: [
@@ -38,18 +41,17 @@ function AnalyticsButton({ comitiva }) {
      { path: "/modulos/crear_pago/feria", label: "Generar recibo" },
      { path: "/modulos/usuarios/feria", label: "Ver Personas" },
      { path: "/modulos/crear_servicio/feria", label: "Agregar servicio" }
-   ]
- };
-
- // Si no hay comitiva especificada, mostrar los módulos generales
- const defaultModules = [
+   ],
+   delegado: [
    { path: "/modulos/panteon", label: "Módulo Panteón" },
    { path: "/modulos/agua", label: "Módulo Pago Agua" },
    { path: "/modulos/delegacion", label: "Módulo Delegación" },
    { path: "/personas/usuarios", label: "Módulo de Personas" },
-   { path: "/modulos/feria", label: "Módulo Feria" }
- ];
-
+   { path: "/modulos/feria", label: "Módulo Feria" },
+   { path: "/modulos/agregar_administrador/", label: "Administrar Usuarios" }
+   ]
+ };
+ 
  const modulesToRender = comitiva ? moduleOptionsMap[comitiva] || [] : defaultModules;
 
  return (

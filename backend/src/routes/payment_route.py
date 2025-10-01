@@ -1,4 +1,3 @@
-
 """
 Módulo: payment_route.py
 Descripción:
@@ -24,7 +23,6 @@ from flask_jwt_extended import jwt_required,  get_jwt
 service_details_options = ServiceDetailsCrud()
 
 hanlder_cash_cut = cashCutCrud()
-
 
 security_options = SecurityUsers()
 
@@ -267,7 +265,7 @@ def get_any_data() -> Response:
             estado, mensaje, datos = payment_options.get_cost_by_payment_year(data_json['costoservicio'])
         
         if 'pagosPendientes' in data_json and data_json['pagosPendientes']:
-            estado, mensaje, datos = payment_options.get_cost(data_json['pagosPendientes'])
+            estado, mensaje, datos = payment_options.get_pending_paids_per_customer(data_json['pagosPendientes'])
             print(f"Datos recibidos: {datos}")
             
         if 'servicios_corte_caja' in data_json and data_json['servicios_corte_caja']:

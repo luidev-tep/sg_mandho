@@ -127,14 +127,6 @@ n_exterior: yup.string()
     // Validar explícitamente que no sea negativo
     return !/^-\d+$/.test(value);
   }),
-
-  estadoPersona: yup.string()
-    .required('Debe seleccionar un estado para la persona')
-    .oneOf([
-      'Estudiante', 'Inmigrante', 'Pequeño propietario', 
-      'Vecino', 'Ranchero', 'Invalido'
-    ], 'Estado no válido'),
-
 fecha_nacimiento: yup
     .mixed()
     .required('La fecha de nacimiento es requerida')
@@ -171,6 +163,10 @@ fecha_nacimiento: yup
   estadoPersona: yup
     .string()
     .required('El estado de la persona es requerido')
+    .oneOf([
+      'Estudiante', 'Inmigrante', 'Pequeño propietario', 
+      'Vecino', 'Ranchero', 'Invalido'
+    ], 'Estado no válido')
     .test('age-restriction', 'Las personas menores de 15 años solo pueden ser Estudiante o Invalido', function(value) {
       const fechaNacimiento = this.parent.fecha_nacimiento;
       if (!fechaNacimiento || !value) return true;
