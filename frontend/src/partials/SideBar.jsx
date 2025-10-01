@@ -27,6 +27,7 @@ const moduleOptionsMap = {
     { path: "/modulos/usuarios/panteon", label: "Ver Personas" }
   ], 
   personas: [
+    ...(userRole === 'delegado' ? [{ path: "/Analytics/delegado", label: "Panel de Control" }] : []),
     { path: "/personas/usuarios", label: "lista de personas" },
     { path: "/cuentas/cuenta", label: "crear cuenta" },
     { path: "/personas/registro", label: "Agregar persona" }
@@ -365,7 +366,7 @@ return (
                                 }}
                               >
                                 <span className="text-base font-semibold lg:opacity-100 2xl:opacity-100 duration-200">
-                                  Personnas del pueblo
+                                  Personas del pueblo
                                 </span>
                               </NavLink>
                             </li>

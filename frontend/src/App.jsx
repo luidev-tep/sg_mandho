@@ -35,6 +35,9 @@ import DynamicMostrarUsuarios from './pages/payments/DynamicMostrarUsuarios.jsx'
 import AgregarServicio from './pages/payments/AgregarServicio.jsx';
 //import Navigation from './components/Navigation.jsx';
 
+//Importar pagina para los adminsitradores 
+import AgregarUsuario from './pages/AgregarUsuario.jsx';
+
 /**
  * The main application component that sets up routing for the application.
  * It includes various routes for different pages like CompanyProfile, Menu, 
@@ -87,6 +90,8 @@ function App() {
 
           <Route path="/modulos/usuarios/:moduleName" element={<DynamicMostrarUsuarios />} />
           <Route path="/modulos/crear_servicio/:moduleName" element={<AgregarServicio />} />
+
+          <Route path="/modulos/agregar_administrador/" element={<AgregarUsuario />} />
           {/* Rutas adicionales */}
         </Routes>
     </>

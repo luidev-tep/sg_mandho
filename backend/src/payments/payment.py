@@ -243,8 +243,12 @@ class PaymentCrud:
             # Capturar cualquier excepción inesperada y devolver un error del servidor
             return 500, f"Error leyendo los pagos: {str(e)}", []
         
-    def get_cost(self, data_json: dict) -> tuple[int, Any, list]:
-        """Obtiene una lista de pagos pendientes para un cliente y servicio específicos.
+    def get_pending_paids_per_customer(self, data_json: dict) -> tuple[int, Any, list]:
+        """ 
+        Documenta resta funcion correctmanete, cambiar cosas generias como lo son el nombre y 
+        explicar bien que valores devuelve
+        
+        Obtiene una lista de pagos pendientes para un cliente y servicio específicos.
 
             Esta función valida los datos de entrada y busca los pagos pendientes
             asociados a las cuentas del cliente para un servicio y años específicos.
