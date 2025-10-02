@@ -70,7 +70,7 @@ def get_analythics_by_service() -> tuple[Response, Literal[404]] | Any | tuple[R
             return send_error("No se recibieron datos", 400)
         
         # Llama a la función de la capa de negocio para obtener las analíticas
-        estado, mensaje, datos = handler_analythics.get_analytics_per_month(data)
+        estado, mensaje, datos = handler_analythics.get_analytics_per_service(data)
 
         # Retorna una respuesta exitosa o de error basada en el estado devuelto
         if 200 <= estado <= 205:

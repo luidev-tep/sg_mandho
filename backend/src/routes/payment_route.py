@@ -61,7 +61,10 @@ def create_payment() -> Response:
     if not payment_json:
         return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
     
-    request_service_name = payment_json.get('ServiceName', '')
+    if isinstance(payment_json, list):
+        request_service_name = payment_json[0].get('ServiceName', '')
+    else:
+        request_service_name = payment_json.get('ServiceName', '')
     # print(f"------IMPRIMIENTO INFORMACION DEBUG------")
     # print(f"Rol del usuario: {user_role}")
     # #print(f"Fraccion del usuario: {user_fraction}")
@@ -82,10 +85,10 @@ def create_payment() -> Response:
         estado = 200
         mensaje = ""
         datos = []
-        
         # Se verifica si los datos recibidos son una lista para manejar pagos masivos
         if isinstance(payment_json, list):
             # Se llama a la función de creación de pagos masivos
+            print(payment_json)
             estado, mensaje = payment_options.create_check_list_payments(payment_json)
         else:
             # Se llama a la función para crear un solo pago

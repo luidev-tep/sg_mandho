@@ -64,8 +64,11 @@ class factRevenueCrud():
         
         dim_date_data = DIM_DATE()
         year = str(dim_date_data.dateId)
+        #Se hashea una vez antes para que la posibilidad de que el revenue se repita sea menor
+        hash_revenue = create_id([data_json['DIM_AccountId'], data_json['entrada'], data_json['AnioPago']]) 
+        
         data_format = {
-            'FACT_RevenueId': create_id([data_json['FactAmount'], data_json['DIM_AccountId'], year[4:]]), #Asi se evita que el id se repita
+            'FACT_RevenueId': create_id([data_json['FactAmount'], hash_revenue, year[4:]]), #Asi se evita que el id se repita
             'DIM_DateId': dim_date_data.dateId,
             'DIM_AccountId': data_json['DIM_AccountId'],
             'DIM_ServiceDetailsId': data_json['DIM_ServiceDetailsId'],
@@ -152,6 +155,8 @@ class factRevenueCrud():
                 }
                 
                 model_format.append(FACT_Revenue(**formatted_data))
+            
+            #Testear que se inserten todos los registros
             
             # Insertar todos los registros en la base de datos de manera masiva
             isvalid = insert_many_fact_revenues(model_format)

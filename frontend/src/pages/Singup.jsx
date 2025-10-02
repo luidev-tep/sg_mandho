@@ -120,7 +120,7 @@ function Signup() {
                       {...register("name", {
                         required: 'El usuario es requerido',
                         pattern: {
-                          value: /^[A-Za-zÁÉÍÓÚáéíóúñÑ]+$/i,
+                          value: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9]+$/i,
                           message: 'Solo se permiten letras sin espacios'
                         }
                       })}

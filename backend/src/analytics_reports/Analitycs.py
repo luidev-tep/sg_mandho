@@ -22,7 +22,7 @@ class Analitycs:
         self.payment_processor = PaymentProcessor()
 
 
-    def get_analytics_per_month(self, data_json: dict) -> tuple[int, str, dict]:
+    def get_analytics_per_service(self, data_json: dict) -> tuple[int, str, dict]:
         """ 
         Obtiene los datos de analíticas por mes, incluyendo ingresos y
         fracciones facturadas.

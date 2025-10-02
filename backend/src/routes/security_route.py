@@ -172,9 +172,9 @@ def validar_password() -> tuple[Any]:
         request_data = request.json
         if not request_data:
             return send_error("No se recibieron datos", 400)
-        
+        print(f"Se recibieron los siguientes datos: {request_data}")
         password = 'qwerty' 
-
+        print(f"Se comparan las 2 contrasenias: {request_data['password']} y {password} para validar la contrasenia: {request_data['password'] == password}")
         isValid = request_data['password'] == password
 
         if not isValid:

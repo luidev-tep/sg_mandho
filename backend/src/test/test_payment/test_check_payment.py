@@ -1,5 +1,6 @@
 from src.fact_revenues.Fact_revenue import factRevenueCrud
 from src.dim_servicedetails.serviceDetails import ServiceDetailsCrud
+from src.payments.payment import PaymentCrud
 
 def test_check_payment():
     hadler_revuene = factRevenueCrud()
@@ -15,7 +16,7 @@ def test_check_payment():
         "amount": 0,
         "entrada": "check_list",
         "movementName": "ingreso",
-        "serviceDetailsType": "cooperacion camino"
+        "serviceDetailsType": "testeo servicio"
     },
     {
         "AnioPago": 2025,
@@ -27,7 +28,7 @@ def test_check_payment():
         "amount": 0,
         "entrada": "check_list",
         "movementName": "ingreso",
-        "serviceDetailsType": "cooperacion camino"
+        "serviceDetailsType": "testeo servicio"
     },
     {
         "AnioPago": 2025,
@@ -39,7 +40,7 @@ def test_check_payment():
         "amount": 0,
         "entrada": "check_list",
         "movementName": "ingreso",
-        "serviceDetailsType": "cooperacion camino"
+        "serviceDetailsType": "testeo servicio"
     },
     {
         "AnioPago": 2025,
@@ -51,7 +52,7 @@ def test_check_payment():
         "amount": 0,
         "entrada": "check_list",
         "movementName": "ingreso",
-        "serviceDetailsType": "cooperacion camino"
+        "serviceDetailsType": "testeo servicio"
     },
     {
         "AnioPago": 2025,
@@ -63,10 +64,11 @@ def test_check_payment():
         "amount": 0,
         "entrada": "check_list",
         "movementName": "ingreso",
-        "serviceDetailsType": "cooperacion camino"
+        "serviceDetailsType": "testeo servicio"
     }
     ]
-    status, message = hadler_revuene.insert_many_register(data)
+    hanlder_payment = PaymentCrud()
+    status, message = hanlder_payment.create_check_list_payments(data)
     
     print(f"Status: {status}, Message: {message}")
     assert status == 201

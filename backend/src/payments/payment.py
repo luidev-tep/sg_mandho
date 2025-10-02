@@ -500,6 +500,8 @@ class PaymentCrud:
                 return 400, message
             
         try:
+            #testeando
+            #return 201, "Pagos creados exitosamente"
             # Crear el registro de ingresos en la tabla de facturación
             code, message = fact_revenue_handler.insert_many_register(payment_json)
             

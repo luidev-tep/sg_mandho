@@ -98,7 +98,7 @@ export const getPagosPendientes = async (data) => {
         if (!data || !data.pagosPendientes || !data.pagosPendientes.DIM_CustomerId || !data.pagosPendientes.ServiceName) {
             throw new Error('Faltan datos requeridos para obtener los pagos pendientes');
         }
-        console.log("Datos enviados a getPAgosPendientes:", data);
+        //console.log("Datos enviados a getPAgosPendientes:", data);
         const response = await axiosInstance.post('payment/get_any_data/', data);
 
         // Verificar si la respuesta tiene el formato esperado
@@ -108,7 +108,7 @@ export const getPagosPendientes = async (data) => {
 
         // La respuesta es un JSON, no un número.
         const pendingPayments = response.data.body;
-        console.log('Pagos pendientes recibidos de la API:', pendingPayments); // Log para verificar
+        //console.log('Pagos pendientes recibidos de la API:', pendingPayments); // Log para verificar
 
         return {
             data: pendingPayments

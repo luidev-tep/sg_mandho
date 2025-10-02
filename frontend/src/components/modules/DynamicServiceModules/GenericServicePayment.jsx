@@ -1,14 +1,15 @@
+// Componente genérico y dinámico (MODIFICADO - eliminada funcionalidad renderAdditionalContent)
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData, paymentData }) => {
+const GenericServicePayment = ({ onValidityChange, onModuleData, paymentData, serviceName }) => {
   
   const { register, handleSubmit, watch, setValue, formState: { errors, isValid } } = useForm({
     mode: 'onChange',
     defaultValues: {
       serviceType: '',
       amount: 0,
-      serviceName: 'agua',
+      serviceName: serviceName,
       description: ''
     }
   });
@@ -16,7 +17,6 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData, paymentD
   const serviceType = watch('serviceType');
   const amount = watch('amount');
   const description = watch('description');
-  const [selectedServiceInfo, setSelectedServiceInfo] = useState(null);
 
   useEffect(() => {
     onValidityChange?.(isValid);
@@ -27,26 +27,31 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData, paymentD
       onModuleData?.({
         serviceType,
         amount,
-        serviceName: 'agua',
+        serviceName: serviceName,
         description
       });
     }
-  }, [serviceType, amount, description, isValid, onModuleData]);
+  }, [serviceType, amount, description, isValid, onModuleData, serviceName]);
+
+  useEffect(() => {
+    // Reiniciar el formulario cuando cambie el serviceName (ej. al navegar entre módulos)
+    setValue('serviceType', '');
+    setValue('amount', 0);
+    setValue('description', '');
+    setValue('serviceName', serviceName);
+  }, [serviceName, setValue]);
 
   useEffect(() => {
     if (serviceType && paymentData) {
       const selected = paymentData.find(p => p.serviceType === serviceType);
       if (selected) {
         setValue('amount', selected.amount, { shouldValidate: true });
-        const newDescription = `Pago por ${selected.serviceType.replace('_', ' ')} del año seleccionado.`;
-        setValue('description', newDescription);
-        setSelectedServiceInfo(selected);
+        const newDescription = `Pago por ${selected.serviceType.replace(/_/g, ' ')} del año seleccionado.`;
+        setValue('description', newDescription, { shouldValidate: true });
       }
     } else {
-      setValue('amount', 0);
-      setValue('description', '');
-      setSelectedServiceInfo(null);
-      setValue('serviceName', 'agua');
+      setValue('amount', 0, { shouldValidate: true });
+      setValue('description', '', { shouldValidate: true });
     }
   }, [serviceType, paymentData, setValue]);
 
@@ -66,7 +71,7 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData, paymentD
             <option value="">-- Seleccione un servicio --</option>
             {paymentData?.map(service => (
               <option key={service.serviceType} value={service.serviceType}>
-                {`${service.serviceType.charAt(0).toUpperCase() + service.serviceType.slice(1)} - $${service.amount}`}
+                {`${service.serviceType.charAt(0).toUpperCase() + service.serviceType.slice(1).replace(/_/g, ' ')} - $${service.amount}`}
               </option>
             ))}
           </select>
@@ -89,18 +94,10 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData, paymentD
               placeholder="Costo se asigna al seleccionar"
             />
           </div>
-
           {errors.amount && (
             <p className="text-red-500 text-sm mt-1">Este campo es requerido</p>
           )}
         </div>
-
-        {/* Mensaje para "Agregar toma" */}
-        {serviceType === 'agregar_toma' && (
-        <div className="md:col-span-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 p-3 rounded-lg">
-          Esta opción aún no está implementada.
-        </div>
-        )}
 
         {/* Campo oculto: serviceName */}
         <input type="hidden" {...register('serviceName')} />
@@ -121,4 +118,4 @@ const DynamicWaterPaymentComponent = ({ onValidityChange, onModuleData, paymentD
   );
 };
 
-export default DynamicWaterPaymentComponent;
+export default GenericServicePayment;

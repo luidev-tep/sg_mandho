@@ -201,15 +201,18 @@ function DynamicTable({ filters, serviceName }) {
                 serviceName={serviceName} 
                 onSuccess={fetchCustomers} // Pasar la función para recargar
               />
-              <button 
-                onClick={() => setIsCorteCajaModalOpen(true)}
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-gray-400 dark:focus:ring-offset-gray-800"
-              >
-                <svg className="w-4 h-4 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                </svg>
-                <span className="whitespace-nowrap">Finalizar Servicio</span>
-              </button>
+              {/* El botón "Finalizar Servicio" solo se muestra si el servicio no es 'agua' ni 'delegacion' */}
+              {serviceName !== 'agua' && serviceName !== 'delegacion' && (
+                <button 
+                  onClick={() => setIsCorteCajaModalOpen(true)}
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 border border-transparent rounded-lg shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-gray-400 dark:focus:ring-offset-gray-800"
+                >
+                  <svg className="w-4 h-4 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="whitespace-nowrap">Finalizar Servicio</span>
+                </button>
+              )}
             </div>
           )}
         </div>
