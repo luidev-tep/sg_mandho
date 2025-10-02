@@ -1,9 +1,4 @@
-import axios from "axios";
-
-
-const api = axios.create({   
-        baseURL: 'http://127.0.0.1:5000/api/security/'
-    });
+import axiosInstance from "./axiosInstance";
 
 export const validatePassword = async (data) => {
     try {
@@ -12,16 +7,10 @@ export const validatePassword = async (data) => {
             throw new Error('El password debe ser una cadena de texto válida');
         }
 
-
         console.log("Datos validados para validatePassword:", data);
         
-        const response = await api.post('validate_password/', data, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        });
-
+        const response = await axiosInstance.post('security/validate_password/', data);
+        
         // Verificar si la respuesta tiene el formato esperado
         if (!response.data) {
             throw new Error('No se recibió respuesta del servidor');

@@ -1,6 +1,7 @@
 from src.utils.conexion import Conexion
 from src.users.models.user import User
 import sqlite3
+from src.utils.id_generator import create_id
 class Create():
     def insert_user(self, data: User) -> bool:
         """Método responsable de insertar un usuario a la base de datos
@@ -43,10 +44,17 @@ class Create():
                 CustomerEndDate, 
                 CustomerFraction, 
                 CustomerAddress, 
-                CustomerNumberExt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                CustomerNumberExt,
+                username,   --Se agregaron los nuevos campos aqui.
+                password
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
+            #Se agregra el usuario y contrasenia de formaautomatica desde
+            #aqui se debe dejar en cuenta que aqui se agregara esta parte
+            #Para que en modificacione sposteriores se modifique aqui 
 
+            passwonrd = create_id([data.CustomerDateBirth])  #Para el cumpleanios que sea su fecha haseada
+            username = data.CustomerName
             values = (
                 str(data.DIM_CustomerId),
                 str(data.DIM_DateId),
@@ -54,14 +62,16 @@ class Create():
                 data.CustomerMiddleName,
                 data.CustomerLastName,
                 data.CustomerSecondLastName,
-                data.CustomerDateBirth,  # Agregado este campo que faltaba
+                data.CustomerDateBirth, 
                 data.CustomerStartDate,
                 data.CustomerEndDate,
                 data.CustomerFraction,
                 data.CustomerAddress,
-                data.CustomerNumberExt  # Agregado este campo que faltaba
+                data.CustomerNumberExt,  # Agregado este campo que faltaba
+                username,
+                passwonrd
             )
-
+            #print(f"Los valores que se agregaran a la base de datos son {values}")
             object_conecction.cursor.execute(query, values)
             
             object_conecction.save_changes()  # Comentado según lo indicado

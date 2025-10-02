@@ -431,7 +431,7 @@ def role_required(required_role) :#-> Callable[..., _Wrapped[Callable[..., Any],
             #print("Claims obtenidas del JWT:", claims) # Depuración: Muestra las claims obtenidas
             # Asume que el rol se guardó en la claim "role"
             user_role = claims.get('role', 'user') # Si no hay rol, asume 'user' [7]
-            
+            #print(f"El rol del usuario es: {user_role} se va a comparar con el rol requerido: {required_role == user_role}")
             # Lógica de verificación: ¿El rol del usuario coincide con el rol requerido?
             if user_role != required_role:
                 # Si el rol no coincide, se devuelve un error 403 (Prohibido) [6, 7]

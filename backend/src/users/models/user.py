@@ -105,7 +105,7 @@ def to_edit(campos_editables: dict) -> dict[str, str]:
     """
     Función para verificar o completar la información recibida y poner alguna por defecto
     si es que el valor del campo es nulo o una cadena vacía.
-
+    
     Args:
         campos_editables (dict): Un diccionario que contiene los campos a verificar.
                                  Las claves son los nombres de los campos y los valores

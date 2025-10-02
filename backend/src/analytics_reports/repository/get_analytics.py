@@ -56,6 +56,8 @@ class GetAnalytics:
             list: Una lista de diccionarios con el formato
                   `[{"month": "MM-YYYY", "amount": 0}, ...]`.
                   Retorna una lista vacía en caso de error o si no hay datos.
+
+        ESTA FUNCION FILTRA CORRECTAMENTE LOS PAGOS GENERADOS COMO TRABAJADOS
         """
         handler_service = DIM_Service()
         handler_conexion = Conexion()
@@ -79,7 +81,8 @@ class GetAnalytics:
             fac.dim_statusId in ('status4', 'status5')  
             ) as revenue_servicios ON d.DIM_DateId = revenue_servicios.DIM_DateId
             
-            WHERE 
+            WHERE
+            
             [filtros]
             GROUP BY d.FiscalYear, d.FiscalMonth
             ORDER BY d.FiscalYear DESC, d.FiscalMonth DESC;
@@ -199,6 +202,9 @@ class GetAnalytics:
                     s.DIM_ServiceId = sv.DIM_ServiceId  -- Corregido: era 'SV' en mayúsculas
                     AND s.ServiceName = ?
                 -- GROUP BY removido de la subconsulta para permitir la suma correcta
+                join  DIM_Status as status on
+                    f.DIM_StatusId = status.DIM_StatusId
+                    AND StatusName in ('completo', 'pendiente')
             ) as vw 
                 ON vw.DIM_CustomerId = cus.DIM_CustomerId 
             LEFT JOIN DIM_Date as dat 
@@ -263,7 +269,6 @@ class GetAnalytics:
         query = """
             SELECT
                 cus.CustomerFraction,
-                -- Contamos una columna de la tabla de Fechas (la última en la cadena)
                 COUNT(dat.DIM_DateId) AS pendientes
             FROM
                 DIM_Customer AS cus
@@ -293,20 +298,24 @@ class GetAnalytics:
                 }
         try:
             for estado in estados:
-                print(query)
-                print(estado, year)
+                # print(query)
+                # print(estado, year)
                 handler_conexion.cursor.execute(query, (estado, year))
                 data = handler_conexion.cursor.fetchall()
                 
                 for row in data:
+                    print(row)
+
                     manzanas[row[0]].append(row[1])
-                print(manzanas)
 
             #obtener el porcentaje de pagos 
             for manzana in manzanas:
+                porcentaje = 0
+                #print(f'Se esta imprimiento la informacionde cad amanzana: {manzana}')
                 total = sum(manzanas[manzana])
-                porcentaje = manzanas[manzana][0] / total * 100
-                porcentaje = round(porcentaje, 2)
+                if manzanas[manzana][0] != 0:
+                    porcentaje = (manzanas[manzana][0] / total) * 100
+                    porcentaje = round(porcentaje, 2)
                 manzanas[manzana].append(porcentaje)
                 manzanas[manzana].insert(0, total) 
 

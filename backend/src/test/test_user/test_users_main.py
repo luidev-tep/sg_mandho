@@ -17,8 +17,8 @@ def test_insert_user():
     }
     
     status_code, message, id_user = crud.insert_user(user_json)
-    
-    assert status_code == 501
+    print(message)
+    assert status_code == 200
     
     # assert user == {
     #         "id_user": "1",

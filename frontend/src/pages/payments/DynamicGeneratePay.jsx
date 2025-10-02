@@ -15,11 +15,10 @@ import ServiciosElegiblesDropdown from '../../components/modules/tablas/Servicio
 // Componentes dinámicos (carga diferida)
 const COMPONENT_CONFIG = {
   obtener_cuenta: lazy(() => import('../../components/accounts/GetAccount.jsx')),
-  pago_agua: lazy(() => import('../../components/modules/DynamicServiceModules/AguaCreate.jsx')),
-  pago_panteon: lazy(() => import('../../components/modules/DynamicServiceModules/PanteonCreate.jsx')),
-  // pago_delegacion: lazy(() => import('../components/modules/DelegacionCreate.jsx')),
-  // pago_feria: lazy(() => import('../components/modules/feriaCreate.jsx')),
+  service_payment: lazy(() => import('../../components/modules/DynamicServiceModules/GenericServicePayment.jsx')),
+  // Los componentes específicos como AguaCreate y PanteonCreate ya no son necesarios aquí
 };
+
 
 //LEER ESTA LINE APARA CONTEXTO
 //Se tiene que hacer una peticion a la api. los datos que reciben deben de ir en este formato:
@@ -140,7 +139,7 @@ const DynamicGeneratePay = () => {
     } else {
       setYearSpecificData(null);
     }
-    console.log('Año seleccionado:', year);
+    //console.log('Año seleccionado:', year);
   };
 
   // Función para actualizar la información de los servicios válidos y usuarios
@@ -242,7 +241,7 @@ const DynamicGeneratePay = () => {
           title: moduleJson.default.title || "Generar Pago",
           formTitle: moduleJson.default.formTitle || "Detalles del Pago",
           submitText: moduleJson.default.submitText || "Generar Pago",
-          componentType: COMPONENT_CONFIG[`pago_${moduleName}`] ? `pago_${moduleName}` : 'obtener_cuenta',
+          componentType: 'service_payment', 
           successTitle: moduleJson.default.successTitle || "Pago Registrado",
           successMessage: moduleJson.default.successMessage || "El pago ha sido registrado para",
           menuPath: moduleJson.default.menuPath
@@ -360,10 +359,10 @@ const DynamicGeneratePay = () => {
     return (
       <Suspense fallback={<div className="h-20 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />}>
         <DynamicComponent 
-        onValidityChange={handleModuleChildValidityChange} // Prop 1: Notifica validez
-        onModuleData={handleModuleData}            // Prop 2: Recibe datos del módulo
-        paymentData={yearSpecificData}              // Prop 3: Pasa los datos del año seleccionado
-        // isAccountComponent={moduleConfig.componentType === 'obtener_cuenta'}
+          onValidityChange={handleModuleChildValidityChange} // Prop 1: Notifica validez
+          onModuleData={handleModuleData}                    // Prop 2: Recibe datos del módulo
+          paymentData={yearSpecificData}                     // Prop 3: Pasa los datos del año seleccionado
+          serviceName={moduleName}                            // Prop 4: Pasa el nombre del módulo
         />
       </Suspense>
     );
@@ -433,14 +432,6 @@ const DynamicGeneratePay = () => {
                   onSuccess={handleServiciosValidosChange}
                   onDataUpdate={handleDataUpdate}
                 />
-
-
-              
-              
-              
-              
-
-
               {/* Campo Año de Pago - Ahora es un selector y está reubicado */}
               <div className="mb-6">
                 <div className="relative">
