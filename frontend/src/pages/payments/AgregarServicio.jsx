@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../../partials/SideBar.jsx';
 import Header from '../../partials/Header.jsx';
 import PasswordVerificationModal from '../../components/ModalValitePass.jsx';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { generarServicio } from '../../api/pagos/api_generar_servicio.js';
 import PayBg from "../../images/pay-bg.jpg";
 
@@ -11,6 +11,7 @@ import Tooltip from '../../components/Tooltip.jsx';
 
 function AgregarServicio() {
   const { moduleName } = useParams();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Estados para el formulario
@@ -31,6 +32,11 @@ function AgregarServicio() {
   const fechaInicioPredefinida = `${currentYear}-01-01`;
   const fechaFinPredefinida = `${currentYear}-12-31`;
 
+  // Función para regresar a la página anterior
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   // Función para validar nombre del servicio (solo letras, espacios y caracteres especiales básicos)
   const handleNombreServicioChange = (e) => {
     const value = e.target.value;
@@ -40,14 +46,14 @@ function AgregarServicio() {
     }
   };
 
-  // Función para validar cantidad (solo números, máximo 1000, no negativos)
+  // Función para validar cantidad (solo números, máximo 5000)
   const handleCantidadChange = (e) => {
     const value = e.target.value;
     // Permite solo números y punto decimal
     if (/^\d*\.?\d*$/.test(value)) {
       const numericValue = parseFloat(value);
-      // Valida que no sea negativo y no exceda 1000
-      if ((numericValue >= 0 && numericValue <= 1000) || value === '') {
+      // Valida que no exceda 5000. El mínimo se valida con el atributo 'min' del input para una mejor experiencia de usuario.
+      if (numericValue <= 5000 || value === '') {
         setCantidad(value);
       }
     }
@@ -166,11 +172,26 @@ function AgregarServicio() {
             <div className="bg-white dark:bg-gray-800 px-10 pb-8 rounded-b-xl shadow-xs">
               {/* Card header */}
               <div className="text-center mb-8">
+                {/* Se tiene que agregar un disenio de colores a este boton.  */}
+                {/* Botón para regresar */}
+                <div className="flex justify-start mb-4 " >
+                  <button
+                      onClick={handleGoBack}
+                      className="flex items-center px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-blue-600 dark:text-blue-300 font-medium rounded-lg shadow transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                      {/* El SVG ahora usa 'currentColor' para heredar el color del texto (text-blue-600) */}
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                      <span className="text-sm">Regresar</span>
+                  </button>
+                </div>
+                
                 <h1 className="text-2xl leading-snug text-gray-800 dark:text-gray-100 font-semibold mb-3">
                   Agregar Nuevo Servicio
                 </h1>
                 <div className="text-base text-gray-600 dark:text-gray-400">
-                  {moduleName && `Módulo: ${moduleName}`}
+                  {moduleName && `Comitiva de ${moduleName}`}
                 </div>
                 {/* Indicador de seguridad */}
                 <div className="mt-2 flex items-center justify-center text-sm">
@@ -247,9 +268,9 @@ function AgregarServicio() {
                       id="cantidad" 
                       className="form-input w-full text-base py-3 px-4" 
                       type="number" 
-                      step="0.01"
-                      min="0"
-                      max="1000"
+                      step="1.00"
+                      min="10"
+                      max="5000"
                       placeholder="0.00"
                       value={cantidad}
                       onChange={handleCantidadChange}
@@ -262,7 +283,7 @@ function AgregarServicio() {
                       required
                     />
                     <div className="text-sm text-gray-500 mt-1">
-                      Máximo permitido: 1000. 
+                      Mínimo permitido: $10 , Máximo permitido: $5000. 
                     </div>
                   </div>
 

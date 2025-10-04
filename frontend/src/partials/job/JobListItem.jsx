@@ -1,6 +1,6 @@
 import React from 'react';
 
-function JobListItem({ id, name, role, details, date }) {
+function JobListItem({ id, name, role, details, service }) {
   return (
     <div
       className="bg-white dark:bg-gray-800 shadow-xs rounded-xl px-5 py-4 border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-colors duration-200"
@@ -28,13 +28,9 @@ function JobListItem({ id, name, role, details, date }) {
 
         {/* Right side */}
         <div className="flex items-center space-x-4 pl-14 md:pl-0 mt-3 md:mt-0">
-          <div className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-            {new Date(date).toLocaleDateString('es-MX', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            })}
-          </div>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              {service}
+            </p>
         </div>
       </div>
     </div>
@@ -42,3 +38,12 @@ function JobListItem({ id, name, role, details, date }) {
 }
 
 export default JobListItem;
+
+// De esta forma se puede mostrar la fecha en el formato deseado en español:
+//           <div className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+//             {new Date(date).toLocaleDateString('es-MX', {
+//               year: 'numeric',
+//               month: 'short',
+//               day: 'numeric'
+//             })}
+//           </div>
