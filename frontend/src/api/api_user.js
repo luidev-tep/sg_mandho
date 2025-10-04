@@ -286,41 +286,26 @@ export const GenerarReporteUsuario = (Dim_customerId) => {
     });
 };
 
-export const MostrarAdmin = () => {
-    console.log("MostrarAdmin Hola dese aqui el admin");
-    console.log("Esta api aun no es funcional");
-    const items = [
-    // La informacion proveniente del backend deberia venir en este formato
-    [
-      {
-        id: 0,
-        name: 'Carlos Martínez',
-        role: 'delegado',
-        details: 'buenavista Av.20 noviembre s/n',
-        date: '2025-05-01',
-      },
-    ],
-    // Grupo 2 (Subdelegados) - 1 por manzana (6 en total)
-    [
-      {
-        id: 2,
-        name: 'Pedro Sánchez',
-        role: 'subdelegado',
-        details: 'tepetate Av.20 noviembre s/n',
-        date: '2025-05-01',
-      },
-    ],
-    // Grupo 3 (Comotivas personal) - 5 en total
-    [
-      {
-        id: 7,
-        name: 'Sofía Mendoza',
-        role: 'comotiva',
-        details: 'buenavista Av.20 noviembre s/n',
-        date: '2025-05-01',
-      },
-    ],
-  ];
 
-  return items;
+export const MostrarAdmin = () => {
+    return axiosInstance.get('home/get_home_info/')
+        .then(response => {
+            if (response.data.status === 'success') {
+                // Transformar los datos del backend al formato esperado
+                
+                return response.data.body;
+            } else {
+                throw new Error('Formato de respuesta inesperado del backend');
+            }
+        })
+        .catch(error => {
+            console.error("[API] Error en MostrarAdmin:", {
+                error: error,
+                responseData: error.response?.data,
+                status: error.response?.status
+            });
+            
+            // Retornar array vacío en caso de error para mantener consistencia
+            return [];
+        });
 };

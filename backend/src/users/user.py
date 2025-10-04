@@ -23,6 +23,10 @@ from src.analytics_reports.Analitycs import Analitycs
 
 hanlder_analitycs = Analitycs()
 
+
+#Importacione spara obtener la informacion de los administradores para mostrar en la pantalla principal
+from src.users.repository.home_info import get_admins_home_info
+
 #importacion para verificar si la persona a marcar como morida ya no tien eningun pago activo
 class UserCrud:
     """ 
@@ -266,7 +270,6 @@ class UserCrud:
 
         return 201, "El usuario se ha actualizado correctamente", new_user
     
-    
     def get_data_customer_payments(self, dim_customer_id: str) -> tuple[int, str, dict]:
         """
         Obtiene el historial de pagos de un cliente.
@@ -310,4 +313,20 @@ class UserCrud:
         except Exception as e:
             print(f"Error al obtener la informacion del cliente: {e}")
             return 500, "Ocurrió un error al obtener los datos.", {}
-        
+
+
+#Se Creara esta pequenio funcion para traer informacion de Inicio, Como tal no pertenece a los ususarios 
+#Por lo tanto no se agrega dentro de la clase UserCrud
+def get_home_info():
+    """
+    Funcion la cual, hara uan peticion a la base de datos, donde se obtendr ala ifnroamcion de los usuarios administradores.
+    Esta infromacion es la que se mostrara en la apntalla de inicio para todos los usuarios.
+    """
+    try:
+        datos = get_admins_home_info()
+        if not datos:
+            return 404, "No se encontro informacion", []
+        return 200, "Informacion obtenida correctamente", datos
+    except Exception as e:
+        print(f"Error al obtener la informacion del cliente: {e}")
+        return 500, "Ocurrió un error al obtener los datos.", []

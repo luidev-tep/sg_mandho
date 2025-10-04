@@ -11,7 +11,7 @@ from src.routes.handle_message import send_error, send_success
 
 user_route = Blueprint('user_route', __name__)
 
-from flask_jwt_extended import jwt_required,  get_jwt, get_jwt_identity
+from flask_jwt_extended import jwt_required,  get_jwt
 
 @user_route.route('/api/user/create_user/', methods=['POST'])
 @jwt_required()

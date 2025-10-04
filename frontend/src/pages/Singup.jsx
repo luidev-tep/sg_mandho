@@ -5,7 +5,7 @@ import { ObtenerUsuario, iniciarRenovacionAutomatica } from '../api/api_auth';
 import AuthImage from "../images/auth-image.jpg";
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
- 
+
 function Signup() {
   const { 
     register, 
@@ -22,10 +22,18 @@ function Signup() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [isThrottled, setIsThrottled] = useState(false); // Estado para limitar clics
 
   const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   const onSubmit = handleSubmit(async (data) => {
+    // Si el botón está en cooldown, no hacer nada
+    if (isThrottled) return;
+
+    // Activar el cooldown por 1 segundo
+    setIsThrottled(true);
+    setTimeout(() => setIsThrottled(false), 1000);
+
     if (!data.recaptcha) {
       setRecaptchaError("Por favor completa el reCAPTCHA");
       return;
@@ -193,20 +201,39 @@ function Signup() {
                     <label className="block text-sm font-medium mb-1" htmlFor="password">
                       Contraseña <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      id="password" 
-                      className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full ${errors.password ? 'border-red-500' : ''}`} 
-                      type="password" 
-                      autoComplete="on"
-                      {...register("password", {
-                        required: 'La contraseña es requerida',
-                        minLength: {
-                          value: 8,
-                          message: 'La contraseña debe tener al menos 8 caracteres'
-                        }
-                      })}
-                      onChange={() => setApiError(null)} // Limpiar error al escribir
-                    />
+                    <div className="relative">
+                      <input 
+                        id="password" 
+                        className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full pr-10 ${errors.password ? 'border-red-500' : ''}`} 
+                        type="password" 
+                        autoComplete="on"
+                        {...register("password", {
+                          required: 'La contraseña es requerida',
+                          minLength: {
+                            value: 8,
+                            message: 'La contraseña debe tener al menos 8 caracteres'
+                          }
+                        })}
+                        onChange={() => setApiError(null)} // Limpiar error al escribir
+                      />
+                      <button 
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 dark:text-gray-400"
+                        onClick={() => {
+                          const passwordInput = document.getElementById('password');
+                          if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                          } else {
+                            passwordInput.type = 'password';
+                          }
+                        }}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                    </div>
                     {errors.password && (
                       <span className="text-red-500 text-sm">{errors.password.message}</span>
                     )}
@@ -222,8 +249,8 @@ function Signup() {
 
                   <button 
                     type="submit" 
-                    className="w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-lg shadow-lg transition-all duration-300"
-                    disabled={isSubmitting || loginSuccess}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-lg shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting || loginSuccess || isThrottled}
                   >
                     <span className="relative z-10">
                       {isSubmitting ? 'Procesando...' : 'Ingresar'}

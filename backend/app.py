@@ -12,6 +12,7 @@ from src.routes.search_real_time import search_route
 from src.routes.security_route import security_route
 from src.routes.payment_route import payment_route
 from src.routes.analitycs_route import analitycs_route
+from src.routes.home_route import home_route
 #from src.routes.
 ##Esto esta comentado ya que es solo de produccion
 #from dotenv import load_dotenv  # Importa load_dotenv
@@ -25,6 +26,7 @@ app.register_blueprint(search_route)
 app.register_blueprint(security_route)
 app.register_blueprint(payment_route)
 app.register_blueprint(analitycs_route)
+app.register_blueprint(home_route)
 app.config['JWT_SECRET_KEY'] = os.environ.get('SECRET_KEY', 'No se conecto')
 # Configuración de los tiempos de expiración [5]
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes = 15)  # Access token expira después de 15 minutos
