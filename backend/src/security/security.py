@@ -30,6 +30,8 @@ from src.security.repository.user_info import (
     get_user_info,
     insert_onwer_info
 )
+
+from src.security.repository.get_onwers_info import get_admin_info
 from src.accounts.account import AccountCrud
 
 hanlder_account = AccountCrud()
@@ -84,7 +86,6 @@ class SecurityUsers:
                 if validacion1 and validacion2 and validacion4:
                     # Se remueve la contraseña del objeto que se retorna por seguridad.
                     del user['password']
-                    del user['username']
                     del user['DIM_AccountId']
                     del user['DIM_CustomerId']
                     del user['StartDate']
@@ -374,7 +375,7 @@ class SecurityUsers:
         3. **Sin Espacios:** No debe contener caracteres de espacio.
         4. **Minúsculas:** Debe contener al menos una letra minúscula (`[a-z]`).
         5. **Mayúsculas:** Debe contener al menos una letra mayúscula (`[A-Z]`).
-        6. **Dígito:** Debe contener al menos un número (`\d`).
+        6. **Dígito:** Debe contener al menos un número (`d`).
         7. **Carácter Especial:** Debe contener al menos un carácter especial
            de la siguiente lista: `!@#$%^&*()_+-=[]{}|;:,.<>?`.
 
@@ -417,6 +418,29 @@ class SecurityUsers:
             'is_valid': len(errors) == 0,
             'errors': ' '.join(errors)
         }
+
+
+    def validate_admin_password(self, password: str) -> tuple[int, str]:
+        """
+        Funcion para validar si la contrasenia del delegado es correcta, esto se hace para agregar cierto tipo de candados en la comunidad. Ya que el usuario 
+        delegado debe proveer su contrasneia para que se complete la accion.
+        
+        Args:
+            password (str): La contrasenia del usuario delegado.
+        
+        Returns:
+            tuple[int, str]: Una tupla con el codigo de estado y el mensaje de la validacion.
+        """
+        try:
+            passwordDB = get_admin_info()
+            if create_id([password]) == passwordDB:
+                return 200, "Contrasenia correcta"
+            else:
+                return 401, "Contrasenia incorrecta"
+        except Exception as e:
+            print(e)
+            return 500, str(e)
+
 
 def role_required(required_role) :#-> Callable[..., _Wrapped[Callable[..., Any], Any, Callable[...:
     # Definición del decorador externo que acepta el rol requerido

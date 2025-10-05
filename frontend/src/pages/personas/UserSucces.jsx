@@ -68,7 +68,7 @@ function Onboarding04() {
                       "
                     >
                       <span className="relative z-10 flex items-center justify-center">
-                        Volver al Menu <span className="ml-1">→</span>
+                        Volver al Menú <span className="ml-1">→</span>
                       </span>
                     </Link>
                   </div>

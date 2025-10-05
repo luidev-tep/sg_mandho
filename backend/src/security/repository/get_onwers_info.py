@@ -1,6 +1,7 @@
 import sqlite3 
 from src.utils.conexion import Conexion
 from src.security.model import VistaModel
+from src.dim_dates.dim_date import DIM_DATE
 
 def get_securyty_users_info():
     """
@@ -64,6 +65,46 @@ def get_securyty_users_info():
             list_data.append(data_onwers_info_format)
         
         return list_data
+    except sqlite3.Error as e:
+        print(f"Error al obtener la informacion del usuario: {e}")
+        raise
+    finally:
+        hanlder_conection.close_conexion()
+
+def get_admin_info():
+    """
+    Funcion la cual extrae la contrasenia del Delegado para validarla en el 
+    """
+    hanlder_conection = Conexion()
+    
+    year, month, day = DIM_DATE()._get_full_date()
+    
+    start_date = f"{year}-01-01"
+    end_date = f"{year}-12-31"
+    
+    query = """
+    SELECT 
+        password
+    FROM
+        SecurityUsers
+    WHERE
+        RoleName = 'delegado'
+        AND StartDate = ?
+        AND EndDate = ?
+    """
+    try:
+        hanlder_conection.cursor.execute(query, (start_date, end_date))
+        user_info = hanlder_conection.cursor.fetchone()
+
+        # Corrección: Verificar si fetchone() devuelve None antes de acceder al índice
+        if user_info is None:
+            return None
+        
+        if user_info[0] is None:
+            return None
+        
+        return user_info[0]
+    
     except sqlite3.Error as e:
         print(f"Error al obtener la informacion del usuario: {e}")
         raise

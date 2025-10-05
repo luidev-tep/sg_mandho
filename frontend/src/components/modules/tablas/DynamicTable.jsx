@@ -157,7 +157,7 @@ function DynamicTable({ filters, serviceName }) {
   
     setAllCustomers(updateFunction);
     setFilteredCustomers(updateFunction);
-  };
+  }; 
   
   const handleClick = (e) => {
     const { id, checked, dataset } = e.target;

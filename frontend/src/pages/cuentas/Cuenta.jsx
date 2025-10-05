@@ -18,7 +18,7 @@ const accountSchema = yup.object().shape({
     .oneOf([
       'Estudiante', 'Inmigrante', 'Pequeño propietario', 
       'Vecino', 'Ranchero', 'Invalido'
-    ], 'Estado no válido')
+    ], 'Estado no válido', 'Residente', 'Vecino exento')
 });
 
 function Cart() {
@@ -174,7 +174,9 @@ function Cart() {
                       <option value="Pequeño propietario">Pequeño propietario</option>
                       <option value="Vecino">Vecino</option>
                       <option value="Ranchero">Ranchero</option>
-                      <option value="Invalido">Invalido</option>
+                      <option value="Invalido">Inválido</option>
+                      <option value="Residente">Residente</option>
+                      <option value="Vecino exento">Vecino exento</option>
                     </select>
                     
                     {/* Mensaje de validación para menores */}

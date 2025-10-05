@@ -110,7 +110,8 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
             additional_claims={
             "role": user_data['RoleName'],
             "service": user_data['ServiceName'],
-            "fraction": user_data['CustomerFraction']
+            "fraction": user_data['CustomerFraction'],
+            "name": user_data['username']
                         }
             )
         refresh_token = create_refresh_token(
@@ -118,7 +119,8 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
             additional_claims={
             "role": user_data['RoleName'],
             "service": user_data['ServiceName'],
-            "fraction": user_data['CustomerFraction']
+            "fraction": user_data['CustomerFraction'],
+            "name": user_data['username']
                         }
             )
         #Es la mejor forma de enviar la informacion ya que no se cambia nada, slamente se modifica el diccionario interno
@@ -138,9 +140,9 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
         return send_error(str(e), 500)
 
 
-@security_route.route('validate_password/', methods=['POST'])
-@role_required('comitiva')
-def validar_password() -> tuple[Any]:
+@security_route.route('validate_password_service/', methods=['POST'])
+@jwt_required()
+def validar_password_by_action() -> tuple[Any]:
     """
     Endpoint para validar una contraseña de forma aislada.
 
@@ -167,18 +169,36 @@ def validar_password() -> tuple[Any]:
 
     Returns:
         Response: Un objeto de respuesta de Flask que indica si la contraseña es válida o no.
+        
+    Servira para validar todo tipo de servicios en los cuales se corre reisgo de manipular 
+    mucha informacion, por eso se agrega esta funcionalidad.
     """
     try:
+        claims = get_jwt()
+        user_role = claims.get('role')  
+        if user_role != 'comitiva':
+            return send_error("No tienes permiso para validar la contrasenia", 403)
+        
         request_data = request.json
+        
         if not request_data:
             return send_error("No se recibieron datos", 400)
         print(f"Se recibieron los siguientes datos: {request_data}")
-        password = 'qwerty' 
-        print(f"Se comparan las 2 contrasenias: {request_data['password']} y {password} para validar la contrasenia: {request_data['password'] == password}")
-        isValid = request_data['password'] == password
-
-        if not isValid:
-            return send_error("La contrasenia es incorrecta, intentelo de nuevo", 200)
+        
+        data = {
+            "password": request_data['password'],
+            "manzana": claims.get('fraction'),
+            "role": user_role,
+            "name": claims.get('name')
+        }
+        #print([(data[dat], type(data[dat])) for dat in data])
+        #Se debe verificar con la contrasenia que el propia del usuario
+        #Se debe extraer la contrasenia y comprobar.
+        #Se debe extraer el name y buscar la contrasenia en la base de datos.
+        status, message, data = security_options.authenticate_user(data)        
+        
+        if status != 200:
+            return send_error(message, status)
         
         return send_success("Validacion completa", {'data': True}, 200)
     except Exception as e:
@@ -314,3 +334,62 @@ def get_onwer_info():
         return send_error(error_msg, 500)
         
 
+
+
+@security_route.route('validate_password/', methods=['POST'])
+@jwt_required()
+def check_admin_password() -> tuple[Any]:
+    """
+    Endpoint para validar una contraseña de forma aislada.
+
+    Este endpoint se utiliza para verificar una contraseña específica (hardcodeada
+    como 'qwerty' en la lógica actual) para una funcionalidad secundaria, como
+    una doble verificación de seguridad antes de una acción crítica (ej. un corte de caja).
+
+    Restricción de Acceso:
+    - Solo usuarios con el rol **'comitiva'** pueden acceder a esta ruta (debido al decorador `@role_required('comitiva')`).
+
+    Flujo de ejecución:
+    1. **Validación de Datos:** Verifica si se recibió el cuerpo JSON y extrae la clave 'password'.
+    2. **Validación de Lógica:** Compara la contraseña recibida con la contraseña predefinida.
+    3. **Manejo de Resultado:**
+       - Si es **incorrecta**, retorna un mensaje de error, pero con un estado **200** para
+         indicar que el servidor procesó la solicitud exitosamente, pero el resultado
+         de la validación es negativo.
+       - Si es **correcta**, retorna un mensaje de éxito con un objeto `{'data': True}`.
+
+    JSON Body esperado:
+    {
+      "password": "la_contraseña_a_validar"
+    }
+
+    Returns:
+        Response: Un objeto de respuesta de Flask que indica si la contraseña es válida o no.
+        Esta sera exclusiva del delegado para que el escriba su contrasenia y se valida si es correcta
+        Se debe temrinar de implementar este endpoint para toda la parte de validaciones de comitiva
+    """
+    try:
+        claims = get_jwt()
+        user_role = claims.get('role')  
+        if user_role != 'comitiva':
+            return send_error("No tienes permiso para validar la contrasenia", 403)
+        
+        request_data = request.json
+        
+        if not request_data:
+            return send_error("No se recibieron datos", 400)
+        #print(f"Se recibieron los siguientes datos: {request_data}")
+        
+        #print([(data[dat], type(data[dat])) for dat in data])
+        #Se debe verificar con la contrasenia que el propia del usuario
+        #Se debe extraer la contrasenia y comprobar.
+        #Se debe extraer el name y buscar la contrasenia en la base de datos.
+        status, message = security_options.validate_admin_password(request_data['password'])        
+        
+        if status != 200:
+            return send_error(message, status)
+        
+        return send_success("Validacion completa", {'data': True}, 200)
+    except Exception as e:
+        print(e)
+        return send_error(str(e), 500)

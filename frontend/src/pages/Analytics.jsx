@@ -180,7 +180,11 @@ function Analytics() {
             
             </div>            
             
-            {/* DashboardCard09 en pantalla completa */}
+            {/* DashboardCard09 en pantalla completa 
+            
+            //EMODIFICAR LA PRIMERA LETRA DE LA MANZANA PAR QU ESTE COMO MAYUSCULA
+            // 
+            Esto aplica para toda slas interface de dashboard*/}
             <div className="w-full mb-6">
               {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">

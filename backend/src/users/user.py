@@ -68,7 +68,7 @@ class UserCrud:
                 "CustomerDateEnd": user_json.get("fecha_fin") or "s/n",
                 "CustomerAdress": user_json.get("calle") or "s/n",
                 "CustomerFraction": user_json.get("manzana") or "s/n",
-                "CustomerNumberExt": user_json.get("numero_ext") or "s/n"
+                "CustomerNumberExt": user_json.get("n_exterior") or "s/n"
             }
 
             
@@ -89,7 +89,6 @@ class UserCrud:
         else:
             return 400, es_valido[1], None
         
-
     def read_user(self, data_json= dict) -> tuple:
         """
         Esta funcion se encargara de leer los usuarios de la base de datos, hara 2 cosas pricipales
@@ -115,9 +114,6 @@ class UserCrud:
         constraints:
             1;- id_user y filters son mutuamente excluyentes
             2; En cualquier caso donde haya un problema la lista se retornara vacia
-
-
-            CREAR UN FILTRO PARA QUE RECHACE A TODOS LOS ADMINSITRADORES DESDE LA INTERFAZ DE USUARIO
         """
         
         campos_requeridos = ["id_user", "filters"]
@@ -136,7 +132,7 @@ class UserCrud:
                     return 404, "No se encontró información para este usuario", []
                 
             elif data_json["filters"] == {} and data_json['id_user'] == '':
-                
+                #hASTA EL MOMENTO SE CREE QUE ESTA FUNCION A QUEDADO DEPRECADA, YA QUE NO SE UTILIZA 
                 datos = get_all_users()
                 
                 if datos:

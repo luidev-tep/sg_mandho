@@ -165,7 +165,7 @@ fecha_nacimiento: yup
     .required('El estado de la persona es requerido')
     .oneOf([
       'Estudiante', 'Inmigrante', 'Pequeño propietario', 
-      'Vecino', 'Ranchero', 'Invalido'
+      'Vecino', 'Ranchero', 'Invalido', 'Residente', 'Vecino exento'
     ], 'Estado no válido')
     .test('age-restriction', 'Las personas menores de 15 años solo pueden ser Estudiante o Invalido', function(value) {
       const fechaNacimiento = this.parent.fecha_nacimiento;
@@ -367,7 +367,7 @@ function UserRegister() {
                       <div className="flex space-x-4">
                         <div className="flex-1">
                           <label className="block text-sm font-medium mb-1" htmlFor="apellido">
-                            Apellido paterno <span className="text-red-500">*</span>
+                            Apellido Paterno <span className="text-red-500">*</span>
                           </label>
                           <input 
                             id="apellido" 
@@ -550,7 +550,9 @@ function UserRegister() {
                             <option value="Pequeño propietario">Pequeño propietario</option>
                             <option value="Vecino">Vecino</option>
                             <option value="Ranchero">Ranchero</option>
-                            <option value="Invalido">Invalido</option>
+                            <option value="Invalido">Inválido</option>
+                            <option value="Residente">Residente</option>
+                            <option value="Vecino exento">Vecino exento</option>
                           </select>
                           
                           {errors.estadoPersona && (

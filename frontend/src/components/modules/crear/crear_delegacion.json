@@ -3,7 +3,7 @@
   "formTitle": "Detalles del Pago de Delegación",
   "submitText": "Registrar Pago de Delegación",
   "successTitle": "Pago de Delegación Registrado",
-  "successMessage": "El pago del servicio de delegación ha sido registrado para",
+  "successMessage": "El pago del servicio de Delegación ha sido registrado para",
   "componentType": "delegacion",
   "menuPath": "/modulos/delegacion"
 }

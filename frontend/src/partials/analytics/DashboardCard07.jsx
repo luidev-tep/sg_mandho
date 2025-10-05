@@ -34,7 +34,7 @@ function DashboardCard07({ comitiva, anio, data, loading }) {
                   <div className="font-semibold text-left">Manzanas</div>
                 </th>
                 <th className="p-2">
-                  <div className="font-semibold text-center">Personas</div>
+                  <div className="font-semibold text-center">Pagos Hechos</div>
                 </th>
                 <th className="p-2">
                   <div className="font-semibold text-center">Pagados</div>

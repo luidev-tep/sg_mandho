@@ -88,8 +88,10 @@ class ServiceDetailsCrud:
             # servicio, detalle[0], starDate[1:7]
             startDate = str(handler_date.dateId)
             #se creara un hash para el id
+            #Se hasheo para que base muchisimo la probabilidad de que los indices se encuentren.
+            hash_id = create_id([service_details_json["amount"], is_optional, service_details_json["isOptional"]]) 
             data_format = {
-                "DIM_ServiceDetailsId": create_id([service_details_json['ServiceName'], service_details_json['serviceDetailesType'], startDate[2:7]]), # Testeado para que no de error
+                "DIM_ServiceDetailsId": create_id([service_details_json['ServiceName'], hash_id, startDate[2:7]]), # Testeado para que no de error
                 "DIM_DateId": handler_date.dateId,
                 "DIM_ServiceId": service_id,
                 "serviceDetailesType": service_details_json["serviceDetailesType"],

@@ -18,36 +18,36 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
   // Roles y permisos
   const userRole = usuario?.RoleName?.toLowerCase();
   const userService = usuario?.ServiceName?.toLowerCase();
-  // Definir las opciones para cada módulo /modulos/usuarios/
+  // Definir las opciones para cada módulo /modulos/usuarios/ 
 const moduleOptionsMap = {
   panteon: [
     { path: "/Analytics/panteon", label: "Panel de Control" },
     { path: "/modulos/panteon", label: "Ver Registros" },
-    { path: "/modulos/crear_pago/panteon", label: "Generar Registro" },
+    { path: "/modulos/crear_pago/panteon", label: "Generar registro" },
     { path: "/modulos/usuarios/panteon", label: "Ver Personas" }
   ], 
   personas: [
     ...(userRole === 'delegado' ? [{ path: "/Analytics/delegado", label: "Panel de Control" }] : []),
-    { path: "/personas/usuarios", label: "lista de personas" },
-    { path: "/cuentas/cuenta", label: "crear cuenta" },
+    { path: "/personas/usuarios", label: "Lista de personas" },
+    { path: "/cuentas/cuenta", label: "Crear cuenta" },
     { path: "/personas/registro", label: "Agregar persona" }
   ],
   agua: [
     { path: "/Analytics/agua", label: "Panel de Control" },
     { path: "/modulos/agua", label: "Ver pagos" },
-    { path: "/modulos/crear_pago/agua", label: "Generar recibo" },
+    { path: "/modulos/crear_pago/agua", label: "Generar registro" },
     { path: "/modulos/usuarios/agua", label: "Ver Personas" }
   ],
   delegacion: [
     { path: "/Analytics/delegacion", label: "Panel de Control" },
-    { path: "/modulos/delegacion", label: "ver registros" },
-    { path: "/modulos/crear_pago/delegacion", label: "Generar recibo" },
+    { path: "/modulos/delegacion", label: "Ver registros" },
+    { path: "/modulos/crear_pago/delegacion", label: "Generar registro" },
     { path: "/modulos/usuarios/delegacion", label: "Ver Personas" }
   ],
   feria: [
     { path: "/Analytics/feria", label: "Panel de Control" },
-    { path: "/modulos/feria", label: "ver registros" },
-    { path: "/modulos/crear_pago/feria", label: "Generar recibo" },
+    { path: "/modulos/feria", label: "Ver registros" },
+    { path: "/modulos/crear_pago/feria", label: "Generar registro" },
     { path: "/modulos/usuarios/feria", label: "Ver Personas" }
   ]
 };
@@ -61,8 +61,18 @@ useEffect(() => {
       setActiveModule(null);
       setModuleOptions([]);
     } else {
+      let options = moduleOptionsMap[currentModule];
+      
+      // Si el usuario es 'delegado', filtramos las opciones que no debe ver en los módulos.
+      if (userRole === 'delegado' && currentModule !== 'personas') {
+        options = options.filter(option => 
+          !option.path.includes('/crear_pago/') && 
+          !option.path.includes('/modulos/usuarios/')
+        );
+      }
+
       setActiveModule(currentModule);
-      setModuleOptions(moduleOptionsMap[currentModule]);
+      setModuleOptions(options);
     }
   } else {
     setActiveModule(null);
@@ -202,7 +212,7 @@ return (
                               <path d="M6.068 7.482A2.003 2.003 0 0 0 8 10a2 2 0 1 0-.518-3.932L3.707 2.293a1 1 0 0 0-1.414 1.414l3.775 3.775Z" />
                             </svg>
                             <span className="text-base font-semibold ml-4 lg:opacity-100 2xl:opacity-100 duration-200">
-                              Panel de control
+                              Inicio
                             </span>
                           </div>
                           {/* Icon */}
@@ -237,7 +247,7 @@ return (
                               }
                             >
                               <span className="text-base font-semibold lg:opacity-100 2xl:opacity-100 duration-200">
-                                Menu inicio
+                                Menú inicio
                               </span>
                             </NavLink>
                           </li>
@@ -249,7 +259,7 @@ return (
               </SidebarLinkGroup>
               {/* Módulos */}
               {userRole === 'delegado' && (
-                <SidebarLinkGroup activecondition={pathname.includes("panteon") || pathname.includes("agua") || pathname.includes("personas") || pathname.includes("delegacion")}>
+                <SidebarLinkGroup alwaysOpen={true} activecondition={pathname.includes("panteon") || pathname.includes("agua") || pathname.includes("personas") || pathname.includes("delegacion")}>
                   {(handleClick, open) => {
                     return (
                       <React.Fragment>
@@ -298,7 +308,7 @@ return (
                                 }}
                               >
                                 <span className="text-base font-semibold lg:opacity-100 2xl:opacity-100 duration-200">
-                                  Panteon
+                                  Panteón
                                 </span>
                               </NavLink>
                             </li>
@@ -332,7 +342,7 @@ return (
                                 }}
                               >
                                 <span className="text-base font-semibold lg:opacity-100 2xl:opacity-100 duration-200">
-                                  Delegacion
+                                  Delegación
                                 </span>
                               </NavLink>
                             </li>
@@ -434,7 +444,7 @@ return (
               )}
               {/* Módulo para Comitiva */}
               {(userRole === 'comitiva' && userService) && (
-                <SidebarLinkGroup activecondition={pathname.includes(userService)}>
+                <SidebarLinkGroup alwaysOpen={true} activecondition={pathname.includes(userService)}>
                   {(handleClick, open) => {
                     return (
                       <React.Fragment>
@@ -485,7 +495,7 @@ return (
               )}
               {/* Sección dinámica (antes Personas) */}
               {activeModule && (userRole === 'delegado' || userRole === 'subdelegado' || (userRole === 'comitiva' && activeModule === userService)) && (
-                <SidebarLinkGroup activecondition={pathname.includes(activeModule)}>
+                <SidebarLinkGroup alwaysOpen={true} activecondition={pathname.includes(activeModule)}>
                   {(handleClick, open) => {
                     return (
                       <React.Fragment>

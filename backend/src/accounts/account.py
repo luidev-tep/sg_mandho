@@ -111,7 +111,7 @@ class AccountCrud():
         dim_date = DIM_DATE()
         
         # Se crea el rol asociado y se obtiene el id
-        valid, dim_role_id, message = handler_role.insert_role(account_json)
+        valid, dim_role_id, message = handler_role.insert_role(account_json) #Se manda todo el diccionario pero solo se utilizan algunos campos
         
         if not valid:
             print("Termino porque no era valido al insertr el rol")
@@ -125,16 +125,17 @@ class AccountCrud():
         estado = DIM_status()
         
         #Validaciones para ver si la cuenta debe ser activa u inactiva
-        status_name = estado.get_status_id("","account")
+        DIM_status_id = estado.get_status_id("","account")
         
         is_active, Status, EndDate = validate_status(account_json["status"])  
+        #Si el estado que se ingresa es inactivo, se asigna el id del estado inactivo
 
         #En caso de no ser activas las variables se asignan como desactivadas
         if not is_active:
             status_id = Status
             account_json["end_date"] = EndDate
         else:
-            status_id = status_name
+            status_id = DIM_status_id
 
         if estado and dim_date and valido:
             #Formatear el dim date para que la informacion sea correcta
