@@ -272,7 +272,6 @@ def insert_onwer_info(data: dict) -> tuple[int, str]:
         print(f"Error al insertar el usuario: {e}")
         return 500, "Error al insertar el usuario"
 
-
 def update_user_info(password: str, username: str, dim_customer_id: str) -> tuple[int, str]:
     """
     Actualiza el nombre de usuario y la contraseña (ya hasheada) de un cliente
@@ -321,7 +320,6 @@ def update_user_info(password: str, username: str, dim_customer_id: str) -> tupl
         return 500, "Error al actualizar la informacion del usuario"
     finally:
         handler_connection.close_conexion()
-
 
 def insert_service_owner_info(data: dict) -> tuple[int, str]:
     """

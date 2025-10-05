@@ -4,6 +4,8 @@ from src.users.models.user import User
 from src.utils.build_filters import BuildFilters
 
 
+#POR EL MOMENTO SE CREE QUE ESTA FUNCION YA NO ES FUNCIONAL.
+#SE PRETENDE ELIMINARLA DE SER ASI
 def get_all_users() -> list:
     """Funcion la cual sirve para obtener a todos los usuarios, 
     se usa cuando tanto los filtros como la id_user estan vacios

@@ -6,6 +6,7 @@ import { useAuth } from '../../utils/AuthContext';
 function AnalyticsButton({ comitiva }) {
   const { state } = useAuth();
   const { usuario } = state;
+  const userRole = usuario?.RoleName?.toLowerCase();
   const moduleOptionsMap = {
    panteon: [
      { path: "/modulos/generar_reporte/panteon", label: "Generar Reporte", isReport: true },
@@ -52,7 +53,19 @@ function AnalyticsButton({ comitiva }) {
    ]
  };
  
- const modulesToRender = comitiva ? moduleOptionsMap[comitiva] || [] : defaultModules;
+  let modulesToRender = [];
+  if (comitiva && moduleOptionsMap[comitiva]) {
+    modulesToRender = moduleOptionsMap[comitiva];
+
+    // Si el usuario es 'delegado', filtramos las opciones que no debe ver
+    if (userRole === 'delegado') {
+      modulesToRender = modulesToRender.filter(module => 
+        !module.path.includes('/crear_pago/') &&
+        !module.path.includes('/modulos/usuarios/') &&
+        !module.path.includes('/modulos/crear_servicio/')
+      );
+    }
+  }
 
  return (
    <div className="col-span-full bg-white dark:bg-gray-800 shadow-xs rounded-xl">
@@ -61,14 +74,17 @@ function AnalyticsButton({ comitiva }) {
 <h2 className="font-bold text-3xl text-gray-800 dark:text-gray-100"> {comitiva ? `Comitiva ${comitiva.charAt(0).toUpperCase() + comitiva.slice(1)}` : 'Comitivas del Pueblo'} </h2> </header>
      <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
        {modulesToRender.map((module, index) => (
-         module.isReport ? (
-           <Link
-             key={index}
-             to={module.path}
-             className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-           >
-             {module.label}
-           </Link>
+         module.isReport ? ( 
+          // La funcionalidad de "Generar Reporte" está deshabilitada temporalmente.
+          // Cuando esté lista, descomentar el siguiente bloque de código.
+          /* <Link
+              key={index}
+              to={module.path}
+              className="flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-medium rounded-lg shadow transition-all duration-200 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+            >
+              {module.label}
+            </Link> */
+            null
          ) : (
            <ModuleButton key={index} to={module.path}>
              {module.label}

@@ -37,11 +37,12 @@ function AgregarServicio() {
     navigate(-1);
   };
 
-  // Función para validar nombre del servicio (solo letras, espacios y caracteres especiales básicos)
+  // Función para validar nombre del servicio (ahora permite letras, números, espacios y caracteres especiales básicos)
   const handleNombreServicioChange = (e) => {
     const value = e.target.value;
-    // Permite letras, espacios, acentos y algunos caracteres especiales comunes
-    if (/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s.,-]*$/.test(value) || value === '') {
+    // Permite letras, números, espacios, acentos y algunos caracteres especiales comunes
+    // Se valida que los números no sean negativos
+    if (/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s.,-]*$/.test(value) || value === '') {
       setNombreServicio(value);
     }
   };
@@ -249,7 +250,7 @@ function AgregarServicio() {
                       required
                     />
                     <div className="text-sm text-gray-500 mt-1">
-                      Escribe el nombre del servicio
+                      Escribe el nombre del servicio (puede incluir letras y números)
                     </div>
                   </div>
 

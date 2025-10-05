@@ -17,7 +17,7 @@ from src.dim_dates.dim_date import DIM_DATE
 
 #Manejadro de los roles para cuenta, ya que es a donde esta asociado
 handler_role = Role()
-
+ 
 def validate_account(user_id: str) -> bool:
     """Funcion la cual debera hacer una consulta a la base de datos para veficiar que no se pase el limite de cuentas
     el limite de cuentas es de 10, la funcion hara una consulta sql y verificara cuentas cuentas con esa persona hay
@@ -144,6 +144,8 @@ def validate_status(type_status) -> tuple[Literal[False], int, str] | tuple[Lite
     estatus_inactivos = {
         "estudiante": inactivo,
         "invalido": inactivo,
+        "residente": inactivo,
+        "vecino exento": inactivo,
     }
 
     if type_status in estatus_inactivos:

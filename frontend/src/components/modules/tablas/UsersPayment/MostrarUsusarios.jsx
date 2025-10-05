@@ -147,7 +147,7 @@ function CustomersTable({ filters }) {
       <div className="w-full">
         {/* Encabezado (visible en md y superior) */}
         <div className="hidden md:grid md:grid-cols-8 md:gap-4 bg-gray-50 dark:bg-gray-700/50 font-semibold text-xs uppercase text-gray-500 dark:text-gray-400 p-2 rounded-t-lg border-b border-gray-200 dark:border-gray-700">
-          <div className="text-center">Avatar</div>
+          <div className="text-center">imagen</div>
           <div className="md:col-span-2">Nombre Completo</div>
           <div className="text-center">Manzana</div>
           <div>Dirección</div>

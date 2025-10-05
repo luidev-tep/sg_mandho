@@ -112,7 +112,7 @@ function DynamicMenuCusomers() {
                 >
                   <span className="flex items-center">
                     <span className="mr-2 text-lg">+</span>
-                    <span className="text-sm sm:text-base">Ir al menu </span>
+                    <span className="text-sm sm:text-base">Ir al menú </span>
                   </span>
                 </Link>
               </div>

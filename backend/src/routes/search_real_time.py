@@ -4,6 +4,8 @@ from typing import Literal
 from flask import Blueprint, Response, request, jsonify
 from src.users.user import UserCrud
 from src.dim_dates.dim_date import DIM_DATE
+from src.utils.conexion import Conexion  # Usa tu clase de conexión existente
+
 
 from src.routes.handle_message import send_error
 
@@ -86,63 +88,98 @@ def busqueda_tiempo_real() -> tuple[Response, Literal[400]] | Response | tuple[R
         ]
     }
     """
+    # 1️⃣ Validar rol del usuario
     claims = get_jwt()
     user_role = claims.get('role')
-    if user_role == 'delegado' or user_role == 'subdelegado' or user_role == 'comitiva':
-        pass
-    else:
+    if user_role not in ['delegado', 'subdelegado', 'comitiva']:
         return send_error("No tienes permiso para buscar", 403)
-    
-    # 1. Validación del parámetro de búsqueda
-    search_term = request.args.get('q', '').lower().strip()
 
+    # 2️⃣ Validar parámetro de búsqueda
+    search_term = request.args.get('q', '').strip().lower()
     if not search_term or len(search_term) < 3:
         return jsonify({
-            'results': [], 
+            'results': [],
             'message': 'Ingrese mínimo 3 caracteres'
-        }), 400  # Cambiado a 400 (Bad Request es más apropiado que 401)
+        }), 400
 
     handler_date = DIM_DATE()
+    conn = None
     try:
-        # 2. Obtener todos los usuarios (filtro vacío)
-        data = {'id_user': '', 'filters': {}}
-        estado, mensaje, todos_los_datos = personas.read_user(data)
-        
-        if not estado:
-            raise RuntimeError(f"Error al leer usuarios: {mensaje}")
-        
-        # 3. Filtrar resultados
+        # 3️⃣ Conexión a BD
+        db_handler = Conexion()
+        conn, cursor = db_handler.conexion()
+
+        # 4️⃣ Consulta SQL con filtro directo (LIKE)
+        # Nota: El uso de parámetros evita inyección SQL
+        like_term = f"%{search_term}%"
+        query = """
+        SELECT 
+            DIM_CustomerId,
+            DIM_DateId,
+            CustomerName,
+            CustomerMiddleName,
+            CustomerLastName,
+            CustomerSecondLastName,
+            CustomerDateBirth,
+            CustomerStartDate,
+            CustomerEndDate,
+            CustomerAddress,
+            CustomerFraction,
+            CustomerNumberExt
+        FROM DIM_Customer
+        WHERE LOWER(CustomerName) LIKE ?
+           OR LOWER(CustomerMiddleName) LIKE ?
+           OR LOWER(CustomerLastName) LIKE ?
+           OR LOWER(CustomerSecondLastName) LIKE ?
+           OR CustomerFraction LIKE ?
+        LIMIT 50;
+        """
+        cursor.execute(query, (like_term, like_term, like_term, like_term, like_term))
+        registros = cursor.fetchall()
+
+        # 5️⃣ Mapear registros a formato del frontend
+        #Se puede agregar toda la logica para filtra por personas muertas 
+        #y poner a persons inactivas en amarillo
         resultados = []
-        
-        for registro in todos_los_datos:
+        for r in registros:
+            registro = {
+                "id_user": r[0],
+                "date_id": r[1],
+                "first_name": r[2],
+                "second_name": r[3],
+                "last_name": r[4],
+                "second_last_name": r[5],
+                "date_of_birth": r[6],
+                "date_user_start": r[7],
+                "date_user_end": r[8],
+                "manzana": r[9],
+                "street": r[10],
+                "number_ext": r[11],
+            }
+
             registro['edad'] = handler_date.get_age(registro.get('date_of_birth'))
-            # Campos donde se buscará (todos convertidos a minúsculas)
-            campos_relevantes = [
-                registro.get('first_name', '').lower(),
-                registro.get('second_name', '').lower(),
-                registro.get('last_name', '').lower(),
-                registro.get('id_user', ''),
-                registro.get('manzana', '').lower()
-            ]
             
-            # Buscar coincidencia en cualquier campo
-            if any(search_term in campo for campo in campos_relevantes):
+            #Se agreggo el registro con el que se filtran directamente a las personas muertas.
+            if r[8] == 's/n':
                 resultados.append({
-                    'id': registro['id_user'],
-                    'text': registro['first_name'],
-                    'data': registro,
-                    'selectable': True,  # Todos seleccionables en esta implementación
-                    'reason': ''        # Sin motivo de restricción
+                    "id": registro["id_user"],
+                    "text": registro["first_name"],
+                    "data": registro,
+                    "selectable": True,
+                    "reason": ""
                 })
-        
-        # 4. Retornar respuesta exitosa
+
+        # 6️⃣ Retornar respuesta
         return jsonify({
-            'status': 'success',
-            'count': len(resultados),
-            'results': resultados
+            "status": "success",
+            "count": len(resultados),
+            "results": resultados
         })
-        
+
     except Exception as e:
-        # 5. Manejo de errores
-        print(f"Error en búsqueda: {str(e)}")
+        print(f"Error en búsqueda optimizada: {str(e)}")
         return send_error(str(e), 500)
+
+    finally:
+        if conn:
+            conn.close()

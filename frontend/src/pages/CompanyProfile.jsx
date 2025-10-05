@@ -74,8 +74,8 @@ function CompanyProfile() {
 
                 {/* Company name and info */}
                 <div className="mb-4">
-                  <h2 className="text-2xl text-gray-800 dark:text-gray-100 font-bold mb-2">S.G. El Mandho</h2>
-                  <p>Sistema de Gestion comunal el Mandhò, Una plataforma solida para el futuro</p>
+                  <h2 className="text-2xl text-gray-800 dark:text-gray-100 font-bold mb-2">S.G. El Mandhó</h2>
+                  <p>Sistema de Gestión comunal el Mandhó, una plataforma sólida para el futuro</p>
                 </div>
 
                 {/* Meta */}

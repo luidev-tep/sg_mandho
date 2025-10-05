@@ -20,10 +20,9 @@ function Header({
           <div className="flex">
             <h1 className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white whitespace-nowrap">
               <span className="sm:hidden">S.R. El Mandho</span>
-              <span className="hidden sm:inline">Sistema de Registro El Mandho</span>
+              <span className="hidden sm:inline">Sistema de Registro El Mandhó</span>
             </h1>
           </div>
-
           {/* Header: Right side */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Botón de búsqueda - ahora responsivo */}

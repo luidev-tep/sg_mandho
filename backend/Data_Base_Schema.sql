@@ -200,6 +200,13 @@ VALUES ('74789a1e-2fc7-5131', 'pequeño propietario', 'usuario', '2000-01-01', '
 INSERT INTO DIM_Role (DIM_RoleId, RoleName, RoleType, RoleStartDate, RoleEndDate) 
 VALUES ('e03b67a8-f9d7-5e9d', 'invalido', 'inactivo', '2000-01-01', '2100-01-01');
 
+--SE AGREGARON 2 NUEVOS ROLES LOS CUALES POR EL MOMENTO CUMPLES CON LA LABOR DE MANEJAR A PERSONAS LAS CUALES NO VAN A PARTICIPAR
+
+INSERT INTO DIM_Role (DIM_RoleId, RoleName, RoleType, RoleStartDate, RoleEndDate) 
+VALUES ('16c84d0b-3148-5769', 'residente', 'usuario', '2000-01-01', '2100-01-01');
+
+INSERT INTO DIM_Role (DIM_RoleId, RoleName, RoleType, RoleStartDate, RoleEndDate) 
+VALUES ('ac53ea10-cb43-5ce6', 'vecino exento', 'usuario', '2000-01-01', '2100-01-01');
 
 -- Insertar registros en la tabla DIM_Movement Solo son 2 registros
 insert into DIM_Movement 

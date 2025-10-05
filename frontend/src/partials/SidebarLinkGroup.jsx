@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 function SidebarLinkGroup({
   children,
   activecondition,
+  alwaysOpen = false, // Nueva propiedad para mantener el grupo abierto
 }) {
 
-  const [open, setOpen] = useState(activecondition);
+  const [open, setOpen] = useState(alwaysOpen || activecondition);
 
   const handleClick = () => {
-    setOpen(!open);
+    // Solo permite cerrar si no está configurado para estar siempre abierto
+    if (!alwaysOpen) setOpen(!open);
   }
 
   return (
@@ -18,4 +20,4 @@ function SidebarLinkGroup({
   );
 }
 
-export default SidebarLinkGroup;
+export default SidebarLinkGroup; 
