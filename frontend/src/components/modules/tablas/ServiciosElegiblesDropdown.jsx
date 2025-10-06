@@ -108,6 +108,7 @@ function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess, 
           ServiceDetailType={selectedService}
           users={serviciosValidos.usuarios}
           onSuccess={onSuccess}
+          onClose={handleCloseModal}
         />
       )}
     </>

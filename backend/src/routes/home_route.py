@@ -9,17 +9,11 @@ user_options = UserCrud()
 #Traer mensje de error dinamicos 
 from src.routes.handle_message import send_error, send_success
 
-home_route = Blueprint('home_route', __name__, url_prefix='/api/home/') 
-#Aunque es una nueva ruta, se seguira manejando con el mismo nombre de user, Ya que
-#No se cosnidera nesesario una nueva ruta api, para poder mantener la consistencia
-#Y la facilidad de uso para el usuario final.
-
+home_route = Blueprint('home_route', __name__, url_prefix='/api/home') 
 
 from flask_jwt_extended import jwt_required,  get_jwt
 
-
-
-@home_route.route("/get_home_info/", methods=["GET"]) 
+@home_route.route("/get_home_info", methods=["GET"]) 
 @jwt_required()
 def read_information() -> tuple[Any, Literal[400]] | tuple[Any, Literal[200]] | tuple | tuple[Any, Literal[500]]:
     """
@@ -48,10 +42,7 @@ def read_information() -> tuple[Any, Literal[400]] | tuple[Any, Literal[200]] | 
                   solicitud no cumple con los requisitos o falla.
     """
     claims = get_jwt()
-    user_role = claims.get('role')
-    
-    print(f"------IMPRIMIENTO INFORMACION DEBUG------")
-    print(f"Rol del usuario: {user_role}")
+    user_role = claims.get('role', '')
     
     if user_role == 'delegado' or user_role == 'comitiva'  or user_role == 'subdelegado':
         pass

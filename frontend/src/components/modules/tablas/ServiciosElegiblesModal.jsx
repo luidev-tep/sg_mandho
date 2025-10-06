@@ -11,6 +11,13 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
   const { usuario } = state;
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
 
+  // Función unificada para cerrar el modal
+  const handleClose = () => {
+    if (!isSubmitting) {
+      onClose();
+    }
+  };
+
   const handleSelectUser = (accountId) => {
     setSelectedUsers(prevSelected => {
       const newSelection = prevSelected.includes(accountId)
@@ -92,7 +99,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
         setNotification({ show: true, message: response.message || "Registros creados exitosamente.", type: 'success' });
         setTimeout(() => {
           onSuccess(); // Llama a la función para recargar la tabla
-          onClose();   // Cierra el modal
+          handleClose();   // Cierra el modal usando la función unificada
         }, 2000); // Espera 2 segundos antes de cerrar
       } else {
         throw new Error(response.message || "Ocurrió un error en el servidor.");
@@ -108,31 +115,16 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
     }
   };
 
-//Amount debe ser 0, al igual que fact amount, ya que estos pagos no se crearan  
-//LA para enviar los datos a la api debe tener estos campos
-        // Validación corregida de campos requeridos
-        // if (
-        // !data.DIM_AccountId = la cuenta del registro
-        // || 
-        // !data.DIM_CustomerId || = el id del cliente
-        //  !data.ServiceName || = el n0ombre del servicio (ejemplo agua, panteon, delegacion, etc)
-        //  !data.DIM_OnwerCustomerId || el id del propietario 
-        // !data.serviceDetailsType || =  el nombre del tipo de servicio
-        //  !data.amount  || debe ser 0 
-        //  !data.AnioPago || anio actual 
-        //  !data.FactAmount || la que viene de la funcion get amount
-
-
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl transform transition-all animate-scale-in">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] transform transition-all animate-scale-in">
         {/* Encabezado */}
         <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
             Usuarios elegibles para <span className="text-indigo-500">{serviceName}</span>
           </h3>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
             disabled={isSubmitting}
           >
@@ -143,7 +135,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
         </div>
 
         {/* Cuerpo */}
-        <div className="p-6 max-h-[60vh] overflow-y-auto">
+        <div className="p-6 overflow-y-auto">
           <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
             <p>Selecciona los usuarios a los que se les aplicará el pago. Total de personas: <span className="font-bold text-gray-800 dark:text-gray-200">{users.length}</span></p>
           </div>
@@ -165,7 +157,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
                     <div className="flex items-center">
                       <input
                         type="checkbox"
-                        className="h-4 w-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 mr-3"
+                        className="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 mr-3"
                         checked={allInFractionSelected}
                         onChange={(e) => handleSelectAllFraction(fraction, e.target.checked)}
                         onClick={(e) => e.stopPropagation()} // Evita que el acordeón se cierre al hacer clic en el checkbox
@@ -186,7 +178,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
                           <li key={user.DIM_AccountId} className="flex items-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
                             <input
                               type="checkbox"
-                              className="h-4 w-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 mr-3"
+                              className="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 mr-3"
                               checked={selectedUsers.includes(user.DIM_AccountId)}
                               onChange={() => handleSelectUser(user.DIM_AccountId)}
                             />
@@ -206,7 +198,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
         </div>
 
         {/* Pie */}
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 rounded-b-2xl">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/30 rounded-b-2xl mt-auto border-t border-gray-100 dark:border-gray-700">
           {notification.show && (
             <div className="mb-3">
               <Notification
@@ -216,18 +208,18 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
               />
             </div>
           )}
-          <div className="flex justify-end space-x-3">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-2 sm:space-y-0">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
             disabled={isSubmitting || selectedUsers.length === 0}
-            className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 dark:hover:bg-indigo-800 transition-colors disabled:opacity-50 flex items-center"
+            className="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 dark:hover:bg-indigo-800 transition-colors disabled:opacity-50 flex items-center justify-center"
           >
             {isSubmitting ? (
               <>

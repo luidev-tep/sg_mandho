@@ -73,7 +73,43 @@ def get_securyty_users_info():
 
 def get_admin_info():
     """
-    Funcion la cual extrae la contrasenia del Delegado para validarla en el 
+    Extrae la contraseña del usuario con rol 'delegado' desde la base de datos
+    para el periodo de tiempo actual (año completo).
+
+    Esta función está diseñada para obtener la credencial de un usuario específico
+    ('delegado'), presumiblemente para una validación de seguridad secundaria
+    o una acción crítica.
+
+    Flujo de ejecución:
+    1.  **Establecimiento de Conexión:** Inicializa una conexión a la base de datos
+        a través de la clase `Conexion()`.
+    2.  **Determinación de Fechas:** Utiliza una instancia de `DIM_DATE()` para
+        obtener el año actual. Con este año, construye el rango de fechas
+        `start_date` ("YYYY-01-01") y `end_date` ("YYYY-12-31").
+    3.  **Consulta SQL:** Ejecuta una consulta SQL parametrizada contra la tabla
+        `SecurityUsers`.
+        -   Busca el registro donde `RoleName` sea **'delegado'**.
+        -   Filtra adicionalmente por el rango de fechas (`StartDate` y `EndDate`),
+            asegurando que se extraiga la información válida para el año en curso.
+    4.  **Extracción de Resultado:** Llama a `hanlder_conection.cursor.fetchone()`
+        para obtener el primer (y esperado único) resultado de la consulta.
+    5.  **Manejo de Nulos/Ausencia de Datos:**
+        -   Verifica si `user_info` es `None` (no se encontró el usuario).
+        -   Verifica si el campo de la contraseña (`user_info[0]`) es `None`.
+        -   En ambos casos, retorna `None`.
+    6.  **Retorno:** Si se encuentra la contraseña, retorna solo el valor del campo
+        `password` (`user_info[0]`).
+
+    Manejo de Errores:
+    -   Captura explícitamente `sqlite3.Error` (si la conexión o la base de datos
+        es SQLite) para imprimir el error y luego relanzarlo (`raise`).
+
+    Cierre de Recursos:
+    -   Garantiza que la conexión a la base de datos se cierre siempre (`finally: hanlder_conection.close_conexion()`).
+
+    Returns:
+        str | None: La contraseña hasheada del delegado si se encuentra, o `None`
+        si el usuario no existe o el campo de contraseña está vacío.
     """
     hanlder_conection = Conexion()
     

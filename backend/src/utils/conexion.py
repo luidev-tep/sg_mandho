@@ -51,9 +51,23 @@ class Conexion:
     """
 
     def __init__(self) -> None:
-        self.__ruta = "C:\\Users\\angel\\Documents\\Github\\sg_mandho\\backend\\database\\sistema_mandho.db"#str(os.getenv('DATABASE_PATH'))
-        self.conn = sqlite3.connect(self.get_route())
-        self.cursor = self.conn.cursor()
+        # Define la ruta de manera más robusta si es posible
+        self.__ruta = "C:\\Users\\angel\\Documents\\Github\\sg_mandho\\backend\\database\\sistema_mandho.db"
+        try:
+            self.conn = sqlite3.connect(self.__ruta)
+            self.cursor = self.conn.cursor()
+            # --- TU IDEA IMPLEMENTADA AQUÍ ---
+            # 1. Activa el modo WAL para mejorar la concurrencia (lectores no bloquean a escritores)
+            self.cursor.execute("PRAGMA journal_mode=WAL;")
+            
+            # 2. Establece un tiempo de espera para evitar errores de "database is locked"
+            self.cursor.execute("PRAGMA busy_timeout = 5000;") # 5000 ms = 5 segundos
+            # ------------------------------------
+            
+        except sqlite3.Error as e:
+            print(f"Error al conectar con la base de datos: {e}")
+            raise # Relanza la excepción para que el código que llama sepa que falló
+
 
     def get_route(self) -> str:
         return self.__ruta

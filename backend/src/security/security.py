@@ -422,14 +422,39 @@ class SecurityUsers:
 
     def validate_admin_password(self, password: str) -> tuple[int, str]:
         """
-        Funcion para validar si la contrasenia del delegado es correcta, esto se hace para agregar cierto tipo de candados en la comunidad. Ya que el usuario 
-        delegado debe proveer su contrasneia para que se complete la accion.
-        
+        Función para validar la contraseña del usuario con rol 'delegado' para
+        autorizar acciones críticas en el sistema.
+
+        Esta validación actúa como un candado de seguridad adicional, requiriendo que
+        el usuario con rol 'delegado' proporcione su contraseña para completar
+        una acción sensible.
+
+        Flujo de ejecución detallado:
+        1.  **Obtención de la Contraseña Almacenada:** Llama a la función `get_admin_info()`
+            para recuperar la contraseña hasheada del usuario 'delegado' desde la
+            base de datos.
+        2.  **Hashing de la Contraseña de Entrada:** Utiliza la función `create_id` (que
+            actúa como una función de hashing simple) sobre la lista que contiene
+            la `password` proporcionada por el usuario (`[password]`).
+        3.  **Comparación de Contraseñas:** Compara el hash generado de la contraseña de entrada
+            con la contraseña hasheada recuperada de la base de datos (`passwordDB`).
+        4.  **Resultado de la Validación:**
+            -   Si los hashes **coinciden**: Retorna `(200, "Contrasenia correcta")`.
+            -   Si los hashes **no coinciden**: Retorna `(401, "Contrasenia incorrecta")`
+                indicando un fallo de autenticación.
+
+        Manejo de Errores:
+        -   Captura cualquier `Exception` inesperada, imprime un log y retorna
+            `(500, str(e))` para indicar un error interno del servidor.
+
         Args:
-            password (str): La contrasenia del usuario delegado.
-        
+            password (str): La contraseña en texto plano proporcionada por el usuario 'delegado'
+                            para su validación.
+
         Returns:
-            tuple[int, str]: Una tupla con el codigo de estado y el mensaje de la validacion.
+            tuple[int, str]: Una tupla que contiene:
+                            - El código de estado HTTP (200 para éxito, 401 para fallo de credenciales, 500 para error interno).
+                            - El mensaje descriptivo del resultado de la validación.
         """
         try:
             passwordDB = get_admin_info()

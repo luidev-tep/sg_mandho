@@ -22,10 +22,6 @@ from src.security.repository.get_onwers_info import get_securyty_users_info
 
 security_route = Blueprint('security_route', __name__, url_prefix='/api/security/')
 
-# 1. Obtener información de la URL como PARÁMETROS DE RUTA
-#    Ejemplo de URL: /api/auth/read_user/123 (donde 123 es el user_id)
-# 1. Obtener información de la URL como PARÁMETROS DE RUTA
-#    Ejemplo de URL: /api/auth/read_user/123 (donde 123 es el user_id)
 @security_route.route('login/', methods=['POST'])
 def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Response, Lit...:
     """
@@ -144,23 +140,33 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
 @jwt_required()
 def validar_password_by_action() -> tuple[Any]:
     """
-    Endpoint para validar una contraseña de forma aislada.
+    Endpoint para validar la contraseña de un usuario autenticado para una acción crítica.
 
-    Este endpoint se utiliza para verificar una contraseña específica (hardcodeada
-    como 'qwerty' en la lógica actual) para una funcionalidad secundaria, como
-    una doble verificación de seguridad antes de una acción crítica (ej. un corte de caja).
+    Este endpoint requiere que el usuario esté previamente autenticado (decorador `@jwt_required()`)
+    y tenga un token JWT válido. Su propósito principal es solicitar una re-validación de
+    credenciales antes de ejecutar acciones sensibles (ej. corte de caja).
 
     Restricción de Acceso:
-    - Solo usuarios con el rol **'comitiva'** pueden acceder a esta ruta (debido al decorador `@role_required('comitiva')`).
+    -   **Requerimiento JWT:** El usuario debe incluir un Access Token válido.
 
-    Flujo de ejecución:
-    1. **Validación de Datos:** Verifica si se recibió el cuerpo JSON y extrae la clave 'password'.
-    2. **Validación de Lógica:** Compara la contraseña recibida con la contraseña predefinida.
-    3. **Manejo de Resultado:**
-       - Si es **incorrecta**, retorna un mensaje de error, pero con un estado **200** para
-         indicar que el servidor procesó la solicitud exitosamente, pero el resultado
-         de la validación es negativo.
-       - Si es **correcta**, retorna un mensaje de éxito con un objeto `{'data': True}`.
+    Flujo de ejecución detallado:
+    1.  **Extracción de Claims:** Se obtienen los claims del token JWT activo mediante `get_jwt()`.
+        Se extrae el rol del usuario (`user_role`).
+    2.  **Validación de Rol (Lógica de Negocio):** Se realiza una validación de rol explícita:
+        -   Solo usuarios con el rol **'comitiva'** pueden continuar con esta validación de contraseña.
+        -   Si el rol no es 'comitiva', se retorna un error 403 (Prohibido).
+    3.  **Obtención y Validación de Datos:** Se obtienen los datos JSON de la solicitud (`request.json`).
+        Se espera que contenga la clave 'password' a validar. Si no hay datos, retorna un error 400.
+    4.  **Preparación de Datos para Autenticación:** Se crea un diccionario `data` con la contraseña
+        recibida y los datos del usuario extraídos del token (manzana/fraction, role, name).
+    5.  **Re-autenticación (`security_options.authenticate_user`):** Se llama a la misma lógica de autenticación
+        del inicio de sesión, pero usando los datos preparados. Esta función debe verificar la contraseña
+        proporcionada contra la almacenada para el usuario identificado en el token.
+    6.  **Manejo de Resultado de Autenticación:**
+        -   Si `status != 200` (la contraseña es incorrecta o hay otro error de autenticación),
+            retorna el error con el mensaje y el estado.
+        -   Si `status == 200` (la contraseña es correcta), retorna un mensaje de éxito
+            con el objeto `{'data': True}` y estado 200.
 
     JSON Body esperado:
     {
@@ -168,10 +174,9 @@ def validar_password_by_action() -> tuple[Any]:
     }
 
     Returns:
-        Response: Un objeto de respuesta de Flask que indica si la contraseña es válida o no.
-        
-    Servira para validar todo tipo de servicios en los cuales se corre reisgo de manipular 
-    mucha informacion, por eso se agrega esta funcionalidad.
+        tuple[Response, int]: Un objeto de respuesta de Flask con JSON que indica la validez
+        de la contraseña (`'data': True`) y código de estado 200.
+        En caso de no tener el rol o de contraseña incorrecta, retorna el error y código HTTP.
     """
     try:
         claims = get_jwt()

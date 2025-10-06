@@ -51,37 +51,37 @@ def create_payment() -> Response:
     Raises:
         Exception: Captura cualquier excepción genérica y devuelve una respuesta de error 500.
     """
-
-    claims = get_jwt()
-    user_role = claims.get('role')
-    user_service = claims.get('service', '').strip().lower()
-
-    payment_json = request.json
-
-    if not payment_json:
-        return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
-    
-    if isinstance(payment_json, list):
-        request_service_name = payment_json[0].get('ServiceName', '')
-    else:
-        request_service_name = payment_json.get('ServiceName', '')
-    # print(f"------IMPRIMIENTO INFORMACION DEBUG------")
-    # print(f"Rol del usuario: {user_role}")
-    # #print(f"Fraccion del usuario: {user_fraction}")
-    # print(f"Datos recibidos en la solicitud: {payment_json}")
-    # print(f"Servicio solicitado en la petición: {request_service_name}, compara {user_service} con {request_service_name} = {user_service==request_service_name}")
-    if user_role != 'comitiva':
-        return send_error("No tienes permiso para crear pagos", 403)
-    
-    if not request_service_name:
-            return send_error("Se debe especificar un servicio al crear pago", 400)
-        
-    if not user_service:
-            return send_error("Se debe especificar un servicio", 400)
-    
-    if request_service_name != user_service: 
-        return send_error("No autorizado para crear pagos de este servicio", 403)
     try:
+        claims = get_jwt()
+        user_role = claims.get('role')
+        user_service = claims.get('service', '').strip().lower()
+
+        payment_json = request.json
+
+        if not payment_json:
+            return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+        
+        if isinstance(payment_json, list):
+            request_service_name = payment_json[0].get('ServiceName', '')
+        else:
+            request_service_name = payment_json.get('ServiceName', '')
+        # print(f"------IMPRIMIENTO INFORMACION DEBUG------")
+        # print(f"Rol del usuario: {user_role}")
+        # #print(f"Fraccion del usuario: {user_fraction}")
+        # print(f"Datos recibidos en la solicitud: {payment_json}")
+        # print(f"Servicio solicitado en la petición: {request_service_name}, compara {user_service} con {request_service_name} = {user_service==request_service_name}")
+        if user_role != 'comitiva':
+            return send_error("No tienes permiso para crear pagos", 403)
+        
+        if not request_service_name:
+                return send_error("Se debe especificar un servicio al crear pago", 400)
+            
+        if not user_service:
+                return send_error("Se debe especificar un servicio", 400)
+        
+        if request_service_name != user_service: 
+            return send_error("No autorizado para crear pagos de este servicio", 403)
+    
         estado = 200
         mensaje = ""
         datos = []
@@ -128,37 +128,35 @@ def read_payment() -> Response:
         Response: Objeto de respuesta de Flask con JSON que contiene los datos del
                   pago(s) o un mensaje de error.
     """
-    claims = get_jwt()
-    user_role = claims.get('role')
-    user_service = claims.get('service', '').strip().lower()
-
-    payment_json = request.json
-    #print(f"Rol del usuario: {user_role}, Servicio asignado: {user_service}")
-
-    if not payment_json:
-        return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
-    
-    request_service_name = payment_json.get('serviceName', '')
-    #print(f"Servicio solicitado en la petición: {request_service_name}")
-    if user_role == 'delegado':
-        # Usuario delegado: Acceso total. No se aplica ningún filtro.
-        # Por ejemplo: query = query.filter(Pago.estado == 'pendiente').all() 
-        if not request_service_name:
-            return send_error("Se debe especificar un servicio", 400)
-        
-    elif user_role == 'comitiva':
-        if not user_service:
-            return send_error("Se debe especificar un servicio", 400)
-            # Usuario comitiva: Solo puede ver pagos de su propio servicio.
-        #print(f"Comparando servicio del usuario '{user_service}' con el solicitado '{request_service_name}' El resultado es {user_service==request_service_name}")
-        if not request_service_name:
-            payment_json['serviceName'] = user_service
-            request_service_name = user_service
-        elif request_service_name != user_service: 
-            return send_error("No autorizado para ver pagos de este servicio", 403)
-    else:
-        return send_error("Rol de usuario no autorizado para crear pagos", 403)
     try:
+        claims = get_jwt()
+        user_role = claims.get('role')
+        user_service = claims.get('service', '').strip().lower()
+
+        payment_json = request.json
+        #print(f"Rol del usuario: {user_role}, Servicio asignado: {user_service}")
+
+        if not payment_json:
+            return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+        
+        request_service_name = payment_json.get('serviceName', '')
+        if user_role == 'delegado':
+            if not request_service_name:
+                return send_error("Se debe especificar un servicio", 400)
+            
+        elif user_role == 'comitiva':
+            if not user_service:
+                return send_error("Se debe especificar un servicio", 400)
+                # Usuario comitiva: Solo puede ver pagos de su propio servicio.
+            #print(f"Comparando servicio del usuario '{user_service}' con el solicitado '{request_service_name}' El resultado es {user_service==request_service_name}")
+            if not request_service_name:
+                payment_json['serviceName'] = user_service
+                request_service_name = user_service
+            elif request_service_name != user_service: 
+                return send_error("No autorizado para ver pagos de este servicio", 403)
+        else:
+            return send_error("Rol de usuario no autorizado para crear pagos", 403)
+    
         if 'filters' in payment_json:
             estado, mensaje, datos = payment_options.read_payments(payment_json)
 
@@ -249,13 +247,14 @@ def get_any_data() -> Response:
     Returns:
         Response: Objeto de respuesta Flask con el formato JSON estándar de la API
     """
-    claims = get_jwt()
-    user_role = claims.get('role')
-    if user_role == 'delegado' or user_role == 'comitiva' or user_role == 'subdelegado':
-        pass
-    else:
-        return send_error("No tienes permiso para obtener datos", 403)
     try:
+        claims = get_jwt()
+        user_role = claims.get('role')
+        if user_role == 'delegado' or user_role == 'comitiva' or user_role == 'subdelegado':
+            pass
+        else:
+            return send_error("No tienes permiso para obtener datos", 403)
+        
         # Validar que se recibieron datos JSON en el cuerpo de la solicitud
         data_json = request.json
         if not data_json:

@@ -288,7 +288,7 @@ export const GenerarReporteUsuario = (Dim_customerId) => {
 
 
 export const MostrarAdmin = () => {
-    return axiosInstance.get('home/get_home_info/')
+    return axiosInstance.get('home/get_home_info')
         .then(response => {
             if (response.data.status === 'success') {
                 // Transformar los datos del backend al formato esperado
