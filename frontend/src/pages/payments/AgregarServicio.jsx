@@ -32,6 +32,16 @@ function AgregarServicio() {
   const fechaInicioPredefinida = `${currentYear}-01-01`;
   const fechaFinPredefinida = `${currentYear}-12-31`;
 
+  // Efecto para ajustar 'esOpcional' basado en 'moduleName'
+  useEffect(() => {
+    if (moduleName === 'delegacion') {
+      setEsOpcional(true);
+    } else if (moduleName === 'agua') {
+      setEsOpcional(false);
+    }
+    // No es necesario resetear para otros casos, ya que el estado inicial es 'false'
+  }, [moduleName]);
+
   // Función para regresar a la página anterior
   const handleGoBack = () => {
     navigate(-1);
@@ -309,6 +319,7 @@ function AgregarServicio() {
                           name="opcional"
                           className="form-radio h-4 w-4 text-indigo-600"
                           checked={esOpcional === true}
+                          disabled={moduleName === 'delegacion' || moduleName === 'agua'}
                           onChange={() => setEsOpcional(true)}
                         />
                         <span className="ml-2 text-base text-gray-700 dark:text-gray-300">Sí</span>
@@ -319,6 +330,7 @@ function AgregarServicio() {
                           name="opcional"
                           className="form-radio h-4 w-4 text-indigo-600"
                           checked={esOpcional === false}
+                          disabled={moduleName === 'delegacion' || moduleName === 'agua'}
                           onChange={() => setEsOpcional(false)}
                         />
                         <span className="ml-2 text-base text-gray-700 dark:text-gray-300">No</span>
