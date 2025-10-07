@@ -267,6 +267,10 @@ def get_any_data() -> Response:
             estado, mensaje, datos = payment_options.get_cost_by_payment_year(data_json['costoservicio'])
         
         if 'pagosPendientes' in data_json and data_json['pagosPendientes']:
+            print('Se imprimen los la info obtendia')
+            for data in data_json['pagosPendientes']:
+                
+                print(f'El valor es{data}= {data_json['pagosPendientes'][data]}')
             estado, mensaje, datos = payment_options.get_pending_paids_per_customer(data_json['pagosPendientes'])
             print(f"Datos recibidos: {datos}")
             

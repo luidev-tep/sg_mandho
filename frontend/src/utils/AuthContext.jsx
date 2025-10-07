@@ -70,7 +70,6 @@ function authReducer(state, action) {
         usuario: user,
         timestamp: Date.now(),
       }));
-      // Guardamos los tokens junto con el timestamp para el refresh token
       localStorage.setItem('tokens', JSON.stringify({
         tokens: userTokens,
         refreshTokenTimestamp: Date.now()
@@ -85,6 +84,8 @@ function authReducer(state, action) {
   }
 }
 
+
+
 export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, {
     usuario: loadUserFromStorage(),
@@ -94,14 +95,13 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- Lógica de Inactividad ---
+  // --- Lógica de Inactividad (sin cambios) ---
   const [showIdleModal, setShowIdleModal] = useState(false);
-  const [countdown, setCountdown] = useState(180); // 3 minutos en segundos
+  const [countdown, setCountdown] = useState(180);
   const idleTimer = useRef(null);
   const countdownTimer = useRef(null);
-
-  const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutos
-  const COUNTDOWN_SECONDS = 3 * 60; // 3 minutos
+  const INACTIVITY_TIMEOUT = 10 * 60 * 1000;
+  const COUNTDOWN_SECONDS = 3 * 60;
 
   const handleLogout = useCallback(() => {
     setShowIdleModal(false);
@@ -119,7 +119,7 @@ export function AuthProvider({ children }) {
   };
 
   const startWarning = () => {
-    setCountdown(COUNTDOWN_SECONDS); // Reinicia el contador cada vez que se muestra el modal
+    setCountdown(COUNTDOWN_SECONDS);
     setShowIdleModal(true);
     countdownTimer.current = setInterval(() => {
       setCountdown(prev => {
@@ -147,7 +147,7 @@ export function AuthProvider({ children }) {
       events.forEach(event => window.addEventListener(event, resetIdleTimer));
       resetIdleTimer();
     }
-
+ 
     return () => {
       events.forEach(event => window.removeEventListener(event, resetIdleTimer));
       clearTimeout(idleTimer.current);
@@ -155,6 +155,58 @@ export function AuthProvider({ children }) {
     };
   }, [resetIdleTimer, state.usuario]);
   // --- Fin Lógica de Inactividad ---
+
+    // --- INICIO: Lógica de Renovación de Token ---
+  
+  const handleTokenRefresh = useCallback(async () => {
+    if (!state.tokens?.refresh_token) {
+        console.log("No hay refresh token para renovar.");
+        // Si no hay refresh token, no tiene sentido seguir, cerramos sesión.
+        handleLogout();
+        return;
+    }
+    
+    try {
+        console.log("Intentando renovar el token...");
+        const newAccessToken = await RefrescarToken(state.tokens.refresh_token);
+        
+        const newTokens = {
+            ...state.tokens,
+            access_token: newAccessToken,
+        };
+        
+        // **LA PARTE CLAVE**: Despachamos la acción para actualizar el estado Y el localStorage.
+        dispatch({ type: 'SET_TOKENS', payload: newTokens });
+        console.log('Token renovado exitosamente en el estado de la aplicación.');
+
+    } catch (error) {
+        console.error('La renovación del token falló, cerrando sesión:', error);
+        handleLogout(); // Si falla la renovación, cerramos la sesión.
+    }
+  }, [state.tokens, dispatch, handleLogout]);
+
+
+  // useEffect para manejar el intervalo de renovación automática
+  useEffect(() => {
+    // 14 minutos para darnos un margen de 1 minuto antes de que expire el token de 15 min.
+    const RENEWAL_INTERVAL = 14 * 60 * 1000; 
+    let intervalId = null;
+
+    if (state.tokens) {
+      intervalId = setInterval(handleTokenRefresh, RENEWAL_INTERVAL);
+      console.log('Renovación automática de token iniciada.');
+    }
+
+    // Función de limpieza para detener el intervalo si el usuario cierra sesión o el componente se desmonta.
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        console.log('Renovación automática de token detenida.');
+      }
+    };
+  }, [state.tokens, handleTokenRefresh]);
+
+  // --- FIN: Lógica de Renovación de Token ---
 
   // Efecto para redirigir al login si no hay usuario
   useEffect(() => {

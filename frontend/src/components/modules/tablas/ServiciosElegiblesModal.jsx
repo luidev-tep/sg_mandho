@@ -16,7 +16,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
     if (!isSubmitting) {
       onClose();
     }
-  };
+  }; 
 
   const handleSelectUser = (accountId) => {
     setSelectedUsers(prevSelected => {

@@ -191,15 +191,19 @@ def get_user_register_creation(dim_customer_id: str) -> str | None:
         list: Con el registro encontrado o error en caso contrario
     """
 
-    print(f"Id de usuario: {dim_customer_id}")
+    #print(f"Id de usuario: {dim_customer_id}")
     object_conection = Conexion() 
     
     try:
         query = """SELECT CustomerStartDate FROM DIM_Customer WHERE DIM_CustomerId = ?"""
         object_conection.cursor.execute(query, (dim_customer_id,))
-        registros = object_conection.cursor.fetchall()
+        registros = object_conection.cursor.fetchone()
         
-        return registros[0][0]
+        if registros is not None:
+            print(f'se retorna el anio que se consiguio {registros}')
+            return registros[0]
+        else:
+            return None
     except sqlite3.Error as e:
         print(f"Error al realizar la consulta: {e}")
     finally:

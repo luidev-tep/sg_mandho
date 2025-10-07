@@ -34,7 +34,7 @@ if not secret_key:
 app.config['JWT_SECRET_KEY'] = secret_key
 
 # Configuración de los tiempos de expiración
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=20)
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=1)
 
 jwt = JWTManager(app)

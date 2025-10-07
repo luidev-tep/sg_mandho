@@ -279,27 +279,29 @@ class PaymentCrud:
             # Intenta obtener los pagos pendientes usando los datos del JSON.
             data = get_pending_pays(data_json['DIM_CustomerId'], data_json['ServiceName'])
             
-
             #Se deben filtrar aqui por los pagos. Ya que tecnicamente el cliente no debe pagar 
             #pagos de servicios los cuales aun no ha creado
             fecha_str = get_user_register_creation(data_json['DIM_CustomerId'])
             # La fecha viene como '2025-07-20'. Obtener el anio con libreria Time (usaremos datetime).
+            if not fecha_str:
+                return 404, "No se encontro la fecha de inicio para este ususario", []
+            #print(f'Datos obtenido de la funcion {data}')
             try:
                 #print(f"La fecha obtenida es: {fecha_str}")
                 # Convertir la cadena de fecha a un objeto datetime
                 fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d')
                 # Extraer el año
                 anio_registro = fecha_obj.year
+                #print(anio_registro)
             except (ValueError, TypeError) as e:
                 # Manejo de error si el formato de la fecha es incorrecto o si es None
-                print(f"Error al procesar la fecha: {e}")
+                #print(f"Error al procesar la fecha: {e}")
                 anio_registro = None # O el valor por defecto que consideres adecuado
             if data is None:
-                print(f"Error al obtener los pagos pendientes: {data}")
+                #print(f"Error al obtener los pagos pendientes: {data}")
                 return 400, "No se encontraron pagos pendientes", []
             
             data_format = [register for register in data if register['year'] >= anio_registro]
-
             #print(f"Data format: {data_format}")
             
             # Si todo es correcto, retorna un código 200 con la lista de pagos.
