@@ -51,8 +51,19 @@ class Conexion:
     """
 
     def __init__(self) -> None:
-        # Define la ruta de manera más robusta si es posible
-        self.__ruta = "C:\\Users\\angel\\Documents\\Github\\sg_mandho\\backend\\database\\sistema_mandho.db"
+        ruta_actual = os.path.abspath(__file__)
+
+        # 2. Sube tres niveles para llegar a la raíz del proyecto.
+        # Desde: .../project_root/src/utils/
+        # Sube a: .../project_root/src/
+        # Sube a: .../project_root/
+        raiz_del_proyecto = os.path.dirname(os.path.dirname(os.path.dirname(ruta_actual)))
+
+        # 3. Construye la ruta final hacia la base de datos usando os.path.join()
+        # (Asegúrate de que 'sistema_mandho.db' sea el nombre correcto de tu archivo)
+        self.__ruta = os.path.join(raiz_del_proyecto, 'database', 'sistema_mandho.db') #Cambia el nombre de la base de datos si es necesario
+        #Es completamente funcional aaaaa JAJAJA
+        #print(f"✅ Ruta a la base de datos generada correctamente: {self.__ruta}")
         try:
             self.conn = sqlite3.connect(self.__ruta)
             self.cursor = self.conn.cursor()
