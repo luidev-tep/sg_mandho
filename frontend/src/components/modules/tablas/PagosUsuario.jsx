@@ -1,6 +1,6 @@
 
 // Componente corregido:
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MostrarPagos } from '../../../api/pagos/api_mostrar_pago';
 import PaymentItem from './PagosUsuarioItem';
 
@@ -8,8 +8,6 @@ function PaymentsTableModal({ id_user, serviceName, onClose , service_type, Year
   const [pagos, setPagos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectAll, setSelectAll] = useState(false);
-  const [isCheck, setIsCheck] = useState([]);
 
   useEffect(() => {
     const fetchPagos = async () => {
@@ -60,37 +58,21 @@ function PaymentsTableModal({ id_user, serviceName, onClose , service_type, Year
     }
   }, [id_user, serviceName]);
 
-  const handleSelectAll = () => {
-    setSelectAll(!selectAll);
-    setIsCheck(selectAll ? [] : pagos.map(pago => pago.FACT_RevenueId));
-  };
-
-  const handleClick = (e) => {
-    const { id, checked } = e.target;
-    setSelectAll(false);
-    setIsCheck(checked 
-      ? [...isCheck, id] 
-      : isCheck.filter(item => item !== id)
-    );
-  };
+  // Memoizamos el nombre del cliente para evitar recálculos innecesarios
+  const clienteNombre = useMemo(() => {
+    if (pagos.length > 0) {
+      const cliente = pagos[0];
+      // Filtramos los 'n/a' y unimos los nombres
+      return [cliente.CustomerName, cliente.CustomerMiddleName, cliente.CustomerLastName, cliente.CustomerSecondLastName]
+        .filter(name => name && name.toLowerCase() !== 'n/a')
+        .join(' ');
+    }
+    return '';
+  }, [pagos]);
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className="text-center py-8">Cargando pagos...</div>;
-    }
-
-    if (error) {
-      return (
-        <>
-          <div className="text-center py-8 text-red-500">Error: {error}</div>
-          <button 
-            onClick={onClose}
-            className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded mx-auto block"
-          >
-            Cerrar
-          </button>
-        </>
-      );
+      return <div className="text-center py-10 text-gray-500 dark:text-gray-400">Cargando pagos...</div>;
     }
 
     // Obtener el nombre del cliente del primer pago (si existe)
@@ -100,84 +82,70 @@ function PaymentsTableModal({ id_user, serviceName, onClose , service_type, Year
 
     return (
       <>
-        {/* Nombre del cliente fuera de la tabla */}
-        {clienteNombre && (
-          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200">
-              Cliente: {clienteNombre}
-            </h3>
-          </div>
-        )}
-        
-        <table className="table-auto w-full dark:text-gray-300">
-          <thead className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20 border-t border-b border-gray-100 dark:border-gray-700/60">
-            <tr>
-              <th className="px-4 py-3 whitespace-nowrap text-left">
-                <div className="font-semibold">Estado</div>
-              </th>
-              <th className="px-4 py-3 whitespace-nowrap text-left">
-                <div className="font-semibold">Monto</div>
-              </th>
-              <th className="px-4 py-3 whitespace-nowrap text-left">
-                <div className="font-semibold">Fecha</div>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="text-sm divide-y divide-gray-100 dark:divide-gray-700/60">
-            {pagos.length > 0 ? (
-              pagos.map(pago => (
-                <PaymentItem
-                  key={pago.FACT_RevenueId}
-                  FACT_RevenueId={pago.FACT_RevenueId}
-                  StatusFactura={pago.StatusFactura}
-                  amount={pago.amount}
-                  DIM_DateId={pago.DIM_DateId}
-                  handleClick={handleClick}
-                  isChecked={isCheck.includes(pago.FACT_RevenueId)}
-                />
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  No se encontraron pagos para este servicio
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {/* Encabezado de la lista (visible en pantallas md y superiores) */}
+        <div className="hidden md:grid grid-cols-3 gap-4 px-4 py-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/20 rounded-t-lg">
+          <div className="text-left">Estado</div>
+          <div className="text-left">Monto</div>
+          <div className="text-left">Fecha</div>
+        </div>
+
+        {/* Lista de pagos */}
+        <div className="space-y-2 md:space-y-0">
+          {pagos.length > 0 ? (
+            pagos.map(pago => (
+              <PaymentItem
+                key={pago.FACT_RevenueId}
+                StatusFactura={pago.StatusFactura}
+                amount={pago.amount}
+                DIM_DateId={pago.DIM_DateId}
+              />
+            ))
+          ) : (
+            <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+              {error ? `Error: ${error}` : 'No se encontraron pagos para este servicio y año.'}
+            </div>
+          )}
+        </div>
       </>
     );
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 shadow-xs rounded-xl relative max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-        <header className="px-5 py-4 sticky top-0 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] transform transition-all animate-scale-in">
+        {/* Encabezado del Modal */}
+        <header className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between">
           <div className="flex justify-between items-center">
-            <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-              Pagos del Servicio: <span className="text-blue-600 dark:text-blue-400 font-medium capitalize">
-                {serviceName}
-              </span>
-              <span className="text-gray-400 dark:text-gray-500 font-medium ml-2">
-                ({pagos.length})
-              </span>
-            </h2>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Pagos de <span className="text-indigo-500 capitalize">{serviceName}</span>
+              </h3>
+              {clienteNombre && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Cliente: <span className="font-medium text-gray-700 dark:text-gray-300">{clienteNombre}</span>
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 px-2.5 py-1 rounded-full">
+              {Year}
+            </span>
             <button 
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
               aria-label="Cerrar modal"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
           </div>
         </header>
         
-        <div className="p-4">
-          <div className="overflow-x-auto">
-            {renderContent()}
-          </div>
+        {/* Cuerpo del Modal (con scroll) */}
+        <div className="p-4 sm:p-6 overflow-y-auto">
+          {renderContent()}
         </div>
       </div>
     </div>

@@ -30,7 +30,7 @@ def test_get_check_list():
     """
     year = '2025'
     service_name = "panteon"
-    service_type = "faena"
+    service_type = "tomas"
     response = get_check_list_valids(year, service_name)
     print(f"response: {response}")
     assert isinstance(response, list)

@@ -33,40 +33,33 @@ export const ObtenerUsuario = async (userData) => {
         throw error; // Propaga el error para manejarlo en el componente
     }
 }
-
+ 
 
 //Función unificada para refrescar token
-export const RefrescarToken  = async () => {
-  try {
-    const tokensString = localStorage.getItem('tokens');
-    if (!tokensString) throw new Error('No hay tokens disponibles');
-    
-    // Parseamos el objeto completo desde localStorage
-    const storedData = JSON.parse(tokensString);
-    console.log(storedData);
-    const tokens = storedData.tokens;
 
+/**
+ * Función simplificada para refrescar el token.
+ * Solo realiza la llamada a la API y devuelve el nuevo access_token.
+ * @param {string} refreshToken - El token de refresco a utilizar.
+ * @returns {Promise<string>} - Una promesa que resuelve con el nuevo access_token.
+ */
+export const RefrescarToken = async (refreshToken) => {
+    try {
+        if (!refreshToken) throw new Error('No se proporcionó un refresh token');
 
-    if (!tokens || !tokens.refresh_token) throw new Error('No hay refresh token');
-    
-    // Usamos una instancia de Axios separada para evitar dependencias circulares con el interceptor
-    const response = await axios.post('http://127.0.0.1:5000/api/security/refresh_token/', {}, {
-        headers: {
-            'Authorization': `Bearer ${tokens.refresh_token}`
-        }
-    });
+        const response = await axios.post('http://127.0.0.1:5000/api/security/refresh_token/', {}, {
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            }
+        });
+        
+        // Devuelve solo el nuevo token de acceso
+        return response.data.body.data;
 
-    // Actualizamos el access_token en nuestro objeto de tokens
-    storedData.tokens.access_token = response.data.body.data;
-
-    // Guardamos el objeto completo actualizado en localStorage
-    localStorage.setItem('tokens', JSON.stringify(storedData));
-
-    return storedData.tokens;
-  } catch (error) {
-      console.error("Error al refrescar token:", error);
-      throw error;
-  }
+    } catch (error) {
+        console.error("Error al refrescar token:", error);
+        throw error;
+    }
 }
 
 // Renovación automática cada 15 minutos

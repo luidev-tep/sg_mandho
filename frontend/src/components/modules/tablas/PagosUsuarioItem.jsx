@@ -1,54 +1,45 @@
+//_En: PagosUsuarioItem.js_
+//_Descripción: Componente hijo que renderiza cada fila de pago. Ahora es completamente responsivo._
+
 import React from 'react';
 
-function AccountTableItem(props) {
-  // Mapeo de estados de factura con colores mejorados para modo light/dark
-  const statusStyles = {
-    'completo': {
-      bg: 'bg-green-100 dark:bg-green-900',
-      text: 'text-green-800 dark:text-green-200'
-    },
-    'pendiente': {
-      bg: 'bg-yellow-100 dark:bg-yellow-900',
-      text: 'text-yellow-800 dark:text-yellow-200'
-    },
-    'vencida': {
-      bg: 'bg-red-100 dark:bg-red-900',
-      text: 'text-red-800 dark:text-red-200'
-    },
-    'default': {
-      bg: 'bg-gray-100 dark:bg-gray-700',
-      text: 'text-gray-800 dark:text-gray-300'
-    }
+function PaymentItem({ StatusFactura, amount, DIM_DateId }) {
+  const statusInfo = {
+    'pagado': { text: 'Pagado', color: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' },
+    'pendiente': { text: 'Pendiente', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' },
+    'vencido': { text: 'Vencido', color: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' },
+    'default': { text: StatusFactura || 'Desconocido', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }
   };
 
-  const status = props.StatusFactura?.toLowerCase();
-  const style = statusStyles[status] || statusStyles['default'];
+  const statusKey = StatusFactura ? String(StatusFactura).toLowerCase() : 'default';
+  const { text, color } = statusInfo[statusKey] || statusInfo.default;
 
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+    // Contenedor principal: se comporta como columna en móvil y fila en pantallas 'sm' o más grandes.
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
       
-      {/* Estado de Factura con fondo de color */}
-      <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-        <div className={`text-center text-sm font-medium px-3 py-1 rounded-full ${style.bg} ${style.text}`}>
-          {props.StatusFactura}
-        </div>
-      </td>
-      
+      {/* Estado */}
+      <div className="flex items-center justify-between sm:w-1/3 mb-2 sm:mb-0">
+        <span className="sm:hidden text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Estado</span>
+        <span className={`inline-flex font-medium rounded-full text-center px-2.5 py-0.5 text-sm ${color}`}>
+          {text}
+        </span>
+      </div>
+
       {/* Monto */}
-      <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-        <div className="text-right text-sm font-medium text-gray-900 dark:text-white">
-          ${props.amount}
-        </div>
-      </td>
-      
+      <div className="flex items-center justify-between sm:w-1/3 mb-2 sm:mb-0">
+        <span className="sm:hidden text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Monto</span>
+        <span className="font-medium text-gray-800 dark:text-gray-200">${amount.toFixed(2)}</span>
+      </div>
+
       {/* Fecha */}
-      <td className="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-        <div className="text-center text-sm text-gray-900 dark:text-white">
-          {props.DIM_DateId}
-        </div>
-      </td>
-    </tr>
+      <div className="flex items-center justify-between sm:w-1/3">
+        <span className="sm:hidden text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Fecha</span>
+        <span className="text-sm text-gray-600 dark:text-gray-300">{DIM_DateId}</span>
+      </div>
+      
+    </div>
   );
 }
 
-export default AccountTableItem;
+export default PaymentItem;
