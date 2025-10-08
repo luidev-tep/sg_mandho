@@ -10,10 +10,10 @@ export const crearRegistroPago = async (data) => {
 
         // El backend ahora maneja tanto un objeto como una lista,
         // así que enviamos 'data' directamente.
-        console.log("Payload enviado a api/payment/create:", data);
+        //console.log("Payload enviado a api/payment/create:", data);
         const response = await axiosInstance.post('payment/create/', data);
         
-        console.log("Respuesta del servidor al crear pago(s):", response.data);
+        //console.log("Respuesta del servidor al crear pago(s):", response.data);
         
         return {
             success: response.data.status || false,
@@ -55,7 +55,7 @@ export const CorteDeCaja = async (data) => {
         //console.log("Datos enviados a CorteDeCaja:", data);
         const response = await axiosInstance.post('payment/cash_cut/', data);
         
-        console.log("Respuesta del servidor al crear corte de caja:", response.data);
+        //console.log("Respuesta del servidor al crear corte de caja:", response.data);
         
         // Verificar si la respuesta tiene el formato esperado
         if (!response.data) {

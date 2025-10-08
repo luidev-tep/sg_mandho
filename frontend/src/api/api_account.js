@@ -111,7 +111,7 @@ export const MostrarCuentas = async (filters) => {
         data: { body: [] }
       };
     }
-    console.log("Desde api account, mostrar cuentas")
+    //console.log("Desde api account, mostrar cuentas")
     console.log(id_user)
     const response = await axiosInstance.post('account/read/', { id_user });
     
@@ -177,7 +177,7 @@ export const MostrarCuentas = async (filters) => {
  */
 export const validate_edit_account = async (data) => {
   if (!data.orginal_status || !data.status) {
-    console.log('[validate_edit_account] Sin datos proporcionados');
+    //console.log('[validate_edit_account] Sin datos proporcionados');
     return false;
   }
 

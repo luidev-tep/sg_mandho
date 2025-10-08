@@ -437,6 +437,7 @@ function AgregarServicio() {
         </main>
       </div>
 
+
       {/* Modal de verificación de contraseña */}
       {showPasswordModal && (
         <PasswordVerificationModal
@@ -447,6 +448,7 @@ function AgregarServicio() {
           onVerificationSuccess={handlePasswordVerificationSuccess}
           title="Crear Nuevo Servicio"
           message="Esta acción requiere autorización de delegado. Ingrese la contraseña de delegado para continuar creando el nuevo servicio."
+          verificationType="owner" // Usar la validación de delegado
         />
       )}
     </div>

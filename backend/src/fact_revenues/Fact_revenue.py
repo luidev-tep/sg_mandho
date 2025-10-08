@@ -1,4 +1,5 @@
 from typing import Literal
+import random  
 from src.fact_revenues.services.service import get_status_payment
 from src.fact_revenues.models.fact_revenue import FACT_Revenue
 from src.utils.id_generator import create_id
@@ -139,9 +140,14 @@ class factRevenueCrud():
             model_format = []
             for data_json in data_format:
                 # Generar un ID único para el registro de pago
-                str_amount = str(amount)
-                extract = [str_amount[2:], data_json['DIM_AccountId']]
-                new_id = create_id([extract, data_json['DIM_AccountId'], year[4:]])
+                #Se creara un hash ramdon de 3 carateres de tamanio complatmente aleatorio
+                #Se hizo de esta forma para que practiamente nunca haya coincidencias de id
+                index1 = random.randint(0, 15)
+                index2 = random.randint(0, 15)
+                index3 = random.randint(0, 15)
+                extract =create_id([data_json['DIM_AccountId'][index1:], data_json['DIM_AccountId'][index2:], data_json['DIM_AccountId'][index3:] ]) #Asi se eligera una cadena de tamanio variable
+                extrat2 = create_id([dim_service_detail_id[index1:], dim_service_detail_id[index2:], dim_service_detail_id[index3:]]) #Asi se eligera una cadena de tamanio variable
+                new_id = create_id([extract, extrat2, year[4:]])
                 
                 # Formatear los datos para el modelo de la base de datos
                 formatted_data = {

@@ -1,12 +1,14 @@
 import { useState, useMemo, useEffect } from "react";
 import { crearRegistroPago } from '../../../api/pagos/api_crear_pago';
 import { useAuth } from "../../../utils/AuthContext";
+import PasswordVerificationModal from "../../ModalValitePass";
 import Notification from "../../ui/Notification";
 
 function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClose, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [expandedFractions, setExpandedFractions] = useState({});
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const { state } = useAuth();
   const { usuario } = state;
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
@@ -60,7 +62,12 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
     });
   };
  
-  const handleConfirm = async () => {
+  const handleConfirmClick = () => {
+    // Mostrar el modal de contraseña en lugar de ejecutar la lógica directamente
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordVerificationSuccess = async () => {
     setIsSubmitting(true);
     setNotification({ show: false, message: '', type: 'success' });
 
@@ -69,6 +76,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
       setIsSubmitting(false);
       return;
     }
+    setShowPasswordModal(false); // Ocultar modal de contraseña
 
     const anioActual = new Date().getFullYear();
 
@@ -116,7 +124,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+    <>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] transform transition-all animate-scale-in">
         {/* Encabezado */}
         <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
@@ -217,7 +225,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
             Cancelar
           </button>
           <button
-            onClick={handleConfirm}
+            onClick={handleConfirmClick}
             disabled={isSubmitting || selectedUsers.length === 0}
             className="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 dark:hover:bg-indigo-800 transition-colors disabled:opacity-50 flex items-center justify-center"
           >
@@ -236,7 +244,18 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Modal de verificación de contraseña */}
+      {showPasswordModal && (
+        <PasswordVerificationModal
+          onClose={() => setShowPasswordModal(false)}
+          onVerificationSuccess={handlePasswordVerificationSuccess}
+          title="Confirmar Acción"
+          message={`Está a punto de aplicar el servicio '${ServiceDetailType}' a ${selectedUsers.length} usuario(s). Se requiere autorización de delegado para continuar.`}
+          verificationType="owner" // Usar la validación de delegado
+        />
+      )}
+    </>
   );
 }
 

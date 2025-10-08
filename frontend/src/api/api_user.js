@@ -47,8 +47,8 @@ import { isValid } from "date-fns/isValid";
  */
 export const AgregarUsuario = async (data) => { 
     try {
-        console.log("AgregarUsuario Hola desde api_user.js");
-        console.log("Data recibida en AgregarUsuario:", data);
+        //console.log("AgregarUsuario Hola desde api_user.js");
+        //console.log("Data recibida en AgregarUsuario:", data);
         
         // 1. Crear el usuario primero - AGREGANDO HEADERS COMO EN MostrarUsuarios
         const userResponse = await axiosInstance.post('user/create_user/', data, {
@@ -80,11 +80,11 @@ export const AgregarUsuario = async (data) => {
             status: data.data.estadoPersona.toLowerCase(),
         };
 
-        console.log('Información para crear la cuenta:', accountPayload);
+        //console.log('Información para crear la cuenta:', accountPayload);
         
         // Crear la cuenta asociada
         const accountResponse = await crearCuenta(accountPayload);
-        console.log("Respuesta de creación de cuenta:", accountResponse);
+        //console.log("Respuesta de creación de cuenta:", accountResponse);
 
         // 3. Verificar que ambas operaciones fueron exitosas (ajustado a estructura real)
         if (userResponse.data.status === 'success' && (accountResponse.success || accountResponse.data?.status === 'success')) {
