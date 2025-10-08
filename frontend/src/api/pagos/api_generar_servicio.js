@@ -20,7 +20,7 @@ export const generarServicio = async (data) => {
             throw new Error('El Year debe ser un número válido entre 2000 y 2100');
         }
 
-        console.log("Datos enviados a generarServicio:", data);
+        //console.log("Datos enviados a generarServicio:", data);
         const response = await axiosInstance.post('payment/generar_servicio/', data);
 
         // Verificar si la respuesta tiene el formato esperado
@@ -28,7 +28,7 @@ export const generarServicio = async (data) => {
             throw new Error('No se recibieron datos del servidor');
         }
 
-        console.log('Servicio generado exitosamente:', response.data);
+        //console.log('Servicio generado exitosamente:', response.data);
         return response.data;
 
     } catch (error) {

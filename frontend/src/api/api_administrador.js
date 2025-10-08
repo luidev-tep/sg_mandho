@@ -59,7 +59,7 @@ export const createOwner = async (userData) => {
             throw new Error('No se proporcionaron datos de usuario para la creación.');
         }
 
-        console.log("Enviando datos para crear nuevo propietario:", userData);
+        //console.log("Enviando datos para crear nuevo propietario:", userData);
         // Se asume un endpoint 'admin/create_owner/'
         const response = await axiosInstance.post('security/admin_onwer/', userData);
 
@@ -67,7 +67,7 @@ export const createOwner = async (userData) => {
             throw new Error('No se recibió respuesta del servidor');
         }
 
-        console.log("Respuesta del servidor:", response.data);
+        //console.log("Respuesta del servidor:", response.data);
         return response.data; // Devuelve el objeto completo { success, message }
 
     } catch (error) {

@@ -181,7 +181,7 @@ def validar_password_by_action() -> tuple[Any]:
     try:
         claims = get_jwt()
         user_role = claims.get('role')  
-        if user_role != 'comitiva':
+        if user_role not in ['comitiva', 'subdelegado', 'delegado']:
             return send_error("No tienes permiso para validar la contrasenia", 403)
         
         request_data = request.json
@@ -338,9 +338,6 @@ def get_onwer_info():
         print(f"Error al obtener el costo: {error_msg}")
         return send_error(error_msg, 500)
         
-
-
-
 @security_route.route('validate_password/', methods=['POST'])
 @jwt_required()
 def check_admin_password() -> tuple[Any]:

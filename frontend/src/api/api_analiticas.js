@@ -10,7 +10,7 @@ export const GetAnalytics = async (data) => {
                 // Convertir el año al formato 'Y25' (últimos 2 dígitos del año)
                 const formattedYear = `Y${data.anio.slice(-2)}`;
                 
-                console.log("Datos para la petición de analytics:", { ...data, anio: formattedYear });
+                //console.log("Datos para la petición de analytics:", { ...data, anio: formattedYear });
                 
                 // Enviar los datos en el cuerpo de la petición POST
                 const response = await axiosInstance.post('analitycs/get_analytics/', {
@@ -31,7 +31,7 @@ export const GetAnalytics = async (data) => {
             dataCountUsers: response.data.body.dataCountUsers,
             dataServiceMembers: response.data.body.dataServiceMembers
         }
-        console.log("Datos recibidos en la respuesta:", data_response);
+        //console.log("Datos recibidos en la respuesta:", data_response);
         return data_response;
 
     } catch (error) {
@@ -104,24 +104,6 @@ export const GetAnalytics = async (data) => {
 // {
 //     "manzanas": [
 //       {
-//         "id": 1,
-//         "nombre": "Centro",
-//         "personas": 185,
-//         "pagados": 142,
-//         "pendientes": 43,
-//         "porcentaje": 76.8,
-//         "color": "#24292E"
-//       },
-//       {
-//         "id": 2,
-//         "nombre": "Tepetetate",
-//         "personas": 156,
-//         "pagados": 98,
-//         "pendientes": 58,
-//         "porcentaje": 62.8,
-//         "color": "#1877F2"
-//       },
-//       {
 //         "id": 3,
 //         "nombre": "Yhonda",
 //         "personas": 143,
@@ -139,24 +121,6 @@ export const GetAnalytics = async (data) => {
 //         "porcentaje": 70.1,
 //         "color": "#4BC9FF"
 //       },
-//       {
-//         "id": 5,
-//         "nombre": "Garambullo",
-//         "personas": 134,
-//         "pagados": 78,
-//         "pendientes": 56,
-//         "porcentaje": 58.2,
-//         "color": "#0E2439"
-//       },
-//       {
-//         "id": 6,
-//         "nombre": "Cerritos",
-//         "personas": 118,
-//         "pagados": 92,
-//         "pendientes": 26,
-//         "porcentaje": 78.0,
-//         "color": "#28A745"
-//       }
 //     ]
 //   }
 
@@ -173,22 +137,6 @@ export const GetAnalytics = async (data) => {
 //         "nombre": "Tepetetate",
 //         "personas": 156
 //       },
-//       {
-//         "nombre": "Yhonda",
-//         "personas": 143
-//       },
-//       {
-//         "nombre": "Buenavista",
-//         "personas": 127
-//       },
-//       {
-//         "nombre": "Garambullo",
-//         "personas": 134
-//       },
-//       {
-//         "nombre": "Cerritos",
-//         "personas": 118
-//       }
 //     ]
 //   }
 
@@ -203,22 +151,6 @@ export const GetAnalytics = async (data) => {
 //         "comitiva": "agua",
 //         "fechaInicio": "2025-01-01",
 //         "fechaFin": "2025-12-31"
-//       },
-//       {
-//         "id": 2,
-//         "nombre": "Carlos",
-//         "apellidos": "Martinez Gonzalez",
-//         "comitiva": "luz",
-//         "fechaInicio": "2025-02-15",
-//         "fechaFin": "2025-11-30"
-//       },
-//       {
-//         "id": 3,
-//         "nombre": "Ana",
-//         "apellidos": "Rodriguez Sanchez",
-//         "comitiva": "agua",
-//         "fechaInicio": "2025-03-01",
-//         "fechaFin": "2025-10-31"
 //       },
 //       {
 //         "id": 4,

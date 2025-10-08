@@ -1,3 +1,4 @@
+import random   
 from src.payments.repository.cash_cut_querys import create_cash_cut_register, found_pending, search_service_Valid, is_service_exist
 from src.payments.model.pending_paid import CashCutModel
 from src.utils.id_generator import create_id
@@ -142,12 +143,16 @@ class cashCutCrud(PaymentCrud):
         for account in pending_accounts:
             
             # Generar hash único para la cuenta primero
-            account_hash = create_id([account[0]])
+            index1 = random.randint(0, 15)
+            index2 = random.randint(0, 15)
+            index3 = random.randint(0, 15)
+            extract =create_id([account[0][index1], account[0][index2], account[0][index3] ]) #Asi se eligera una cadena de tamanio variable
+            account_hash = create_id([extract, account[0],])
             
             
             # Crear FACT_RevenueId usando el hash de la cuenta en lugar del amount
             id = create_id([account_hash, data_json['DIM_ServiceDetailesType'], year[4:]])
-            
+             
             fact_revenueId = create_id([id, data_json['DIM_ServiceDetailsId'], account[0]])
             
             # Obtener el estado para montos pendientes (0 amount)

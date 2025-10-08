@@ -1,9 +1,15 @@
 import { useState } from "react";
-import { validatePassword } from "../api/api_security";
+import { validatePassword, ValidatePasswordOnwer } from "../api/api_security";
 
 
 //Modal muy importante para bloquear distintos recursos
-function PasswordVerificationModal({ onClose, onVerificationSuccess, title = "Verificación de Seguridad", message = "Ingrese su contraseña para continuar con esta acción especial." }) {
+function PasswordVerificationModal({ 
+  onClose, 
+  onVerificationSuccess, 
+  title = "Verificación de Seguridad", 
+  message = "Ingrese su contraseña para continuar con esta acción especial.",
+  verificationType = 'default' // 'default' o 'owner'
+}) {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -19,7 +25,14 @@ function PasswordVerificationModal({ onClose, onVerificationSuccess, title = "Ve
     setError(null);
 
     try {
-      const response = await validatePassword({ password: password.trim() });
+      let response;
+      
+      // Determinar qué API llamar según el tipo de verificación
+      if (verificationType === 'owner') {
+        response = await ValidatePasswordOnwer({ password: password.trim() });
+      } else {
+        response = await validatePassword({ password: password.trim() });
+      }
       
       // CORRECCIÓN: Verificar directamente response.data ya que es un boolean
       if (response?.data === true) {
@@ -43,7 +56,7 @@ function PasswordVerificationModal({ onClose, onVerificationSuccess, title = "Ve
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !isSubmitting) {
       handleVerifyPassword();
-    }
+    } 
   };
 
   return (
