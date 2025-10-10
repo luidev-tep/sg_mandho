@@ -27,7 +27,7 @@ def show_account(account_id: str|None) -> list[DIM_Account]|list[Any]:
         accounts = conecion.cursor.fetchall()
 
         conecion.close_conexion()
-        print("Datos crudos de la bd: ", accounts)
+        #print("Datos crudos de la bd: ", accounts)
         if accounts:
             return [DIM_Account(*account) for account in accounts]
         else:

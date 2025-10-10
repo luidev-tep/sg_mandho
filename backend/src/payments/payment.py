@@ -301,9 +301,11 @@ class PaymentCrud:
                 #print(f"Error al obtener los pagos pendientes: {data}")
                 return 400, "No se encontraron pagos pendientes", []
             
+            #print(f"Data: {data}")
             data_format = [register for register in data if register['year'] >= anio_registro]
             #print(f"Data format: {data_format}")
             
+            #print(f"Data format: {data_format}")
             # Si todo es correcto, retorna un código 200 con la lista de pagos.
             # Asi ya se sigue la logica correcta, ya que no tiene sentido que se agregen pagos pendientes
             # a un cliente que aun no se haya registrado
