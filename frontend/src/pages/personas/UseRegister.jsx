@@ -10,6 +10,7 @@ import { AgregarUsuario } from "../../api/api_user";
 import { AgregarFechaActual } from '../../utils/add_date';
 import { AgregarFechaFinVacio } from "../../utils/add_date";
 import { useAuth } from "../../utils/AuthContext"; // Import useAuth
+import ConfirmationModal from '../../components/Modalmessaje'; // Importar el modal de confirmación
 
 /*
   This JavaScript function, capitalizeFirstLetter, takes a string as input and returns a new string
@@ -206,6 +207,10 @@ function UserRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  
+  // Estados para el modal de confirmación
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
 
   const { state } = useAuth(); // Get auth state
   const { usuario } = state;
@@ -233,43 +238,69 @@ function UserRegister() {
     }
   });
 
-  const onSubmit = async (formData) => {
+  // Función que se ejecuta al hacer submit del formulario - SOLO muestra el modal
+  const submitForm = (formData) => {
+    if (isSubmitting) return; // Prevenir doble envío
+    setPendingData(formData); // Guardar datos temporalmente
+    setShowConfirmModal(true); // Mostrar modal
+  };
+
+  // Función de confirmación - ejecuta la lógica real
+  const handleConfirm = async () => {
+    if (!pendingData || isSubmitting) return; // Verificar que hay datos y prevenir doble envío
+    
+    setShowConfirmModal(false); // Cerrar modal
     setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(false);
     
-      try {
-        const fechaData = AgregarFechaActual();
-        const fechaFin = AgregarFechaFinVacio();
-        
-        const dataConFecha = {
-          ...formData,
-          ...fechaData,
-          ...fechaFin
-        };
+    try {
+      const fechaData = AgregarFechaActual();
+      const fechaFin = AgregarFechaFinVacio();
+      
+      const dataConFecha = {
+        ...pendingData,
+        ...fechaData,
+        ...fechaFin
+      };
 
-        const requestData = {
-          data: dataConFecha
-        };
-        console.log("Datos enviados al endpoint front:", requestData);
-        const response = await AgregarUsuario(requestData);
+      const requestData = {
+        data: dataConFecha
+      };
+      console.log("Datos enviados al endpoint front:", requestData);
+      const response = await AgregarUsuario(requestData);
 
-        console.log("Respuesta del endpoint front:", response.id);
-        
-        if (response.id) {
-          setSubmitSuccess(true);
-          // Pequeño delay para que el usuario vea el mensaje de éxito
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          navigate(`/personas/registro_exito/${response.id}`);
-        } else {
-          throw new Error('El backend no devolvió un ID de usuario');
-        }
-      } catch (error) {
-        console.error("Error en el registro:", error);
-        setSubmitError(error.response?.data?.message || error.message || "Error en el registro");
-      } finally {
-        setIsSubmitting(false);
+      console.log("Respuesta del endpoint front:", response.id);
+      
+      if (response.id) {
+        setSubmitSuccess(true);
+        // Pequeño delay para que el usuario vea el mensaje de éxito
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        navigate(`/personas/registro_exito/${response.id}`);
+      } else {
+        throw new Error('El backend no devolvió un ID de usuario');
       }
+    } catch (error) {
+      console.error("Error en el registro:", error);
+      setSubmitError(error.response?.data?.message || error.message || "Error en el registro");
+    } finally {
+      setIsSubmitting(false);
+      setPendingData(null); // ⚠️ IMPORTANTE: Limpiar datos pendientes
+    }
+  };
+
+  // Función de cancelación del modal
+  const handleCloseModal = () => {
+    setShowConfirmModal(false);
+    setPendingData(null); // ⚠️ IMPORTANTE: Limpiar datos pendientes
+  };
+
+  // Función para generar el nombre completo del usuario
+  const getFullName = () => {
+    if (!pendingData) return '';
+    const { nombre, segundo_nombre, apellido, segundo_apellido } = pendingData;
+    const segundoNombreDisplay = segundo_nombre && segundo_nombre !== 'n/a' ? ` ${segundo_nombre}` : '';
+    return `${nombre}${segundoNombreDisplay} ${apellido} ${segundo_apellido}`;
   };
 
     return (
@@ -312,7 +343,7 @@ function UserRegister() {
                 )} 
 
                 <div className="flex-1">
-                  <form onSubmit={handleSubmit(onSubmit)} className="h-full flex flex-col">
+                  <form onSubmit={handleSubmit(submitForm)} className="h-full flex flex-col">
                     <div className="space-y-6 mb-8 flex-1">
                       {/* Nombre y segundo nombre */}
                       <div className="flex space-x-4">
@@ -647,6 +678,20 @@ function UserRegister() {
             </div>
           </div>
         </main>
+
+        {/* Modal de Confirmación */}
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          onClose={handleCloseModal}
+          onConfirm={handleConfirm}
+          title="Confirmar Creación de Usuario"
+          message={`¿Está seguro que desea crear un usuario de tipo "${pendingData?.estadoPersona}" para ${getFullName()}?`}
+          confirmText="Sí, crear usuario"
+          cancelText="Cancelar"
+          variant="info"
+          icon="question"
+          isProcessing={isSubmitting}
+        />
       </div>
     </div>
   );

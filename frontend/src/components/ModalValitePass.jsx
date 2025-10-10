@@ -19,7 +19,7 @@ function PasswordVerificationModal({
     if (!password.trim()) {
       setError("La contraseña es requerida");
       return;
-    }
+    } 
 
     setIsSubmitting(true);
     setError(null);

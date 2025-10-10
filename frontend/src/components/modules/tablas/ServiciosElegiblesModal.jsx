@@ -125,7 +125,12 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] transform transition-all animate-scale-in">
+      {/* Contenedor del Modal (Overlay) */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"
+        onClick={handleClose}
+      >
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] transform transition-all animate-scale-in" onClick={(e) => e.stopPropagation()}>
         {/* Encabezado */}
         <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -243,6 +248,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
           </button>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Modal de verificación de contraseña */}

@@ -2,7 +2,7 @@
 // Codigo de cuenta - Corrección en el manejo de errores
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { yupResolver } from '@hookform/resolvers/yup'; 
 import * as yup from 'yup';
 import { Link } from 'react-router-dom';
 import Sidebar from '../../partials/SideBar';
@@ -10,6 +10,7 @@ import Header from "../../partials/Header";
 import BarraBusquedaAutomatica from '../../components/customers/BarraBusqueda';
 import { crearCuenta } from '../../api/api_account';
 import FormattedErrorMessage from '../../components/alertas/FormattedErrorMessage';
+import ConfirmationModal from '../../components/Modalmessaje'; // Importamos el modal de confirmación
 
 const accountSchema = yup.object().shape({
   clienteId: yup.string().required('Debe seleccionar un cliente'),
@@ -27,6 +28,8 @@ function Cart() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [fechaActual] = useState(new Date().toISOString().split('T')[0]);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
   const [showSuccessOptions, setShowSuccessOptions] = useState(false);
 
   const { 
@@ -50,11 +53,11 @@ function Cart() {
   const getErrorMessage = (error) => {
     if (error.response && error.response.data && error.response.data.message) {
       return error.response.data.message;
-    }
+    } 
     return error.message || 'Error de conexión';
   };
 
-  const onSubmit = async (data) => {
+  const handleConfirmCreation = async () => {
     if (!selectedClient) {
       setMessage({ text: 'Debe seleccionar un cliente', type: 'error' });
       return;
@@ -62,7 +65,7 @@ function Cart() {
 
     // Validación para menores de 15 años
     if (selectedClient.edad < 15) {
-      if (data.estadoPersona !== "Estudiante" && data.estadoPersona !== "Invalido") {
+      if (pendingData.estadoPersona !== "Estudiante" && pendingData.estadoPersona !== "Invalido") {
         setMessage({ 
           text: 'Para personas menores de 15 años solo se permite "Estudiante" o "Invalido"', 
           type: 'error' 
@@ -71,12 +74,13 @@ function Cart() {
       }
     }
 
+    setShowConfirmModal(false);
     setIsSubmitting(true);
     setMessage({ text: '', type: '' });
     
     try {
       const payload = {
-        status: data.estadoPersona.toLowerCase(),
+        status: pendingData.estadoPersona.toLowerCase(),
         customer_id: selectedClient.id,
         start_date: fechaActual,
         end_date: ""
@@ -104,6 +108,17 @@ function Cart() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Función que se activa al enviar el formulario
+  const onSubmit = (data) => {
+    if (isSubmitting) return; // Evitar múltiples envíos
+    setPendingData(data); // Guardamos los datos del formulario
+    if (!selectedClient) {
+      setMessage({ text: 'Debe seleccionar un cliente antes de continuar.', type: 'error' });
+      return;
+    }
+    setShowConfirmModal(true); // Mostramos el modal de confirmación
   };
 
   // Función para formatear fechas
@@ -236,7 +251,7 @@ function Cart() {
 
                     <button 
                       type="submit" 
-                      disabled={isSubmitting || (selectedClient?.edad < 15 && 
+                      disabled={(selectedClient?.edad < 15 && 
                         estadoPersonaValue && 
                         estadoPersonaValue !== "Estudiante" && 
                         estadoPersonaValue !== "Invalido")}
@@ -294,6 +309,21 @@ function Cart() {
           </div>
         </main>
       </div>
+
+      {/* Modal de Confirmación */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmCreation}
+        title="Confirmar Creación de Cuenta"
+        message={`¿Está seguro que desea crear una cuenta de tipo "${pendingData?.estadoPersona}" para ${selectedClient?.nombre_completo}?`}
+        confirmText="Sí, crear cuenta"
+        cancelText="Cancelar"
+        variant="info"
+        icon="question"
+        isProcessing={isSubmitting}
+      />
+
     </div>
   );
 }

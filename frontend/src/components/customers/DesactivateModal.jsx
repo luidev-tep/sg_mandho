@@ -1,14 +1,16 @@
 // Desactivate usuario.jsx
 import { useState } from "react";
 import { DesactivarUsuario } from "../../api/api_user";
+import PasswordVerificationModal from "../ModalValitePass";
 
 // Desactivate usuario.jsx
 function DesactivarUsuarioModal({ id_user, onClose, onUpdate }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   
 
-  const handleDesactivar = async () => {
+  const handlePasswordVerificationSuccess = async () => {
     setIsSubmitting(true);
     setError(null);
 
@@ -57,8 +59,13 @@ function DesactivarUsuarioModal({ id_user, onClose, onUpdate }) {
     }
   };
 
+  const handleConfirmClick = () => {
+    setShowPasswordModal(true);
+  };
+
 
   return (    
+    <>
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md transform transition-all animate-scale-in">
         {/* Encabezado */}
@@ -122,7 +129,7 @@ function DesactivarUsuarioModal({ id_user, onClose, onUpdate }) {
             Cancelar
           </button>
           <button
-            onClick={handleDesactivar}
+            onClick={handleConfirmClick}
             disabled={isSubmitting}
             className="px-4 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 dark:hover:bg-rose-800 transition-colors disabled:opacity-50 flex items-center"
           >
@@ -135,12 +142,24 @@ function DesactivarUsuarioModal({ id_user, onClose, onUpdate }) {
                 Procesando...
               </>
             ) : (
-              'Confirmar desactivación'
+              'Desactivar Usuario'
             )}
           </button>
         </div>
       </div>
     </div>
+
+    {/* Modal de verificación de contraseña */}
+    {showPasswordModal && (
+      <PasswordVerificationModal
+        onClose={() => setShowPasswordModal(false)}
+        onVerificationSuccess={handlePasswordVerificationSuccess}
+        title="Confirmar Desactivación"
+        message="Esta acción es irreversible y marcará al usuario como fallecido. Se requiere autorización de delegado para continuar."
+        verificationType="owner" // Usar la validación de delegado
+      />
+    )}
+    </>
   );
 }
 

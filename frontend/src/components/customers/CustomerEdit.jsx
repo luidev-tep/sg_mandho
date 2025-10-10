@@ -1,4 +1,3 @@
-//editarusuariomodal
 import { useState, useEffect } from "react";
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -8,8 +7,9 @@ import { MostrarUsuarios } from "../../api/api_user";
 import { EditarUsuario } from "../../api/api_user";
 import { MostrarCuentas } from '../../api/api_account';
 import FormattedErrorMessage from "../alertas/FormattedErrorMessage";
+import ConfirmationModal from "../Modalmessaje";
 
-// Esquema de validación simplificado (sin campos de nombre)
+// Esquema de validación
 const editSchema = yup.object().shape({
   CustomerFraction: yup.string()
     .required('La manzana es requerida')
@@ -23,44 +23,40 @@ const editSchema = yup.object().shape({
     ], 'Seleccione una manzana válida'),
 
   CustomerAddress: yup.string()
-  .required('La calle es requerida')
-  .transform(value => value ? value.trim() : value) // Eliminar espacios al inicio/final
-  .test('no-cero', 'El valor "0" no es permitido', value => value !== '0')
-  .test('no-negative', 'No se permiten números negativos', value => {
-    // Verificar que no sea un número negativo
-    return !/^-?\d+$/.test(value);
-  }),
+    .required('La calle es requerida')
+    .transform(value => value ? value.trim() : value)
+    .test('no-cero', 'El valor "0" no es permitido', value => value !== '0')
+    .test('no-negative', 'No se permiten números negativos', value => {
+      return !/^-?\d+$/.test(value);
+    }),
 
   CustomerNumberExt: yup.string()
-  .transform(value => {
-    // Convertir vacío a "s/n"
-    if (!value || value.trim() === '') return 's/n';
-    return value.trim();
-  })
-  .test(
-    'valid-format',
-    'Debe ser solo números positivos o "s/n"',
-    (value) => {
-      // Permitir números positivos o "s/n"
-      return /^\d+$/.test(value) || value.toLowerCase() === 's/n';
-    }
-  )
-  .test('no-negative', 'No se permiten números negativos', (value) => {
-    // Validar explícitamente que no sea negativo
-    return !/^-\d+$/.test(value);
-  }),
+    .transform(value => {
+      if (!value || value.trim() === '') return 's/n';
+      return value.trim();
+    })
+    .test(
+      'valid-format',
+      'Debe ser solo números positivos o "s/n"',
+      (value) => {
+        return /^\d+$/.test(value) || value.toLowerCase() === 's/n';
+      }
+    )
+    .test('no-negative', 'No se permiten números negativos', (value) => {
+      return !/^-\d+$/.test(value);
+    }),
 
-DIM_RoleId: yup.string()
-  .nullable()  // Permite valores nulos
-  .notRequired()  // No es obligatorio
-  .oneOf([
-    'Estudiante', 'Inmigrante', 'Pequeño propietario',
-    'Vecino', 'Ranchero', 'Invalido', null  // Añadido null como valor válido
-  ], 'Estado no válido'),
-
+  DIM_RoleId: yup.string()
+    .nullable()
+    .notRequired()
+    .oneOf([
+      'Estudiante', 'Inmigrante', 'Pequeño propietario',
+      'Vecino', 'Ranchero', 'Invalido', null
+    ], 'Estado no válido'),
 });
 
 function EditCustomerModal({ id_user, onClose, onUpdate }) {
+  // Estados
   const [customer, setCustomer] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fechaActual] = useState(new Date().toISOString().split('T')[0]);
@@ -69,8 +65,11 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
   const [success, setSuccess] = useState(false);
   const [originalRoleId, setOriginalRoleId] = useState(null);
   const [hasActiveAccount, setHasActiveAccount] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Form hook
   const {
     register,
     handleSubmit,
@@ -80,6 +79,7 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
     resolver: yupResolver(editSchema)
   });
 
+  // Opciones
   const fractionOptions = [
     { value: 'tepetate', label: 'Tepetate' },
     { value: 'cerritos', label: 'Cerritos' },
@@ -100,6 +100,7 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
     { value: 'Vecino exento', label: 'Vecino exento' }
   ];
 
+  // Cargar datos del usuario al montar el componente
   useEffect(() => {
     const fetchCustomer = async () => {
       setIsLoading(true);
@@ -122,12 +123,10 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
         const responseaccount = await MostrarCuentas(filters);
 
         if (response?.success && responseaccount?.success) {
-          // Filtrar solo la cuenta activa
           const activeAccount = responseaccount.data.body.find(account =>
             account.DIM_StatusId?.toLowerCase() === 'activo'
           );
 
-          // Verificar si hay cuenta activa
           if (activeAccount) {
             setHasActiveAccount(true);
             const capitalizedRole = activeAccount.DIM_RoleId
@@ -136,10 +135,9 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
 
             setOriginalRoleId(capitalizedRole || null);
 
-            // Verificar si el rol es administrativo (delegado, comitiva, subdelegado)
-            const adminRoles = ['delegado', 'comitiva', 'subdelegado'];
+            const adminRoles = ['delegado', 'comitiva', 'subdelegado', 'administrador'];
             if (activeAccount.DIM_RoleId &&
-                adminRoles.includes(activeAccount.DIM_RoleId.toLowerCase())) {
+              adminRoles.includes(activeAccount.DIM_RoleId.toLowerCase())) {
               setIsAdmin(true);
             }
           } else {
@@ -150,7 +148,6 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
           const customerData = response.data;
           setCustomer(customerData);
 
-          // Resetear el formulario con valores adecuados
           reset({
             DIM_CustomerId: customerData.DIM_CustomerId,
             CustomerFraction: customerData.CustomerFraction,
@@ -158,11 +155,11 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
             CustomerNumberExt: customerData.CustomerNumberExt,
             DIM_AccountId: activeAccount ? activeAccount.DIM_AccountId : null,
             DIM_StatusId: activeAccount ? activeAccount.DIM_StatusId : '',
-                      ...(activeAccount && {
-            DIM_RoleId: activeAccount.DIM_RoleId
-              ? capitalizeFirstLetter(activeAccount.DIM_RoleId)
-              : activeAccount.DIM_RoleId
-  }),
+            ...(activeAccount && {
+              DIM_RoleId: activeAccount.DIM_RoleId
+                ? capitalizeFirstLetter(activeAccount.DIM_RoleId)
+                : activeAccount.DIM_RoleId
+            }),
           });
         } else {
           throw new Error('Cliente no encontrado');
@@ -177,7 +174,18 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
     fetchCustomer();
   }, [id_user, reset]);
 
-  const onSubmit = async (data) => {
+  // Función que muestra el modal de confirmación (se ejecuta al submit del form)
+  const submitForm = (data) => {
+    if (isSubmitting) return;
+    setPendingData(data);
+    setShowConfirmModal(true);
+  };
+
+  // Función que se ejecuta cuando el usuario CONFIRMA en el modal
+  const handleConfirmUpdate = async () => {
+    if (!pendingData) return;
+
+    setShowConfirmModal(false);
     setIsSubmitting(true);
     setError(null);
     setSuccess(false);
@@ -185,18 +193,17 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
     try {
       const payload = {
         DIM_CustomerId: customer.DIM_CustomerId,
-        CustomerAddress: data.CustomerAddress,
-        CustomerNumberExt: data.CustomerNumberExt,
-        CustomerFraction: data.CustomerFraction,
-        // Enviamos false si no hay cuenta activa
-        estadoPersona: hasActiveAccount ? data.DIM_RoleId.toLowerCase() : false,
+        CustomerAddress: pendingData.CustomerAddress,
+        CustomerNumberExt: pendingData.CustomerNumberExt,
+        CustomerFraction: pendingData.CustomerFraction,
+        estadoPersona: hasActiveAccount ? pendingData.DIM_RoleId.toLowerCase() : false,
         fechaCuenta: hasActiveAccount ? fechaActual : false,
         EstadoPersonaOriginal: hasActiveAccount ? originalRoleId.toLowerCase() : false
       };
 
+      // CORRECCIÓN: Llamada a la API que faltaba
       const response = await EditarUsuario(payload);
 
-      // Verificar la respuesta del backend
       if (response && response.success) {
         if (onUpdate) {
           onUpdate(response.data);
@@ -206,18 +213,31 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
           onClose();
         }, 2000);
       } else {
-        // Manejar errores del backend
         const errorMessage = response?.message ||
                             response?.data?.message ||
                             "Error al actualizar el usuario";
         throw new Error(errorMessage);
       }
     } catch (err) {
-      // Mostrar mensaje de error específico del backend
       setError(err.message || "Error al guardar los cambios");
     } finally {
       setIsSubmitting(false);
+      setPendingData(null);
     }
+  };
+
+  // Función para cerrar el modal de confirmación
+  const handleCloseConfirmModal = () => {
+    setShowConfirmModal(false);
+    setPendingData(null);
+  };
+
+  // Construir el mensaje del modal de confirmación
+  const getConfirmationMessage = () => {
+    if (!customer) return '¿Estás seguro de que deseas guardar los cambios?';
+    
+    const fullName = `${customer.CustomerName} ${customer.CustomerLastName}`;
+    return `¿Estás seguro de que deseas modificar los datos de ${fullName}?`;
   };
 
 return (
@@ -277,7 +297,7 @@ return (
               </div>
             </div>
           ) : (
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(submitForm)}>
             {success && (
               <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/50 border border-green-400 dark:border-green-700 text-green-900 dark:text-white rounded-lg text-sm sm:text-base">
                 ¡Usuario actualizado correctamente! Cerrando...
@@ -428,6 +448,18 @@ return (
         )}
       </div>
     </div>
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={handleConfirmUpdate}
+          title="Confirmar Edición de Usuario"
+          message={`¿Estás seguro de que deseas guardar los cambios?`}
+          confirmText="Sí, guardar cambios"
+          cancelText="Cancelar"
+          variant="info"
+          icon="question"
+          isProcessing={isSubmitting}
+          />
   </div>
 );
 }

@@ -1,6 +1,8 @@
 import { createContext, useContext, useReducer, useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import IdleTimeoutModal from './IdleTimeoutModal';
+import { RefrescarToken } from './../api/api_auth';
+import { setupInterceptors } from '../api/axiosInstance';
 
 const AuthContext = createContext();
 
@@ -61,7 +63,7 @@ function authReducer(state, action) {
       const tokens = action.payload;
       localStorage.setItem('tokens', JSON.stringify({
         tokens,
-        refreshTokenTimestamp: Date.now() // Guardamos timestamp para el refresh token
+        refreshTokenTimestamp: Date.now()
       }));
       return { ...state, tokens };
     case "SET_USER_AND_TOKENS":
@@ -84,24 +86,27 @@ function authReducer(state, action) {
   }
 }
 
-
-
 export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, {
     usuario: loadUserFromStorage(),
     tokens: loadTokensFromStorage()
   });
 
+  // Configurar interceptores de Axios una sola vez
+  useEffect(() => {
+    setupInterceptors({ dispatch });
+  }, []);
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- Lógica de Inactividad (sin cambios) ---
+  // --- Lógica de Inactividad ---
   const [showIdleModal, setShowIdleModal] = useState(false);
   const [countdown, setCountdown] = useState(180);
   const idleTimer = useRef(null);
   const countdownTimer = useRef(null);
-  const INACTIVITY_TIMEOUT = 10 * 60 * 1000;
-  const COUNTDOWN_SECONDS = 3 * 60;
+  const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutos
+  const COUNTDOWN_SECONDS = 3 * 60; // 3 minutos
 
   const handleLogout = useCallback(() => {
     setShowIdleModal(false);
@@ -109,7 +114,7 @@ export function AuthProvider({ children }) {
     clearInterval(countdownTimer.current);
     dispatch({ type: 'CLEAR_USER' });
     navigate('/Signup', { replace: true });
-  }, [dispatch, navigate]);
+  }, [navigate]);
 
   const handleStay = () => {
     setShowIdleModal(false);
@@ -138,7 +143,7 @@ export function AuthProvider({ children }) {
     if (state.usuario) {
       idleTimer.current = setTimeout(startWarning, INACTIVITY_TIMEOUT);
     }
-  }, [state.usuario, INACTIVITY_TIMEOUT]);
+  }, [state.usuario]);
 
   useEffect(() => {
     const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
@@ -154,65 +159,73 @@ export function AuthProvider({ children }) {
       clearInterval(countdownTimer.current);
     };
   }, [resetIdleTimer, state.usuario]);
-  // --- Fin Lógica de Inactividad ---
 
-    // --- INICIO: Lógica de Renovación de Token ---
-  
-  const handleTokenRefresh = useCallback(async () => {
-    if (!state.tokens?.refresh_token) {
-        console.log("No hay refresh token para renovar.");
-        // Si no hay refresh token, no tiene sentido seguir, cerramos sesión.
+  // --- RENOVACIÓN DE TOKEN ---
+  const tokenRenewalIntervalRef = useRef(null);
+  const lastRenewalTimeRef = useRef(Date.now());
+
+  const renewToken = useCallback(async () => {
+    try {
+      const tokensString = localStorage.getItem('tokens');
+      if (!tokensString) {
         handleLogout();
         return;
-    }
-    
-    try {
-        console.log("Intentando renovar el token...");
-        const newAccessToken = await RefrescarToken(state.tokens.refresh_token);
-        
-        const newTokens = {
-            ...state.tokens,
-            access_token: newAccessToken,
-        };
-        
-        // **LA PARTE CLAVE**: Despachamos la acción para actualizar el estado Y el localStorage.
-        dispatch({ type: 'SET_TOKENS', payload: newTokens });
-        console.log('Token renovado exitosamente en el estado de la aplicación.');
+      }
+
+      const storedData = JSON.parse(tokensString);
+      const tokens = storedData?.tokens;
+      const refreshToken = tokens?.refresh_token;
+
+      if (!refreshToken) {
+        handleLogout();
+        return;
+      }
+      
+      const newAccessToken = await RefrescarToken(refreshToken);
+      
+      const newTokens = {
+        access_token: newAccessToken,
+        refresh_token: refreshToken,
+      };
+
+      dispatch({ type: 'SET_TOKENS', payload: newTokens });
+      lastRenewalTimeRef.current = Date.now();
 
     } catch (error) {
-        console.error('La renovación del token falló, cerrando sesión:', error);
-        handleLogout(); // Si falla la renovación, cerramos la sesión.
+      console.error('Error al renovar token:', error);
+      handleLogout();
     }
-  }, [state.tokens, dispatch, handleLogout]);
+  }, [handleLogout]);
 
-
-  // useEffect para manejar el intervalo de renovación automática
   useEffect(() => {
-    // 14 minutos para darnos un margen de 1 minuto antes de que expire el token de 15 min.
-    const RENEWAL_INTERVAL = 14 * 60 * 1000; 
-    let intervalId = null;
+    const RENEWAL_INTERVAL = 15 * 60 * 1000; // 15 minutos (renovar antes de que expire a los 20 min)
 
-    if (state.tokens) {
-      intervalId = setInterval(handleTokenRefresh, RENEWAL_INTERVAL);
-      console.log('Renovación automática de token iniciada.');
+    if (tokenRenewalIntervalRef.current) {
+      clearInterval(tokenRenewalIntervalRef.current);
     }
 
-    // Función de limpieza para detener el intervalo si el usuario cierra sesión o el componente se desmonta.
+    if (state.tokens?.access_token && state.tokens?.refresh_token) {
+      const timeSinceLastRenewal = Date.now() - lastRenewalTimeRef.current;
+      
+      if (timeSinceLastRenewal >= RENEWAL_INTERVAL) {
+        renewToken();
+      }
+
+      tokenRenewalIntervalRef.current = setInterval(() => {
+        renewToken();
+      }, RENEWAL_INTERVAL);
+    }
+
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-        console.log('Renovación automática de token detenida.');
+      if (tokenRenewalIntervalRef.current) {
+        clearInterval(tokenRenewalIntervalRef.current);
       }
     };
-  }, [state.tokens, handleTokenRefresh]);
-
-  // --- FIN: Lógica de Renovación de Token ---
+  }, [state.tokens?.access_token, state.tokens?.refresh_token, renewToken]);
 
   // Efecto para redirigir al login si no hay usuario
   useEffect(() => {
-    // Si no hay usuario ni tokens, y no estamos ya en la página de login, redirigimos.
     if (!state.usuario && !state.tokens && location.pathname !== '/Signup') {
-      console.log("Sesión no válida o expirada. Redirigiendo a la página de login...");
       navigate('/Signup', { replace: true });
     }
   }, [state.usuario, state.tokens, location.pathname, navigate]);
