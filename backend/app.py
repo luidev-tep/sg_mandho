@@ -14,7 +14,7 @@ load_dotenv()
 
 # --- CORRECCIÓN 2: Comprobar la variable de prueba aquí ---
 # Ahora que .env está cargado, la variable de prueba SÍ se encontrará.
-print(f"El valor de mi variable de prueba es: {os.environ.get('TEST_VARIABLE')}")
+#print(f"El valor de mi variable de prueba es: {os.environ.get('TEST_VARIABLE')}")
 
 # Importaciones de tus rutas
 from src.routes.user_route import user_route
@@ -49,8 +49,8 @@ app.register_blueprint(analitycs_route)
 app.register_blueprint(home_route)
 
 # Configuración detallada de CORS - CORREGIDA PARA EDGE
-print("Configuración detallada de CORS")   
-print(os.environ.get("URL_FRONTEND"))
+#print("Configuración detallada de CORS")   
+#print(os.environ.get("URL_FRONTEND"))
 
 # Obtener las URLs del frontend
 frontend_urls = os.environ.get("URL_FRONTEND", "http://localhost:5173")
@@ -79,16 +79,16 @@ CORS(app, resources={
 })
 
 # Handler adicional para OPTIONS (preflight) - CRÍTICO PARA EDGE
-@app.after_request
-def after_request(response):
-    origin = request.headers.get('Origin')
-    if origin in origins_list:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        response.headers.add('Access-Control-Max-Age', '86400')
-    return response
+# @app.after_request
+# def after_request(response):
+#     origin = request.headers.get('Origin')
+#     if origin in origins_list:
+#         response.headers.add('Access-Control-Allow-Origin', origin)
+#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers')
+#         response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH')
+#         response.headers.add('Access-Control-Allow-Credentials', 'true')
+#         response.headers.add('Access-Control-Max-Age', '86400')
+#     return response
 
 if __name__ == '__main__':
     app.run(debug=True)
