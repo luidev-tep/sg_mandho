@@ -30,6 +30,12 @@ function FinishPayment({onClose, onUpdate, props }) {
   const [amountTotal, setAmountTotal] = useState(0);
   const [cantidadFaltante, setCantidadFaltante] = useState(0);
   
+  // Estados para los modales de alerta
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultModalData, setResultModalData] = useState({ type: '', message: '' });
+  
   // Extraer datos de las props
   const {
     id,
@@ -64,27 +70,27 @@ function FinishPayment({onClose, onUpdate, props }) {
   } = useForm({
     resolver: yupResolver(editSchema)
   });
-  //Se debe enviar un objeto con esta infromacion dentro 
-useEffect(() => {
-  const empaquetadorXD = {
-  service_type: service_type,
-  Year: dim_date,
-  ServiceName: service_name
-  };
-  const data = {
-    costoservicio: empaquetadorXD
-  }
 
-  getAmount(data)
-    .then((amount) => {
-      setAmountTotal(amount);
-      setIsLoading(false);
-    })
-    .catch((error) => {
-      console.error('Error obteniendo el monto total:', error);
-      setError('Error al obtener el monto total del servicio');
-      setIsLoading(false);
-    });
+  useEffect(() => {
+    const empaquetadorXD = {
+      service_type: service_type,
+      Year: dim_date,
+      ServiceName: service_name
+    };
+    const data = {
+      costoservicio: empaquetadorXD
+    }
+
+    getAmount(data)
+      .then((amount) => {
+        setAmountTotal(amount);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error obteniendo el monto total:', error);
+        setError('Error al obtener el monto total del servicio');
+        setIsLoading(false);
+      });
   }, [ service_type, dim_date]);
 
   const validateAmount = (value) => {
@@ -94,8 +100,11 @@ useEffect(() => {
     return true;
   };
 
-  const onSubmit = async (data) => {
-    // Validación adicional antes de enviar
+  // Función que se ejecuta al hacer submit del formulario - SOLO muestra modal de confirmación
+  const onSubmit = (data) => {
+    if (isSubmitting) return;
+
+    // Validación adicional antes de mostrar confirmación
     if (data.cantidadRecibida > cantidadFaltante) {
       setFormError('cantidadRecibida', {
         type: 'manual',
@@ -112,12 +121,22 @@ useEffect(() => {
       return;
     }
 
+    setPendingData(data);
+    setShowConfirmModal(true);
+  };
+
+  // Función de confirmación - ejecuta la lógica real del pago
+  const handleConfirm = async () => {
+    if (!pendingData || isSubmitting) return;
+
     try {
+      setShowConfirmModal(false);
+      setIsSubmitting(true);
+      clearErrors();
+
       if (!usuario) {
         throw new Error('No hay usuario logueado');
       }
-      setIsSubmitting(true);
-      clearErrors();
 
       const payload = {
         metodoPago: "efectivo",
@@ -130,13 +149,19 @@ useEffect(() => {
         amount: amountTotal,
         AnioPago: dim_date,
         movementName: "ingreso",
-        FactAmount: data.cantidadRecibida,
+        FactAmount: pendingData.cantidadRecibida,
         entrada: '' //Se deja vacio ya que las validaciones solo se aplican a crear pagp
       };
 
       const response = await crearRegistroPago(payload);
       if (response && response.message === "Pago creado satisfactoriamente") {
-        setSuccess(true);
+        // Mostrar modal de éxito
+        setResultModalData({
+          type: 'success',
+          message: '¡Pago registrado correctamente!'
+        });
+        setShowResultModal(true);
+        
         setTimeout(() => {
           // Extraer el objeto si la respuesta es un array como [{...}]
           const updatedData = Array.isArray(response.data) && response.data.length > 0
@@ -149,6 +174,7 @@ useEffect(() => {
           if (onUpdate) {
             onUpdate(completeUpdatedRecord);
           }
+          setShowResultModal(false);
           onClose();
         }, 2000);
         return;
@@ -156,17 +182,35 @@ useEffect(() => {
       const errorMessage = response?.message || response?.data?.message || 'Error desconocido al procesar el pago';
       throw new Error(errorMessage);
     } catch (err) {
-      console.error('❌ Error en onSubmit:', err.message);
+      console.error('❌ Error en handleConfirm:', err.message);
       let errorMessage = 'Error al procesar el pago';
       if (err.response) {
         errorMessage = err.response.data?.message || err.response.data?.error || err.message;
       } else if (err.message) {
         errorMessage = err.message;
       }
-      setError(errorMessage);
+      
+      // Mostrar modal de error
+      setResultModalData({
+        type: 'error',
+        message: errorMessage
+      });
+      setShowResultModal(true);
     } finally {
       setIsSubmitting(false);
+      setPendingData(null);
     }
+  };
+
+  // Función para cerrar modal de confirmación
+  const handleCloseConfirmModal = () => {
+    setShowConfirmModal(false);
+    setPendingData(null);
+  };
+
+  // Función para cerrar modal de resultado
+  const handleCloseResultModal = () => {
+    setShowResultModal(false);
   };
 
   return (
@@ -219,12 +263,6 @@ useEffect(() => {
             </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)}>
-              {success && (
-                <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-100 rounded-lg">
-                  ¡Pago registrado correctamente! Cerrando...
-                </div>
-              )}
-              
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-100">Información del Cliente</h3>
                 <div className="space-y-4 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
@@ -307,7 +345,7 @@ useEffect(() => {
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50"
-                  disabled={isSubmitting || success}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
@@ -316,6 +354,85 @@ useEffect(() => {
           )}
         </div>
       </div>
+
+      {/* Modal de Confirmación */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                Confirmar Pago
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                ¿Estás seguro de que deseas registrar el pago de <strong>${pendingData?.cantidadRecibida}</strong> para {full_name}?
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleCloseConfirmModal}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Procesando...' : 'Sí, Confirmar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Resultado (Éxito/Error) */}
+      {showResultModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-6">
+              <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 ${
+                resultModalData.type === 'success' 
+                  ? 'bg-green-100 dark:bg-green-900/30' 
+                  : 'bg-red-100 dark:bg-red-900/30'
+              }`}>
+                {resultModalData.type === 'success' ? (
+                  <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </div>
+              <h3 className={`text-lg font-semibold text-center mb-2 ${
+                resultModalData.type === 'success' 
+                  ? 'text-green-800 dark:text-green-400' 
+                  : 'text-red-800 dark:text-red-400'
+              }`}>
+                {resultModalData.type === 'success' ? '¡Éxito!' : 'Error'}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
+                {resultModalData.message}
+              </p>
+              <div className="flex justify-center">
+                <button
+                  onClick={handleCloseResultModal}
+                  className={`px-6 py-2 rounded-lg ${
+                    resultModalData.type === 'success'
+                      ? 'bg-green-600 text-white hover:bg-green-700 dark:hover:bg-green-800'
+                      : 'bg-red-600 text-white hover:bg-red-700 dark:hover:bg-red-800'
+                  }`}
+                >
+                  {resultModalData.type === 'success' ? 'Continuar' : 'Reintentar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

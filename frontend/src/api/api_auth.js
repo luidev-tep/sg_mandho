@@ -24,7 +24,6 @@ export const ObtenerUsuario = async (userData) => {
                 'Accept': 'application/json'
             }
         });
-        console.log("Datos recibidos del backend:", response.data.body);
         return { data: response.data.body.data,
             tokens: response.data.body.tokens // ← Tokens incluidos
          };
@@ -34,9 +33,6 @@ export const ObtenerUsuario = async (userData) => {
     }
 }
  
-
-//Función unificada para refrescar token
-
 /**
  * Función simplificada para refrescar el token.
  * Solo realiza la llamada a la API y devuelve el nuevo access_token.
@@ -57,30 +53,7 @@ export const RefrescarToken = async (refreshToken) => {
         return response.data.body.data;
 
     } catch (error) {
-        console.error("Error al refrescar token:", error);
+        console.error("Error al refrescar token:", error.response?.data || error.message);
         throw error;
     }
 }
-
-// Renovación automática cada 15 minutos
-let tokenRefreshInterval = null;
-
-export const iniciarRenovacionAutomatica = () => {
-  if (tokenRefreshInterval) clearInterval(tokenRefreshInterval);
-  
-  tokenRefreshInterval = setInterval(async () => {
-      try {
-          await RefrescarToken();
-          console.log('Token renovado automáticamente');
-      } catch (error) {
-          console.error('Error en renovación automática:', error);
-      }
-  }, 900000); // 15 minutos
-};
-
-export const detenerRenovacionAutomatica = () => {
-  if (tokenRefreshInterval) {
-      clearInterval(tokenRefreshInterval);
-      tokenRefreshInterval = null;
-  }
-};

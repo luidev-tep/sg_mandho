@@ -91,6 +91,10 @@ const DynamicGeneratePay = () => {
   const { state } = useAuth();
   const { usuario } = state;
   
+  // Estados para el modal de confirmación
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState(null);
+
   // Función para manejar errores
   const getErrorMessage = (error) => {
     return error.response?.data?.message || error.message || 'Ocurrió un error al procesar el pago';
@@ -273,8 +277,21 @@ const DynamicGeneratePay = () => {
     setAccountData(data);
   }, []);
 
-  const onSubmit = async (data) => {
+  // Función que se ejecuta al hacer submit del formulario - SOLO muestra modal de confirmación
+  const onSubmit = (data) => {
+    if (isSubmitting) return;
+    
+    setPendingFormData(data);
+    setShowConfirmModal(true);
+  };
+
+  // Función de confirmación - ejecuta la lógica real del pago
+  const handleConfirm = async () => {
+    if (!pendingFormData || isSubmitting) return;
+
     try {
+      setShowConfirmModal(false);
+      
       if (!usuario) {
         throw new Error('No hay usuario logueado');
       }
@@ -282,7 +299,7 @@ const DynamicGeneratePay = () => {
       setIsSubmitting(true);
       
       const payload = {
-        ...data,
+        ...pendingFormData,
         DIM_OnwerCustomerId: usuario.DIM_CustomerId,
         DIM_AccountId: accountData.accountId,
         DIM_CustomerId: accountData.customerId,
@@ -290,9 +307,9 @@ const DynamicGeneratePay = () => {
         fecha: fechaActual, 
         serviceDetailsType: moduleData.serviceType,
         amount: moduleData.amount,
-        AnioPago: data.anioPago,
+        AnioPago: pendingFormData.anioPago,
         movementName: "ingreso",
-        FactAmount: data.cantidadRecibida,
+        FactAmount: pendingFormData.cantidadRecibida,
         entrada: 'crear_pago'
       };
 
@@ -313,7 +330,7 @@ const DynamicGeneratePay = () => {
       throw new Error(errorMessage);
       
     } catch (err) { 
-      console.error('❌ Error en onSubmit:', err.message);
+      console.error('❌ Error en handleConfirm:', err.message);
       let errorMessage = 'Error al procesar el pago';
       
       if (err.response) {
@@ -327,7 +344,14 @@ const DynamicGeneratePay = () => {
       navigate(`/modulos/estado_pago/?type=error&text=${encodeURIComponent(errorMessage)}&customerName=${encodeURIComponent(accountData?.customerName || '')}&menuPath=${encodeURIComponent(moduleConfig.menuPath || '/')}`);
     } finally {
       setIsSubmitting(false);
+      setPendingFormData(null);
     }
+  };
+
+  // Función para cerrar modal de confirmación
+  const handleCloseConfirmModal = () => {
+    setShowConfirmModal(false);
+    setPendingFormData(null);
   };
 
   // Modificado para hacer merge con datos existentes
@@ -567,6 +591,38 @@ const DynamicGeneratePay = () => {
         </div>
       </main>
       </div>
+
+      {/* Modal de Confirmación */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                Confirmar Pago
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                ¿Estás seguro de que deseas registrar el pago de <strong>${pendingFormData?.cantidadRecibida}</strong> para {accountData?.customerName || 'el cliente'}?
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleCloseConfirmModal}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Procesando...' : 'Sí, Confirmar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

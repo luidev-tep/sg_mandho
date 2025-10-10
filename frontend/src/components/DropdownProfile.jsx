@@ -3,8 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Transition from '../utils/Transition';
 import UserAvatar from '../images/user-avatar-32.png';
-import { useAuth } from '../utils/AuthContext'; // Mantenemos la importación del contexto
-import { detenerRenovacionAutomatica } from '../api/api_auth'; // Importamos la función desde su origen
+import { useAuth } from '../utils/AuthContext';
  
 function DropdownProfile({ align }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -26,11 +25,8 @@ function DropdownProfile({ align }) {
 
   // Función para cerrar sesión
   const cerrarSesion = () => {
-    detenerRenovacionAutomatica();      // 1. Detiene la renovación automática
-    dispatch({ type: "CLEAR_USER" });   // 2. Limpia el estado global de la aplicación
-    localStorage.removeItem("usuario"); // 3. Elimina datos del usuario del localStorage
-    localStorage.removeItem("tokens");  // 4. Elimina los tokens del localStorage
-    navigate("/Signup");                // 5. Redirige a la página de login
+    dispatch({ type: "CLEAR_USER" });   // Limpia el estado global (esto automáticamente detiene la renovación en AuthContext)
+    navigate("/Signup");                // Redirige a la página de login
   };
 
   return (

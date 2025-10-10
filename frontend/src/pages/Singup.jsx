@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { ObtenerUsuario, iniciarRenovacionAutomatica } from '../api/api_auth';
+import { ObtenerUsuario } from '../api/api_auth';
 import AuthImage from "../images/auth-image.jpg";
 import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -22,15 +22,13 @@ function Signup() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [loginSuccess, setLoginSuccess] = useState(false);
-  const [isThrottled, setIsThrottled] = useState(false); // Estado para limitar clics
+  const [isThrottled, setIsThrottled] = useState(false);
 
   const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   const onSubmit = handleSubmit(async (data) => {
-    // Si el botón está en cooldown, no hacer nada
     if (isThrottled) return;
 
-    // Activar el cooldown por 1 segundo
     setIsThrottled(true);
     setTimeout(() => setIsThrottled(false), 1000);
 
@@ -54,13 +52,10 @@ function Signup() {
         }
       });
 
-      // Iniciar la renovación automática del token
-      iniciarRenovacionAutomatica();
-
       setLoginSuccess(true);
       setTimeout(() => {
         navigate('/');
-      }, 1500); // Espera 1.5 segundos antes de redirigir
+      }, 1500);
 
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
@@ -74,7 +69,7 @@ function Signup() {
   const onRecaptchaChange = (value) => {
     setValue('recaptcha', value);
     setRecaptchaError(null);
-    setApiError(null); // Limpiar error de API al cambiar reCAPTCHA
+    setApiError(null);
   };
 
   return (
@@ -132,7 +127,7 @@ function Signup() {
                           message: 'Solo se permiten letras sin espacios'
                         }
                       })}
-                      onChange={() => setApiError(null)} // Limpiar error al escribir
+                      onChange={() => setApiError(null)}
                     />
                     {errors.name && (
                       <span className="text-red-500 text-sm">{errors.name.message}</span>
@@ -147,7 +142,7 @@ function Signup() {
                       id="role" 
                       className="text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-select w-full"
                       {...register("role", { required: 'Selecciona un rol' })}
-                      onChange={() => setApiError(null)} // Limpiar error al cambiar
+                      onChange={() => setApiError(null)}
                     >
                       <option value="">Selecciona un rol</option>
                       <option value="delegado">Delegado</option>
@@ -179,7 +174,7 @@ function Signup() {
                           'buenavista'
                         ].includes(value) || 'Seleccione una manzana válida'
                       })}
-                      onChange={() => setApiError(null)} // Limpiar error al cambiar
+                      onChange={() => setApiError(null)}
                       disabled={isSubmitting}
                     >
                       <option value="">Seleccione una opción</option>
@@ -214,7 +209,7 @@ function Signup() {
                             message: 'La contraseña debe tener al menos 8 caracteres'
                           }
                         })}
-                        onChange={() => setApiError(null)} // Limpiar error al escribir
+                        onChange={() => setApiError(null)}
                       />
                       <button 
                         type="button"
@@ -246,7 +241,6 @@ function Signup() {
                       onChange={onRecaptchaChange}
                     />
                   </div>
-
                   <button 
                     type="submit" 
                     className="w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-lg shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
