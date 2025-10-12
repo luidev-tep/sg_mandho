@@ -32,7 +32,7 @@ def insert(data:object)  -> bool:
         object_conecction.cursor.execute(query, values)
         object_conecction.save_changes()
         object_conecction.close_conexion()
-        print("Rol insertado correctamente. Desde src.accounts.repository.insert_account")
+        #print("Rol insertado correctamente. Desde src.accounts.repository.insert_account")
         return True, ""
     except Exception as e:
         object_conecction.close_conexion()

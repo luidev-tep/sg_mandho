@@ -41,9 +41,10 @@ class Role:
         """
         is_vaild, dim_role_data = insertar_role(role_data["status"])
         
-        print(f"es valido : {is_vaild}")
+        #print(f"es valido : {is_vaild}")
         if is_vaild:
             return True, dim_role_data,"Rol obtendido exitosamente"
         else:
+            print("No se pudo obtener el rol")
             return False, "", "No se pudo obtener el rol"
         

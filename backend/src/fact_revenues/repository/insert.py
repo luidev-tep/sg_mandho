@@ -26,7 +26,7 @@ def insert_fact_revenue(data_revenue: FACT_Revenue) -> bool:
             # usando un f-string para formatear la salida.
 
         #print()
-        f"""
+        string = f"""
         INFORMACIÓN DEL REGISTRO EN FACT_Revenue:
         -----------------------------------------
         ID de Factura Revenue:     {data_revenue.Fact_RevenueId}

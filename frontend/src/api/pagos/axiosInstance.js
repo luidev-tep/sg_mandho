@@ -10,12 +10,10 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // 1. Recuperar la cadena de texto JSON de localStorage
     const tokensString = localStorage.getItem('tokens');
-
     if (tokensString) {
       try {
         // 2. Parsear la cadena para convertirla en un objeto
         const tokens = JSON.parse(tokensString);
-
         // 4. Si el accessToken existe, añadirlo a la cabecera
         if (tokens?.tokens?.access_token) {
           config.headers['Authorization'] = `Bearer ${tokens.tokens.access_token}`;

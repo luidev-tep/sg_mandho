@@ -117,7 +117,7 @@ class ReadPayment:
 
                                  # Ejecutamos la consulta
                 #print(query)
-                print(values)
+                #print(values)
                 hanlder_conexion.cursor.execute(query, tuple(values))
             else:
                 query = query.replace("[filtros]", "")

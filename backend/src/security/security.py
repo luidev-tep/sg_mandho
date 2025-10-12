@@ -1,6 +1,7 @@
 from typing import Any
 import re
-
+import hashlib
+import secrets
 
 from src.dim_dates.dim_date import DIM_DATE    
 from src.utils.id_generator import create_id
@@ -72,15 +73,18 @@ class SecurityUsers:
                 # print('Day: ', day)
                 user = get_user_info(data_user['name'], data_user['role'], data_user['manzana'], StartDate, EndDate)
                 
-                
+                #print("User: ", user)
+                #print([(user[dat], type(user[dat]), dat) for dat in user ])
                 if user is None:
                     print('User is None')
                     # Usamos un código 401 (Unauthorized) que es más apropiado para credenciales incorrectas.
                     return 401, "Datos incorrectos", None
                 
                 passwordDB = user['password']
-                hash_password = create_id([data_user['password']]) # Suponiendo que create_id hashea la contraseña
-                validacion1 = hash_password == passwordDB
+                #print(f"Username DB: {user['password']}")
+                #print('password user: ', data_user['password'])
+                #print(f"La password coincide: {self.__verify_password(data_user['password'], passwordDB)}")
+                validacion1 = self.__verify_password(data_user['password'], passwordDB)
                 validacion2 = data_user['name'] == user['username']
                 validacion4 = data_user['role'] == user['RoleName']
                 if validacion1 and validacion2 and validacion4:
@@ -98,7 +102,7 @@ class SecurityUsers:
             except Exception as e:
                 print(e)
                 return 500, str(e), None
-            
+    
     def insert_new_Onwer(self, data_json: dict[str, str]) -> tuple[int, str]:
         """
         Función principal de flujo de trabajo para la creación y asignación de un nuevo
@@ -173,7 +177,7 @@ class SecurityUsers:
         #Validar el rol que se intenta Agregar
         data_for_post = {'RoleName': data_json['RoleName'], 'CustomerFraction': data_json['CustomerFraction'], 'serviceName': data_json['serviceName']}
         status, mensaje = self.validate_user_post(data_for_post)
-        print(f"Paso la validacion de puesto")
+        #print(f"Paso la validacion de puesto")
         if status != 200:
             return status, mensaje
         
@@ -187,8 +191,7 @@ class SecurityUsers:
             print(f"La constrasenia fallo por {message}")
             return 400, message
         
-        hash_password = create_id([data_json['password']]) # Suponiendo que create
-
+        hash_password = self.__hash_password(data_json['password'])
         year, month, day = hanlder_date.full_date
         StartDate = f"{year}-01-01"
         EndDate = f"{year}-12-31"
@@ -357,7 +360,7 @@ class SecurityUsers:
                 return 409, f"No se puede agregar un subdelegado para la manzana de  {data_json['CustomerFraction']}"
         
         return 200, "Validación exitosa"
-#Se ha puesto el decorador como como una funcion py no como un metodo para poder usarlo en cualquier blueprint
+    #Se ha puesto el decorador como como una funcion py no como un metodo para poder usarlo en cualquier blueprint
 
     def validate_password_with_feedback(self, password: str) -> dict:
         """
@@ -418,8 +421,7 @@ class SecurityUsers:
             'is_valid': len(errors) == 0,
             'errors': ' '.join(errors)
         }
-
-
+        
     def validate_admin_password(self, password: str) -> tuple[int, str]:
         """
         Función para validar la contraseña del usuario con rol 'delegado' para
@@ -458,13 +460,39 @@ class SecurityUsers:
         """
         try:
             passwordDB = get_admin_info()
-            if create_id([password]) == passwordDB:
+            if self.__hash_password(password) == passwordDB:
                 return 200, "Contrasenia correcta"
             else:
                 return 401, "Contrasenia incorrecta"
         except Exception as e:
             print(e)
             return 500, str(e)
+        
+        
+    def __hash_password(self, password: str) -> str:
+        """
+        Genera un hash para la contraseña.
+
+        Args:
+            password (str): La contraseña a hashear.
+
+        Returns:
+            str: El hash generado.
+        """
+        return hashlib.md5(password.encode()).hexdigest()  # MD5 es débil pero simple
+
+    def __verify_password(self, password: str, hash_password_db: str) -> bool:
+        """
+        Verifica si una contraseña coincide con su hash.
+
+        Args:
+            password (str): La contraseña a verificar.
+            hash_password (str): El hash de la contraseña.
+
+        Returns:
+            bool: True si coinciden, False en caso contrario.
+        """
+        return self.__hash_password(password) == hash_password_db
 
 
 def role_required(required_role) :#-> Callable[..., _Wrapped[Callable[..., Any], Any, Callable[...:

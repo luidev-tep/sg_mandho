@@ -4,9 +4,8 @@ from src.payments.services.special_services import SpecialServices
 from src.payments.model.pending_paid import PendingPaidModel, PendingPaidModel2
 
 
-#ESTE ARCHIVO YA NO ES FUNCIONAL, DEBIDO A QUE LA QUERY EN LA 
-# QUE SE BASAB HA DEJADO DE FUNCIONAR,
-# SE PLANEA ELIMINARLO
+#ESTE ARCHIVO SIGUE SIENDO UTIL PAR APODER IDENTIFICAR QUE PAGOS PENDIENTES TIENEN LOS USUARIOS
+#EL OTRO USUO YA DEJO DE SER UTILS 
 
 def get_query(type_transaction: str) -> str:
     """

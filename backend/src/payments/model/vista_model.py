@@ -125,6 +125,6 @@ class VistaModel:
             "DIM_DateId": self.get_date(DIM_DateId) ,# Vienen como 2023/04/12
             "DIM_AccountId": DIM_AccountId
         }
-        print(datos)
+        #print(datos)
 
         return datos

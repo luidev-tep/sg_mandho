@@ -100,7 +100,7 @@ class ServiceDetailsCrud:
                 "StartDate": StartDate,
                 "EndDate": EndDate
             }
-            print(f"Data format for service details: {data_format}")
+            #print(f"Data format for service details: {data_format}")
             service_details = DIM_Details(**data_format)
             
             result = insertar_registro(service_details)

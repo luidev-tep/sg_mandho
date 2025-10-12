@@ -17,7 +17,9 @@ function loadUserFromStorage() {
     const threeHours = 3 * 60 * 60 * 1000;
 
     if (now - timestamp > threeHours) {
+      // Si el usuario expira, también eliminar los tokens
       localStorage.removeItem('usuario');
+      localStorage.removeItem('tokens');
       return null;
     }
 
@@ -39,6 +41,7 @@ function loadTokensFromStorage() {
 
     // Si el refresh token tiene más de un día, lo consideramos expirado
     if (now - refreshTokenTimestamp > oneDay) {
+      // Si los tokens expiran, también eliminar el usuario
       localStorage.removeItem('usuario');
       localStorage.removeItem('tokens');
       return null;
@@ -223,9 +226,14 @@ export function AuthProvider({ children }) {
     };
   }, [state.tokens?.access_token, state.tokens?.refresh_token, renewToken]);
 
-  // Efecto para redirigir al login si no hay usuario
+  // Efecto para redirigir al login si no hay usuario O no hay tokens
   useEffect(() => {
-    if (!state.usuario && !state.tokens && location.pathname !== '/Signup') {
+    // Verificar que AMBOS existan, si falta cualquiera de los dos, redirigir
+    if ((!state.usuario || !state.tokens) && location.pathname !== '/Signup') {
+      // Si hay inconsistencia (uno existe pero el otro no), limpiar todo
+      if (state.usuario || state.tokens) {
+        dispatch({ type: 'CLEAR_USER' });
+      }
       navigate('/Signup', { replace: true });
     }
   }, [state.usuario, state.tokens, location.pathname, navigate]);

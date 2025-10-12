@@ -60,7 +60,7 @@ def get_user_info(username: str, RoleName: str, manzana: str, StartDate: str, En
 
         if user_info is None:
             return None
-        
+        #print("User info: ", user_info)
         user_format = VistaModel(*user_info).to_dict()
         
         return user_format
@@ -248,7 +248,7 @@ def insert_onwer_info(data: dict) -> tuple[int, str]:
         # NOTA: Se asume que `insert_account` fue modificado para aceptar un objeto de conexión
         # y no crear uno nuevo, para poder ser parte de la transacción.
         # Lo mismo para las otras funciones. Aquí se simula el flujo correcto.
-        print("Insertando propietario de servicio... Actualizar informacion del usuario...")
+        #print("Insertando propietario de servicio... Actualizar informacion del usuario...")
         #Actualizar el password y de mas en Customer
         estado, mensaje = update_user_info(data['password'], data['username'], data['DIM_CustomerId'])
         if estado != 200:
@@ -262,7 +262,7 @@ def insert_onwer_info(data: dict) -> tuple[int, str]:
             'EndDate': data['EndDate'],
             'serviceName': data['serviceName']
         }
-        print("Insertando propietario de servicio...Insetando propietario")
+        #print("Insertando propietario de servicio...Insetando propietario")
         response  = insert_service_owner_info(data_service_owner)
         if not response:
             return 500, "No se pudo insertar el nuevo usuario"

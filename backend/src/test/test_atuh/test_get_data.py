@@ -3,10 +3,10 @@ from src.security.security import  SecurityUsers
 def test_get_admin_account():
     hanlder = SecurityUsers()
     data = {
-        'name':"monseLopez",
-        'manzana': 'garambullo',
-        'role': 'subdelegado',
-        'password': '2006-11-01'
+        'name':"miriamComitiva",
+        'manzana': 'yhonda',
+        'role': 'comitiva',
+        'password': 'TacosHola!8'
     }
     
     status, mensaje, data = hanlder.authenticate_user(data )

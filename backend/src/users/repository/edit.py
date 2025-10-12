@@ -25,7 +25,7 @@ def edit_user(data_edit: dict) -> bool:
     handler_coon = Conexion()
     try:
 
-        print('Datos a ingresar', data_edit)
+        #print('Datos a ingresar', data_edit)
         query = """
         UPDATE DIM_Customer
                    SET

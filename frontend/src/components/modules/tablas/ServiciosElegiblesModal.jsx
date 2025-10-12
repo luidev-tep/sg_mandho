@@ -257,8 +257,8 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
           onClose={() => setShowPasswordModal(false)}
           onVerificationSuccess={handlePasswordVerificationSuccess}
           title="Confirmar Acción"
-          message={`Está a punto de aplicar el servicio '${ServiceDetailType}' a ${selectedUsers.length} usuario(s). Se requiere autorización de delegado para continuar.`}
-          verificationType="owner" // Usar la validación de delegado
+          message={`Está a punto de aplicar el servicio '${ServiceDetailType}' a ${selectedUsers.length} usuario(s). Se requiere su contraseña para continuar.`}
+          verificationType="owner" // Usar la validación de subdelegado
         />
       )}
     </>

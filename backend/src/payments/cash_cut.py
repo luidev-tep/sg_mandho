@@ -202,7 +202,7 @@ class cashCutCrud(PaymentCrud):
             response = create_cash_cut_register(data_cash_cuth)
             
             if response:
-                print("Cash cut creado exitosamente")
+                #print("Cash cut creado exitosamente")
                 return 201, "Cash cut creado exitosamente"
             
             return 500, "Error creando el cash cut"
@@ -247,7 +247,6 @@ class cashCutCrud(PaymentCrud):
             
             if  is_service_exist(dim_ServiceDailesId): #Si existe ya, entonces no se cuenta
                 continue
-            
             
             #Verificar que el servicio sea valido
             if not search_service_Valid(date[0], dim_ServiceDailesId):

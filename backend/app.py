@@ -78,17 +78,5 @@ CORS(app, resources={
     }
 })
 
-# Handler adicional para OPTIONS (preflight) - CRÍTICO PARA EDGE
-# @app.after_request
-# def after_request(response):
-#     origin = request.headers.get('Origin')
-#     if origin in origins_list:
-#         response.headers.add('Access-Control-Allow-Origin', origin)
-#         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers')
-#         response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH')
-#         response.headers.add('Access-Control-Allow-Credentials', 'true')
-#         response.headers.add('Access-Control-Max-Age', '86400')
-#     return response
-
 if __name__ == '__main__':
     app.run(debug=True)

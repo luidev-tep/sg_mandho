@@ -1,3 +1,4 @@
+import string
 from src.dim_servicedetails.repository.show import get_amount_by_id
 
 #Importacion de la funcion para actualizar una seria de registros, (Ver si convertir a una clase apra que solamente se acceda a sus metodos)
@@ -86,7 +87,7 @@ def get_status_payment_for_registers(
     Returns:
         str: Retorna "pagado" si el monto total coincide o lo supera, o "pendiente" si es menor.
     """
-    print(f"""
+    string =f"""
     DETALLE DE VALORES DE ENTRADA:
     -------------------------------
     Costo del Servicio:        {cost_service}
@@ -96,7 +97,7 @@ def get_status_payment_for_registers(
     Nombre del Servicio:       {service_name}
     Año de Pago:               {year_pay}
     -------------------------------
-    """)
+    """
     #Obtener primero la suma de los pagos que lleva hasta ahora le cliente
     #Se actualizaran todos los pagos asociados a esta cuenta para que se marquen como pagados,
     status,registros_cliente = get_fact_revenues_by_customer_id(dim_customer_id, service_name, servicedetails, year_pay )
@@ -104,12 +105,12 @@ def get_status_payment_for_registers(
     if status != 200:
         print(f"Error al leer los pagos: {registros_cliente}")
         return ""
-    print("Se obtuvieron los pagos", len(registros_cliente))
+    #print("Se obtuvieron los pagos", len(registros_cliente))
 
     amount = cantidad_recibida
     for registro in registros_cliente:
-        print('Se imprime desde service.Get_ status payments for registers ')
-        print(registro)
+        #print('Se imprime desde service.Get_ status payments for registers ')
+        #print(registro)
         amount += registro['amount']
         
     estado = cost_service - amount

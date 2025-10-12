@@ -7,5 +7,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // Permite que el servidor sea accesible desde otras IPs en la red
     port: 5173 // Define el puerto en el que se ejecutará la aplicación
-  }
+  },
+  esbuild: {
+  // 👇 Solo eliminar logs y debugger si es build de producción
+  drop: mode === 'production' ? ['console', 'debugger'] : [],
+  },
 });

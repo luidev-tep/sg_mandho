@@ -20,7 +20,7 @@ handler_role = Role()
  
 def validate_account(user_id: str) -> bool:
     """Funcion la cual debera hacer una consulta a la base de datos para veficiar que no se pase el limite de cuentas
-    el limite de cuentas es de 10, la funcion hara una consulta sql y verificara cuentas cuentas con esa persona hay
+    el limite de cuentas es de 15, la funcion hara una consulta sql y verificara cuentas cuentas con esa persona hay
     
     Args:
         user_id (str): El id de la persona
@@ -41,8 +41,8 @@ def validate_account(user_id: str) -> bool:
     
     account_count = result[0]  # El COUNT(*) es el primer elemento de la tupla
     
-    # Verificar el límite (menor a 10)
-    if account_count <= 10:
+    # Verificar el límite (menor a 15)
+    if account_count <= 15:
         return account_count
     else:
         return False

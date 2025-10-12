@@ -3,7 +3,6 @@ from src.utils.conexion import Conexion
 from src.payments.model.pending_paid import CashCutModel
 
 
-
 def create_cash_cut_register(data_json: CashCutModel) -> bool:
     """
     Inserta un nuevo registro a la tabla DIM_cash cut.
@@ -126,8 +125,6 @@ def search_service_Valid(year: int, service_details_id: str) -> bool:
         handler.close_conexion()
         
         
-
-
 def is_service_exist(service_details_id: str) -> bool:
     """
     Verifica si ya existe un registro de corte de caja para un servicio.
@@ -156,7 +153,7 @@ def is_service_exist(service_details_id: str) -> bool:
         if result is None: #Significa  que no existe ningun registro en la tabla, o que no se ha hecho corte de caja aun
             return False
         
-        print(result)
+        #print(result)
         return True
     except sqlite3.Error as e:
         print(e)
