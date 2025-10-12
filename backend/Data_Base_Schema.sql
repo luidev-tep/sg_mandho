@@ -451,7 +451,6 @@ WHERE
 select * from DIM_Date
 
 
-
 -- Ejemplo de la consulta que se haria para ver los pagos de lar personas
 -- Unidos por anio y por cuenta
 
