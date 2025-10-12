@@ -72,8 +72,10 @@ class ValidatePayment():
         
     def is_account_active(self, DIM_accountId) -> bool: 
         """
-        Verifica que la cuenta no sea de tipo estudiante o de tipo inactiva, ya que los estudiantes no pueden 
-        realizar pagos y las cuentas inactivas no pueden realizar pagos.
+        Verifica que la cuenta no sea de tipo estudiante o de tipo invalido, ya que los estudiantes no pueden 
+        realizar pagos y las cuentas invalidas no pueden realizar pagos.
+        Se han agregado otros 2 nuevos campos, los cuale sosn residente y vecino exento, ya que estos no pueden 
+        realizar pagos.
         """
         handler_coneccion = Conexion()
         query = """
@@ -86,7 +88,7 @@ class ValidatePayment():
         result = handler_coneccion.cursor.fetchone()
         if result is None:
             return False
-        elif result[0] == 'estudiante' or result[0] == 'inactiva':
+        elif result[0] in ['estudiante', 'invalido', 'vecino exento', 'residente']:
             return False
         else:
             return True

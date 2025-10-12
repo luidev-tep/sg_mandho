@@ -75,7 +75,7 @@ def create_user():# -> tuple[Any, Literal[400]] | tuple | tuple[Any, Literal[500
             data = {
                 "id": persona_id,
                 }
-            print(mensaje)
+            #print(mensaje)
             return send_success(mensaje, data,estado)
         else:
             print(mensaje)
@@ -235,7 +235,7 @@ def userDefuncion() -> tuple[Any, Literal[400]] | tuple | tuple[Any, Literal[500
         state, message, data = user_options.defuncion_user(defuncion_data)
 
         if 201 == state :
-            print(f"El estado {state}  Mensaje: {message}, la informacion {data}")
+            #print(f"El estado {state}  Mensaje: {message}, la informacion {data}")
             return send_success(message, data, state)
         else:
             print(message)
@@ -279,7 +279,7 @@ def get_data_customer_payments() -> tuple[dict, int]:
         state, message, data = user_options.get_data_customer_payments(dim_customer_id)
         #print('Sale de la logica principal')
         if state == 200:
-            print(f"Estado: {state}, Mensaje: {message}")
+            #print(f"Estado: {state}, Mensaje: {message}")
             return send_success(message, data, state)
         else:
             print(f"Error: {message}")

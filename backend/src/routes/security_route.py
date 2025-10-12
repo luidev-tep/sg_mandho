@@ -99,7 +99,7 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
         
         if estado != 200:
             return send_error(mensaje, estado)
-        
+        #print([(user_data[dat], type(user_data[dat]), dat) for dat in user_data ])
         #Logica de generacion de JWT
         access_token = create_access_token(
             identity=user_data['DIM_ServiceOwnersId'],
@@ -134,7 +134,6 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
     except Exception as e:
         print(f"Error al obtener el usuario por ID: {e}")
         return send_error(str(e), 500)
-
 
 @security_route.route('validate_password_service/', methods=['POST'])
 @jwt_required()
@@ -188,15 +187,14 @@ def validar_password_by_action() -> tuple[Any]:
         
         if not request_data:
             return send_error("No se recibieron datos", 400)
-        print(f"Se recibieron los siguientes datos: {request_data}")
-        
+        #print(f"Se recibieron los siguientes datos: {request_data}")
         data = {
             "password": request_data['password'],
             "manzana": claims.get('fraction'),
             "role": user_role,
-            "name": claims.get('name')
+            "name": claims.get('name', "No se encontro el nombre")
         }
-        #print([(data[dat], type(data[dat])) for dat in data])
+        
         #Se debe verificar con la contrasenia que el propia del usuario
         #Se debe extraer la contrasenia y comprobar.
         #Se debe extraer el name y buscar la contrasenia en la base de datos.
@@ -305,7 +303,7 @@ def get_onwer_info():
         if not data_json:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
 
-        print(f"Datos recibidos: {len(data_json)}")
+        #print(f"Datos recibidos: {len(data_json)}")
         datos = None
         estado = None
         mensaje = None
@@ -321,7 +319,7 @@ def get_onwer_info():
 
         if 'create_onwer' in data_json and data_json['create_onwer']:
             estado, mensaje = security_options.insert_new_Onwer(data_json['create_onwer'])
-            print(f"Datos recibidos: {datos}")
+            #print(f"Datos recibidos: {datos}")
         
 
         if 200 <= estado <= 205:

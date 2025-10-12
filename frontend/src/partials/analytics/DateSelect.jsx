@@ -9,11 +9,11 @@ import Transition from '../../utils/Transition';
  * 
  * useEffect (click fuera):
  *   Se utiliza para escuchar clics en el documento y cerrar el menú desplegable
- *   si el usuario hace clic fuera del botón o del contenedor del menú.
+ *   si el usuario hace clic fuera del botón o del contenedor del menú. -No funciona
  * 
  * useEffect (ESC):
  *   Se utiliza para cerrar el menú desplegable cuando el usuario presiona
- *   la tecla Escape (keyCode 27).
+ *   la tecla Escape (keyCode 27). - No funciona 
  * 
  * handleSelection:
  *   Función síncrona que:
@@ -39,42 +39,44 @@ import Transition from '../../utils/Transition';
 function DateSelect({ onFilterChange }) {
   // Función para generar opciones de meses dinámicamente
   const generateMonthOptions = () => {
+    const startYear = 2025;
+    const startMonth = 9; // 0-indexed: 9 = Octubre
+    const startDate = new Date(startYear, startMonth, 1);
+
     const options = [];
     const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth(); // 0-11
-    
+
     const monthNames = [
       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
-    
+
     let id = 0;
-    
-    // Generar opciones desde el mes anterior hasta 12 meses atrás
-    for (let i = 1; i <= 12; i++) {
-      let targetMonth = currentMonth - i;
-      let targetYear = currentYear;
-      
-      // Ajustar año si el mes es negativo
-      if (targetMonth < 0) {
-        targetMonth += 12;
-        targetYear--;
-      }
-      
-      const monthName = monthNames[targetMonth];
-      const period = `${monthName} ${targetYear}`;
-      const value = `M${String(targetMonth + 1).padStart(2, '0')}`;
-      const year = targetYear.toString();
-      
+
+    // Caso especial: Si estamos en el mes de inicio (Oct 2025), mostramos solo ese mes.
+    if (today.getFullYear() === startYear && today.getMonth() === startMonth) {
       options.push({
-        id,
-        period,
-        value,
-        year
+        id: 0,
+        period: `${monthNames[startMonth]} ${startYear}`,
+        value: `M${String(startMonth + 1).padStart(2, '0')}`,
+        year: startYear.toString()
       });
-      
-      id++;
+      return options;
+    }
+
+    // Lógica general: Generar hasta 12 meses hacia atrás desde el mes anterior al actual.
+    for (let i = 1; i <= 12; i++) {
+      const dateIterator = new Date(today.getFullYear(), today.getMonth() - i, 1);
+
+      // Detener si el mes a generar es anterior a la fecha de inicio.
+      if (dateIterator < startDate) break;
+
+      options.push({
+        id: id++,
+        period: `${monthNames[dateIterator.getMonth()]} ${dateIterator.getFullYear()}`,
+        value: `M${String(dateIterator.getMonth() + 1).padStart(2, '0')}`,
+        year: dateIterator.getFullYear().toString()
+      });
     }
     
     return options;
@@ -86,49 +88,27 @@ function DateSelect({ onFilterChange }) {
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
-  // Cerrar al hacer clic fuera - EXACTAMENTE como estaba funcionando
+  // Cerrar al hacer clic fuera
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const clickHandler = ({ target }) => {
       if (!dropdownOpen) return;
-      
-      const isClickInsideTrigger = trigger.current && trigger.current.contains(event.target);
-      const isClickInsideDropdown = dropdown.current && dropdown.current.contains(event.target);
-      
-      // Solo cerrar si el clic fue completamente fuera del componente
-      if (!isClickInsideTrigger && !isClickInsideDropdown) {
-        setDropdownOpen(false);
-      }
+      if (!dropdown.current || !trigger.current) return;
+      if (dropdown.current.contains(target) || trigger.current.contains(target)) return;
+      setDropdownOpen(false);
     };
-
-    // Usar capture: true para capturar el evento antes de que llegue al botón
-    document.addEventListener('mousedown', handleClickOutside, true);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
-    };
+    document.addEventListener('click', clickHandler);
+    return () => document.removeEventListener('click', clickHandler);
   }, [dropdownOpen]);
 
-  // Cerrar al presionar la tecla Escape - EXACTAMENTE como estaba funcionando
+  // Cerrar al presionar la tecla Escape
   useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && dropdownOpen) {
+    const keyHandler = ({ keyCode }) => {
+      if (!dropdownOpen || keyCode !== 27) return;
         setDropdownOpen(false);
-      }
     };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    document.addEventListener('keydown', keyHandler);
+    return () => document.removeEventListener('keydown', keyHandler);
   }, [dropdownOpen]);
-
-  // Manejador del botón - EXACTAMENTE como estaba funcionando
-  const handleButtonClick = (event) => {
-    // Prevenir que el evento se propague y cause conflictos
-    event.stopPropagation();
-    setDropdownOpen(prev => !prev);
-  };
 
   const handleSelection = (id) => {
     const option = options.find(opt => opt.id === id);
@@ -151,7 +131,7 @@ function DateSelect({ onFilterChange }) {
         ref={trigger}
         id="date-select-button"
         className="flex items-center justify-between px-5 py-3 text-base font-medium bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 min-w-[220px]"
-        onClick={handleButtonClick}
+        onClick={() => setDropdownOpen(!dropdownOpen)}
         aria-expanded={dropdownOpen}
         aria-haspopup="true"
       >

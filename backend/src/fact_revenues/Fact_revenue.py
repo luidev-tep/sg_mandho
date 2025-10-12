@@ -24,7 +24,6 @@ handler_movement = DIM_Movement()
 handler_status = DIM_status()
 
 
-
 class factRevenueCrud():
     def create_fact_revenue(self, data_json: dict) -> tuple[Literal[500], Literal['Error creating payment']] | tuple[Literal[201], Literal['Payment created successfully']]:
         """
@@ -94,26 +93,26 @@ class factRevenueCrud():
         registros de tipo 'trabajado' y los inserta en la tabla `fact_revenues`.
         También actualiza el estado del servicio asociado.
 
-    Args:
-        data_format (list): Una lista de diccionarios, donde cada diccionario
-                             representa un pago a ser insertado. Se asume que
-                             los datos han sido previamente formateados y
-                             validados.
+        Args:
+            data_format (list): Una lista de diccionarios, donde cada diccionario
+                                representa un pago a ser insertado. Se asume que
+                                los datos han sido previamente formateados y
+                                validados.
 
-    Returns:
-        tuple[Literal[500], Literal['Error creating payment']] | tuple[Literal[201], Literal['Payment created successfully']]:
-            - (201, "Pagos creados exitosamente"): Si la inserción y
-              la actualización del servicio fueron exitosas.
-            - (400, "serviceDetailsType '...' no se encontró."): Si no se
-              encuentra el ID del detalle del servicio.
-            - (500, "Error creando los pagos"): Si hay un error durante la
-              inserción de los registros en la base de datos.
-            - (status, mensaje): Si falla la actualización del estado del
-              servicio, se retorna el código de estado y el mensaje de error.
+        Returns:
+            tuple[Literal[500], Literal['Error creating payment']] | tuple[Literal[201], Literal['Payment created successfully']]:
+                - (201, "Pagos creados exitosamente"): Si la inserción y
+                la actualización del servicio fueron exitosas.
+                - (400, "serviceDetailsType '...' no se encontró."): Si no se
+                encuentra el ID del detalle del servicio.
+                - (500, "Error creando los pagos"): Si hay un error durante la
+                inserción de los registros en la base de datos.
+                - (status, mensaje): Si falla la actualización del estado del
+                servicio, se retorna el código de estado y el mensaje de error.
 
-    Raises:
-        Exception: Captura y maneja cualquier excepción que ocurra durante el
-                   proceso, retornando un error genérico.
+        Raises:
+            Exception: Captura y maneja cualquier excepción que ocurra durante el
+                    proceso, retornando un error genérico.
         """
         try:
             # Obtener el ID del detalle del servicio del primer elemento de la lista

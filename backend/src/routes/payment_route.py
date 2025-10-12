@@ -88,7 +88,7 @@ def create_payment() -> Response:
         # Se verifica si los datos recibidos son una lista para manejar pagos masivos
         if isinstance(payment_json, list):
             # Se llama a la función de creación de pagos masivos
-            print(payment_json)
+            #print(payment_json)
             estado, mensaje = payment_options.create_check_list_payments(payment_json)
         else:
             # Se llama a la función para crear un solo pago
@@ -267,17 +267,17 @@ def get_any_data() -> Response:
             estado, mensaje, datos = payment_options.get_cost_by_payment_year(data_json['costoservicio'])
         
         if 'pagosPendientes' in data_json and data_json['pagosPendientes']:
-            print('Se imprimen los la info obtendia')
-            for data in data_json['pagosPendientes']:
+            #print('Se imprimen los la info obtendia')
+            # for data in data_json['pagosPendientes']:
                 
-                print(f'El valor es{data}= {data_json['pagosPendientes'][data]}')
+            #     print(f'El valor es{data}= {data_json['pagosPendientes'][data]}')
             estado, mensaje, datos = payment_options.get_pending_paids_per_customer(data_json['pagosPendientes'])
-            print(f"Datos recibidos: {datos}")
+            #print(f"Datos recibidos: {datos}")
             
         if 'servicios_corte_caja' in data_json and data_json['servicios_corte_caja']:
             estado, datos = hanlder_cash_cut.get_service_chosen(data_json['servicios_corte_caja'])
             mensaje = "Datos obtenidos correctamente"
-            print(f"Datos recibidos: {datos}")
+            #print(f"Datos recibidos: {datos}")
             
         # Aquí se pueden agregar más condiciones para otros tipos de servicios en el futuro
         # Ejemplo:
@@ -332,7 +332,7 @@ def cash_cut_route() -> Response:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
         
         estado, mensaje = hanlder_cash_cut.CashCut(data_json)
-        print(f"Estado: {estado}, Mensaje: {mensaje}")
+        #print(f"Estado: {estado}, Mensaje: {mensaje}")
         if estado == 201:
             return send_success(mensaje, None, estado)
         else:

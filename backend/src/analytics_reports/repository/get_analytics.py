@@ -304,7 +304,7 @@ class GetAnalytics:
                 data = handler_conexion.cursor.fetchall()
                 
                 for row in data:
-                    print(row)
+                    #print(row)
 
                     manzanas[row[0]].append(row[1])
 

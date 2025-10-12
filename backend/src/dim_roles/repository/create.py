@@ -30,7 +30,7 @@ def insertar_role(rolename: str)  -> tuple[Literal[True], Any] | tuple[Literal[F
         
         id = object_conecction.cursor.fetchone()
         object_conecction.close_conexion()
-        print(f"ID obtenido: {id}")
+        #print(f"ID obtenido: {id}")
         if id is not None:
             return True, id[0]
         else:

@@ -6,8 +6,14 @@ import Transition from '../../utils/Transition';
  * Reconstruido con una lógica de eventos robusta para garantizar un funcionamiento fiable.
  */
 function DateSelectPayment({ onFilterChange }) {
+  const startYear = 2025; // Año de inicio del proyecto
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+
+  // Calcula cuántos años mostrar: desde el año actual hasta el año de inicio, con un límite de 5.
+  const yearsSinceStart = currentYear >= startYear ? currentYear - startYear + 1 : 0;
+  const numberOfYearsToShow = Math.min(yearsSinceStart, 5);
+
+  const years = Array.from({ length: numberOfYearsToShow }, (_, i) => currentYear - i);
   
   const options = years.map((year, index) => ({
     id: index,

@@ -50,7 +50,7 @@ class Analitycs:
         
         data_analythics = dict()
         try:
-            print(f"Obteniendo la informacion de la comitiva: {data_json['comitiva']}, mes: {data_json['mes']}, anio: {data_json['anio']}")
+            #print(f"Obteniendo la informacion de la comitiva: {data_json['comitiva']}, mes: {data_json['mes']}, anio: {data_json['anio']}")
             
             # Obtiene el monto total de ingresos para el año de la comitiva especificada
             data_analythics['dataIncomes'] = self.get_analytics.get_amount_for_year(data_json['mes'], data_json['comitiva'], data_json['anio'])
