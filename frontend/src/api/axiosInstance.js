@@ -4,7 +4,7 @@ import { AuthProvider } from '../utils/AuthContext';
 
 // 1. Crear la instancia de Axios
 const axiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:5000/api/', // URL base de tu API
+  baseURL: import.meta.env.VITE_API_URL, // URL base de tu API desde .env
 });
 
 // 2. Crear un interceptor de peticiones
@@ -30,7 +30,7 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  } 
 );
 
 // 3. Crear un interceptor de respuestas para manejar tokens expirados

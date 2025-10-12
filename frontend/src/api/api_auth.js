@@ -1,6 +1,6 @@
 import axios from "axios";
-const api = axios.create({   
-    baseURL: 'http://127.0.0.1:5000/api/security/'
+const api = axios.create({
+    baseURL: `${import.meta.env.VITE_API_URL}security/`
 });
 
 /**
@@ -32,7 +32,7 @@ export const ObtenerUsuario = async (userData) => {
         throw error; // Propaga el error para manejarlo en el componente
     }
 }
- 
+  
 /**
  * Función simplificada para refrescar el token.
  * Solo realiza la llamada a la API y devuelve el nuevo access_token.
@@ -43,9 +43,9 @@ export const RefrescarToken = async (refreshToken) => {
     try {
         if (!refreshToken) throw new Error('No se proporcionó un refresh token');
 
-        const response = await axios.post('http://127.0.0.1:5000/api/security/refresh_token/', {}, {
+        const response = await api.post('refresh_token/', {}, {
             headers: {
-                'Authorization': `Bearer ${refreshToken}`
+                'Authorization': `Bearer ${refreshToken}`,
             }
         });
         

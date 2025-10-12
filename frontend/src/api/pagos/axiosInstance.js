@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 1. Crear la instancia de Axios
 const axiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:5000/api/', // URL base de tu API
+  baseURL: import.meta.env.VITE_API_URL, // URL base de tu API
 });
 
 // 2. Crear un interceptor de peticiones
@@ -23,7 +23,7 @@ axiosInstance.interceptors.request.use(
       }
     }
     return config;
-  },
+  }, 
   (error) => {
     return Promise.reject(error);
   }
