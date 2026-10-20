@@ -1,5 +1,5 @@
 //src/api/pagos/api_crear_pago.js
-import axiosInstance from "./axiosInstance";
+import axiosInstance from "../axiosInstance";
 
 export const crearRegistroPago = async (data) => {
     try {

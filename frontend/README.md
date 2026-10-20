@@ -1,123 +1,137 @@
-# Documentación del Frontend - Sistema de Gestión Comunitaria
+# Frontend — S.G. El Mandhó
 
-Este documento detalla la estructura y el funcionamiento del frontend de la aplicación, centrándose en la carpeta `src` y sus componentes principales. Las demás carpetas fuera de `src` serán documentadas en fases posteriores del proyecto.
+SPA (React 19 + Vite 6 + TailwindCSS v4) para la gestión comunitaria: personas, cuentas, pagos por servicio, cortes de caja y analíticas. Basada en la plantilla "Mosaic" (Cruip) adaptada al proyecto.
 
-## 1. Visión General de la Carpeta `src`
+## Stack y dependencias
 
-La carpeta `src` es el corazón de la aplicación, conteniendo todo el código fuente del frontend. Su estructura se basa en componentes reutilizables y una clara separación de responsabilidades para facilitar el desarrollo y mantenimiento.
+| Tecnología | Versión | Uso |
+|---|---|---|
+| React | ^19.0.0 | Framework UI |
+| Vite | ^6.0.11 | Build tool (+ `@vitejs/plugin-react`) |
+| react-router-dom | ^7.1.5 | Enrutado SPA |
+| TailwindCSS | ^4.0.2 (+ forms) | Estilos utility-first |
+| axios | ^1.10 | Cliente HTTP |
+| react-hook-form + yup | ^7.58 | Formularios y validación |
+| chart.js + moment | ^4.4.7 | Gráficas del dashboard |
+| clsx + tailwind-merge | — | Helper `cn()` (`src/lib/utils.js`) |
+| @radix-ui/react-popover, react-day-picker | — | Calendario/datepicker |
+| react-google-recaptcha | ^3.1 | Anti-bot en login |
+| react-transition-group | — | Animaciones (`utils/Transition.jsx`) |
 
-### 1.1. Flujo Principal de la Aplicación
+**Estado**: sin Redux/Zustand — Context API nativo (`AuthContext`, `ThemeContext`).
+**Gestor de paquetes**: pnpm.
+**Scripts** (`package.json`): `dev` = `vite --host 0.0.0.0` · `build` = `vite build` · `preview` = `vite preview`.
 
-El flujo de la aplicación se inicia en `main.jsx` y se gestiona a través de `App.jsx`:
+## Estructura de carpetas (`src/`)
 
-* **`main.jsx`**: Este archivo es el punto de entrada principal de la aplicación. Se encarga de la configuración inicial, incluyendo el modo estricto de React (`React.StrictMode`), la configuración de rutas (`BrowserRouter` de `react-router-dom`) y el montaje del componente principal `App`.
+| Carpeta | Propósito |
+|---|---|
+| `api/` | Capa de servicios HTTP: una función por endpoint. Subcarpeta `pagos/` con su propio `axiosInstance.js` |
+| `charts/` | 10 wrappers de Chart.js (`BarChart02/03/04`, `LineChart03/04`, `Doughnut`, `Pie`, `Polar`, `BarchartFraction`) + `ChartjsConfig.jsx` |
+| `components/` | UI reutilizable: modales (`ModalBlank`, `Modalmessaje`, `ModalValitePass`, `ModalSearch`), selects/dropdowns, `PaginationClassic`, `LoadingSpinner`, `Lista` |
+| `components/accounts/` | Búsqueda de cliente y cuentas (`GetAccount`, `AccounsTable`) |
+| `components/alertas/` | `FormattedErrorMessage` |
+| `components/customers/` | `BarraBusqueda`, edición/reporte/desactivación de personas |
+| `components/modules/` | Flujo de pagos: `TerminarPago`, `DynamicServiceModules/GenericServicePayment`, `tablas/` (`DynamicTable`, `CorteCajaModal`), `UsersPayment/`, y JSONs de configuración en `crear/` (`crear_agua.json`, `crear_feria.json`, `crear_panteon.json`, `crear_delegacion.json`) |
+| `components/ui/` | Shadcn-style: `calendar.jsx`, `popover.jsx`, `Notification.jsx` |
+| `css/` | `style.css` (entrada Tailwind v4) + `additional-styles/utility-patterns.css` |
+| `images/` | ~150 assets de la plantilla (varios sobrantes) |
+| `lib/` | `utils.js` con `cn()` |
+| `pages/` | Vistas enrutadas: subcarpetas `cuentas/`, `payments/`, `personas/` |
+| `partials/` | Layout: `SideBar.jsx` (menú por rol), `Header.jsx` (búsqueda global + tema) |
+| `partials/analytics/` | Cards del dashboard (`DashboardCard*`, `FintechCard*`, `AnalyticsButton`…) |
+| `partials/customers/` | `CustomersTable` + item |
+| `utils/` | `AuthContext.jsx`, `ThemeContext.jsx`, `IdleTimeoutModal.jsx`, `useDebounce.js`, `Utils.js` (moneda/colores) |
 
-* **`App.jsx`**: Aquí se definen todas las rutas de la aplicación. La arquitectura del programa se organiza en cinco tipos de menús principales:
+## Rutas de la app
 
-  * **Cuatro módulos específicos**: Panteón, Pagos de Agua, Delegación y Módulo de Personas.
+Definidas en `src/App.jsx:71-96` con `BrowserRouter` (montado en `main.jsx`).
 
-  * **Panel de Control del Administrador**: Destinado al delegado.
+| Ruta | Componente | Vista |
+|---|---|---|
+| `/` y `/CompanyProfile` | `CompanyProfile` | Perfil de la comunidad (delegado/subdelegados/comitivas) |
+| `/Signup` | `Singup` *(typo heredado)* | **Login** con reCAPTCHA |
+| `/personas/usuarios` | `personas/Customers` | Tabla de personas con filtros y búsqueda global |
+| `/personas/registro` | `personas/UseRegister` | Registro de persona (react-hook-form + yup) |
+| `/personas/registro_exito/:id` | `personas/UserSucces` | Confirmación de registro |
+| `/Cuentas/Cuenta` | `cuentas/Cuenta` | Creación de cuenta para un cliente |
+| `/modulos/:moduleName` | `payments/DynamicMenu` | Menú de pagos por servicio (agua, panteón, delegación, feria) |
+| `/modulos/servicio/:moduleName` | `payments/DynamicMenu` | Variante "servicio" |
+| `/modulos/crear_pago/:moduleName` | `payments/DynamicGeneratePay` | Wizard de creación de pago (carga perezosa) |
+| `/modulos/estado_pago` | `payments/PaymentStatus` | Resultado del pago (querystring) |
+| `/modulos/usuarios/:moduleName` | `payments/DynamicMostrarUsuarios` | Personas del módulo con pagos |
+| `/modulos/crear_servicio/:moduleName` | `payments/AgregarServicio` | Alta de servicio anual (requiere verificar contraseña) |
+| `/Analytics/:comitiva` | `Analytics` | Dashboard por comitiva |
+| `/modulos/agregar_administrador/` | `AgregarUsuario` | Alta de usuarios administrativos |
 
-Aunque la gestión de usuarios aún está en desarrollo, la creación de los módulos ha comenzado. La meta es que todos los módulos de gestión (Panteón, Pagos de Agua, Personas) cuenten con las siguientes funcionalidades principales:
+**Lógica de roles en el menú** (`SideBar.jsx:22-81`): `comitiva` solo ve su servicio; `delegado` no ve crear_pago/usuarios; `subdelegado` está limitado a su manzana.
 
-* **CRUD Básico (Lectura, Creación, Edición)**: Se prioriza la lectura, creación y edición de registros.
+## Comunicación con el backend
 
-* **Desactivación de Registros**: La acción de eliminar registros no está permitida; en su lugar, se implementará una funcionalidad para desactivar registros.
+### Configuración (`.env`)
 
-* **Generación de Informes**: Todos los módulos incluirán la opción de generar informes con información relevante para la interfaz. La funcionalidad de impresión y generación de tickets está planificada para fases futuras.
+- `VITE_API_URL` — baseURL (dev: `http://127.0.0.1:5000/api/`; producción: Railway, comentada).
+- `VITE_RECAPTCHA_SITE_KEY`
+- `VITE_ENVIRONMENT`
 
-La prioridad actual es completar las funcionalidades CRUD y la generación de informes. Una vez resuelto esto, se procederá con la implementación de la gestión de usuarios y, finalmente, los detalles de impresión y tickets para cada módulo.
+### Instancias axios
 
-### 1.2. Optimización y Reutilización de Componentes
+**Instancia central** `src/api/axiosInstance.js`:
+- `baseURL = import.meta.env.VITE_API_URL` (L6-8).
+- **Interceptor de petición** (L11-34): añade `Authorization: Bearer <access>` desde `localStorage['tokens']`.
+- **Interceptor de respuesta** `setupInterceptors` (L37-82): ante 401 → llama `RefrescarToken(refresh_token)` → reintenta la petición original; si falla → `CLEAR_USER` (logout).
 
-Para simplificar el desarrollo y evitar la duplicación de código, se han adoptado las siguientes estrategias:
+**Segunda instancia** `src/api/pagos/axiosInstance.js`: duplicado con Bearer pero **sin interceptor de refresh**.
 
-* **Plantilla Principal para Submenús**: Los módulos que no son el panel del delegado (Panteón, Pagos de Agua, Delegación, Personas) utilizan una plantilla principal reutilizable. Esta plantilla se adapta dinámicamente según el módulo seleccionado, lo que evita la necesidad de crear cuatro plantillas idénticas y reduce la complejidad del código.
+### Archivos de API (uno por endpoint)
 
-* **Reutilización de Componentes (Plan Futuro)**: Se busca aplicar un enfoque similar a los componentes dentro de cada módulo. Dada la posibilidad de tener 4 módulos con 4 funcionalidades (lectura, creación, edición, informes), se podrían generar hasta 16 plantillas si no se optimiza. La estrategia es crear componentes comunes que compartan la mayor parte de la lógica y la interfaz, y solo las partes diferenciadoras se implementen de forma específica para cada funcionalidad o módulo. Se evalúa la posibilidad de reducir aún más el número de plantillas generales.
+| Archivo | Endpoints |
+|---|---|
+| `api_auth.js` | `security/login/`, `security/refresh_token/` |
+| `api_user.js` | `user/create_user/`, `read_user/`, `update_user/`, `delete_user/` (PATCH), `home/get_home_info`, historial en `user/gat_data/` |
+| `api_account.js` | `account/create/`, `account/read/` |
+| `api_busqueda_persona.js` | `search/search_client/?q=` (desde L67, GET con AbortSignal) |
+| `api_administrador.js` | `security/admin_onwer/` |
+| `api_security.js` | `security/validate_password/`, `validate_password_service/` |
+| `api_analiticas.js` | `analitycs/get_analytics/` (POST con comitiva/mes/año en formato `Y25`) |
+| `pagos/api_crear_pago.js` | `payment/create/`, `payment/cash_cut/` |
+| `pagos/api_mostrar_pago.js` | `payment/read/` |
+| `pagos/api_get_costo_servicio.js` | `payment/get_cost/`, `getPagosPendientes`, `Get_servicios_disponibles` |
+| `pagos/api_generar_servicio.js` | `payment/generar_servicio/` |
 
-### 1.3. Detalles Técnicos y Librerías
+Patrón común: validar payload → llamar con la instancia central → normalizar la respuesta `{status, message, body}` del backend → mapear errores a mensajes legibles.
 
-La aplicación se basa en una plantilla preexistente, lo que le confiere características como:
+## Autenticación (`src/utils/AuthContext.jsx`)
 
-* **Modo Oscuro/Claro**: Soporte para alternar entre temas visuales.
+1. **Login**: `ObtenerUsuario()` → POST `security/login/` con `username/password/RoleName/manzana/recaptcha` → dispatch `SET_USER_AND_TOKENS` (`Singup.jsx:47-53`).
+2. **Persistencia**: reducer con `localStorage` — usuario expira a las **3 h**, tokens a las **24 h** (`AuthContext.jsx:17-43`).
+3. **Renovación proactiva**: cada 15 min con `security/refresh_token/` (Bearer = refresh token) — `AuthContext.jsx:203-227`.
+4. **Inactividad**: 15 min → modal `IdleTimeoutModal` con cuenta atrás de 3 min → logout.
+5. **Guard global**: efecto que redirige a `/Signup` si falta usuario o tokens (`AuthContext.jsx:230-239`).
+6. **Logout** desde `DropdownProfile.jsx:27-30` (`CLEAR_USER` + navigate).
 
-* **Diseño Responsivo**: La interfaz es adaptable a diferentes tamaños de pantalla (escritorio, tablet, móvil), garantizando la accesibilidad.
+## Configuración
 
-* **Validación de Datos**: Se utiliza la librería `yup` en conjunto con `react-hook-form` (asumido por el uso de `yup` con React) para la validación de entrada de datos en formularios, asegurando la integridad de la información.
+- **`vite.config.js`**: plugin React; server en `0.0.0.0:5173`; esbuild elimina `console`/`debugger` en producción (L11-13).
+- **`postcss.config.cjs`**: solo `@tailwindcss/postcss` (entrada `src/css/style.css`).
+- **`src/css/style.css`**: Tailwind v4 (`@import 'tailwindcss'`), plugin forms, variantes custom `dark` y `sidebar-expanded`, paleta `@theme` con fuente Inter.
+- **`eslint.config.js`**: flat config con `react-hooks` y `react-refresh`; `no-unused-vars` ignora `^[A-Z_]`.
+- **`index.html`**: tema dark de `localStorage` aplicado inline antes del render; título "S.G. El Mandhó".
 
-* **Funciones de Utilidad**: Se han creado dos funciones para agregar automáticamente la hora a los registros cuando es necesario, simplificando la entrada de datos por parte del usuario.
+## Puesta en marcha
 
-## 2. Conexiones con el Backend
-
-Todas las conexiones con el backend se gestionan en la carpeta `api`. Aquí se encuentran los archivos de conexión principales, como `api_user.js` y `api_account.js`. Se utiliza la librería `axios` para facilitar el trabajo con las peticiones HTTP, aprovechando su simplicidad y robustez.
-
-## 3. Estilos (CSS) e Imágenes
-
-* **CSS**: Se utiliza el CSS proporcionado por la plantilla base. No se han creado ni modificado estilos personalizados hasta el momento.
-
-* **Imágenes**: Las imágenes utilizadas son las que vienen por defecto con la plantilla. Se han utilizado muy pocas y se espera que sean eliminadas o reemplazadas por activos finales una vez que el proyecto esté terminado.
-
-## 4. Organización de Carpetas Detallada
-
-A continuación, se describe la función de cada carpeta principal dentro de `src`:
-
-* **`pages`**: Contiene todas las páginas principales que se renderizan en la aplicación. Cada página utiliza su respectiva barra lateral y un encabezado común. Actualmente, se está evaluando si cada módulo tendrá sus propias páginas específicas o si se mantendrá una plantilla reutilizable para todos. Incluye páginas como el menú de inicio, plantillas para el panel del delegado y la página de inicio de sesión.
-
-* **`partials`**: Este directorio aloja un tipo específico de componentes, siguiendo la estructura de la plantilla. Los componentes principales aquí son la barra lateral (`Sidebar`) y el encabezado (`Header`). La barra lateral es funcional y gestiona correctamente los submenús, aunque su organización interna aún está en proceso de optimización. El encabezado no tiene funcionalidad implementada por el momento, pero no es una prioridad actual.
-
-* **`utils`**: Contiene funciones de utilidad que son compartidas a lo largo de la aplicación. Aquí se encuentran las funciones para agregar fechas automáticamente, la lógica para el color del tema (modo oscuro/claro), transiciones y otro código JavaScript de propósito general.
-
-## 5. Diagrama de Organización de Carpetas
-
-A continuación, se presenta un diagrama que ilustra la estructura de las carpetas dentro de `src` y sus relaciones.
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryBorderColor': '#666' }}}%%
-flowchart TD
-    src["src/"] --> api["api/ (Conexiones con el backend usando Axios)"]
-    src --> charts["charts/ (Componentes o lógica para gráficos)"]
-    src --> components["components/ (Componentes reutilizables generales)"]
-    components --> comp_customers["customers/ (Componentes para gestión de clientes)"]
-    components --> modules["modules/ (Componentes por módulo)"]
-    components --> ui["ui/ (Componentes de UI atómicos)"]
-    src --> css["css/ (Archivos de estilos)"]
-    css --> additional_styles["additional-styles/ (Estilos personalizados)"]
-    src --> images["images/ (Activos de imágenes)"]
-    src --> lib["lib/ (Librerías externas)"]
-    src --> pages["pages/ (Páginas principales)"]
-    pages --> panteon["panteon/ (Módulo Panteón)"]
-    pages --> personas["personas/ (Módulo Personas)"]
-    src --> partials["partials/ (Componentes parciales)"]
-    partials --> analytics["analytics/ (Lógica de analíticas)"]
-    partials --> partials_customers["customers/ (Componentes clientes)"]
-    partials --> job["job/ (Componentes de trabajos)"]
-    src --> utils["utils/ (Funciones utilitarias)"]
-
-    classDef folder fill:#e1f5fe,stroke:#039be5,stroke-width:2px;
-    classDef subfolder fill:#b3e5fc,stroke:#0288d1,stroke-width:2px;
-    
-    class api,charts,components,css,images,lib,pages,partials,utils folder
-    class comp_customers,modules,ui,additional_styles,panteon,personas,analytics,partials_customers,job subfolder
+```powershell
+pnpm install
+# .env: VITE_API_URL, VITE_RECAPTCHA_SITE_KEY, VITE_ENVIRONMENT
+pnpm dev      # http://localhost:5173
+pnpm build    # build de producción en dist/
 ```
-Propmt generico para consulta con ia
 
+## Notas técnicas
 
-
-me ayudas a hacer el siguiente cambio en mi barra lateral, <objetivo>Cambiar una parte de esta, y que toda la parte donde actualmente dice persona sea dinamica</objetivo> <como lo haremos></como lo haremos> <interfaz></interfaz>
-
-// {
-//   ubicacion_de_la_pagina: 'src/pages/DynamicGeneratePay.jsx',
-//   obtener_cuenta:{ 
-//   nombre: BarraBusquedaConCuentas, ruta: src/components/accounts/GetAccount.jsx
-//           },
-//  panteon:{ nombre: 'crear_panteon',
-//    ruta: 'src/components/modules/crear/crear_panteon.json'},
-//  agua:{ nombre: 'crear_agua',
-//    ruta: 'src/components/modules/crear/crear_agua.json'},
-// delegacion:{ nombre: 'crear_delegacion',
-//    ruta: 'src/components/modules/crear/crear_delegacion.json'},
-// feria:{ nombre: 'crear_feria',
-//    ruta: 'src/components/modules/crear/crear_feria.json'},
-//   };
-// src/pages/DynamicGeneratePay.jsx
+1. Errata heredada: página de login llamada `Singup.jsx` (debería ser `Signup`); mantener por compatibilidad de rutas.
+2. `components/Lista.jsx` importa funciones inexistentes (`getAlldata`, `ListaCard`) — código huérfano no enrutado.
+3. `react-toast` está en `package.json` pero no se usa.
+4. Dos instancias axios (central y `pagos/`) — unificar para tener refresh en todo el flujo de pagos.
+5. El favicon en `index.html` apunta a `/src/favicon.svg` que no existe; el real es `src/images/favicon.png`.
+6. Flujo ágil pendiente: impresión y tickets por módulo (ver roadmap en secciones anteriores del proyecto).

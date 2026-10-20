@@ -48,11 +48,15 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
 
     JSON Body esperado (ejemplo):
     {
-      "username": "usuarioejemplo",
-      "password": "mi_contraseña_segura"
-      // La parte de reCAPTCHA está actualmente comentada para deshabilitar temporalmente
-      // la validación de bots, pero su estructura de validación se mantiene en los comentarios.
+      "name": "usuarioejemplo",
+      "password": "mi_contraseña_segura",
+      "role": "delegado",
+      "manzana": "centro",
+      "recaptcha": "token_de_google"
     }
+
+    La verificación de reCAPTCHA está activa por defecto. Puede deshabilitarse
+    explícitamente con RECAPTCHA_ENABLED=false (solo para desarrollo local).
 
     Returns:
         Response: Un objeto de respuesta de Flask con JSON que contiene los datos del
@@ -64,37 +68,41 @@ def login() -> tuple[Any]:# -> tuple[Response, Literal[404]] | Any | tuple[Respo
         if not data_json:
             return send_error("No se recibieron datos", 400)
         
-        """
-        #SE DESACTIVARA TODA ESTA PARTE YA QUE POR EL MOMENTO NO ES CRUCIAL, PERO SI SE DEBE TENER CUIDADO
         # --- 1. VALIDACIÓN DEL TOKEN RECAPTCHA ---
-        recaptcha_token = data_json.get('recaptcha')
-        if not recaptcha_token:
-            return send_error("El token de reCAPTCHA es requerido.", 400)
+        recaptcha_enabled = os.environ.get('RECAPTCHA_ENABLED', 'true').strip().lower() not in ('false', '0', 'no')
+        if recaptcha_enabled:
+            recaptcha_token = data_json.get('recaptcha')
+            if not recaptcha_token:
+                return send_error("El token de reCAPTCHA es requerido.", 400)
 
-        # Tu clave secreta de reCAPTCHA. NUNCA la pongas directamente en el código.
-        # Guárdala como una variable de entorno.
-        recaptcha_secret_key = os.environ.get('RECAPTCHA_SECRET_KEY')
-        if not recaptcha_secret_key:
-            # Error para el desarrollador, no para el usuario final
-            print("ERROR: La variable de entorno RECAPTCHA_SECRET_KEY no está configurada.")
-            return send_error("Error de configuración en el servidor.", 500)
+            # Clave secreta de reCAPTCHA. NUNCA debe estar escrita en el código.
+            recaptcha_secret_key = os.environ.get('RECAPTCHA_SECRET_KEY')
+            if not recaptcha_secret_key:
+                print("ERROR: La variable de entorno RECAPTCHA_SECRET_KEY no está configurada.")
+                return send_error("Error de configuración en el servidor.", 500)
 
-        # Petición a la API de Google para verificar el token
-        response = requests.post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            data={
-                'secret': recaptcha_secret_key,
-                'response': recaptcha_token
-            }
-        )
-        response_data = response.json()
+            try:
+                response = requests.post(
+                    'https://www.google.com/recaptcha/api/siteverify',
+                    data={
+                        'secret': recaptcha_secret_key,
+                        'response': recaptcha_token
+                    },
+                    timeout=5
+                )
+                response.raise_for_status()
+                response_data = response.json()
+            except (requests.RequestException, ValueError) as e:
+                print(f"Error al verificar reCAPTCHA: {e}")
+                return send_error("No se pudo verificar el reCAPTCHA. Inténtalo de nuevo.", 503)
 
-        # Verificamos si Google aprobó la solicitud y si la puntuación es aceptable
-        # El umbral de 0.5 es un buen punto de partida, pero puedes ajustarlo.
-        if not response_data.get('success') or response_data.get('score', 0.0) < 0.5:
-            print(f"Fallo de reCAPTCHA: {response_data.get('error-codes', 'Puntuación baja')}")
-            return send_error("Verificación de reCAPTCHA fallida. Inténtalo de nuevo.", 401)
-        """        
+            # reCAPTCHA v2 (checkbox): basta con que Google confirme la verificación.
+            if not response_data.get('success'):
+                print(f"Fallo de reCAPTCHA: {response_data.get('error-codes', 'desconocido')}")
+                return send_error("Verificación de reCAPTCHA fallida. Inténtalo de nuevo.", 401)
+        else:
+            print("ADVERTENCIA: reCAPTCHA deshabilitado por RECAPTCHA_ENABLED=false.")
+
         estado, mensaje, user_data = security_options.authenticate_user(data_json)
         
         if estado != 200:

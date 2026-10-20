@@ -1,4 +1,4 @@
-import axiosInstance from "./axiosInstance";
+import axiosInstance from "../axiosInstance";
 
 export const GetCostoServicio = async (DIM_CustomerId, moduleName) => {
     try {

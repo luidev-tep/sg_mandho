@@ -53,9 +53,6 @@ importers:
       react-router-dom:
         specifier: ^7.1.5
         version: 7.6.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      react-toast:
-        specifier: ^1.0.3
-        version: 1.0.3(react@19.1.0)
       react-transition-group:
         specifier: ^4.4.5
         version: 4.4.5(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1240,11 +1237,6 @@ packages:
       '@types/react':
         optional: true
 
-  react-toast@1.0.3:
-    resolution: {integrity: sha512-gL3+O5hlLaoBmd36oXWKrjFeUyLCMQ04AIh48LrnUvdeg2vhJQ0E803TgVemgJvYUXKlutMVn9+/QS2DDnk26Q==}
-    peerDependencies:
-      react: '>=16'
-
   react-transition-group@4.4.5:
     resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
     peerDependencies:
@@ -2307,10 +2299,6 @@ snapshots:
       get-nonce: 1.0.1
       react: 19.1.0
       tslib: 2.8.1
-
-  react-toast@1.0.3(react@19.1.0):
-    dependencies:
-      react: 19.1.0
 
   react-transition-group@4.4.5(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:

@@ -1,7 +1,9 @@
 from typing import Any
+import hmac
 import re
 import hashlib
-import secrets
+
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from src.dim_dates.dim_date import DIM_DATE    
 from src.utils.id_generator import create_id
@@ -29,7 +31,8 @@ from src.security.repository.user_info import (
     
     # Funciones de gestión de datos
     get_user_info,
-    insert_onwer_info
+    insert_onwer_info,
+    update_user_info
 )
 
 from src.security.repository.get_onwers_info import get_admin_info
@@ -88,6 +91,14 @@ class SecurityUsers:
                 validacion2 = data_user['name'] == user['username']
                 validacion4 = data_user['role'] == user['RoleName']
                 if validacion1 and validacion2 and validacion4:
+                    # Migración transparente: los hashes MD5 heredados se reemplazan
+                    # por un hash seguro en el primer inicio de sesión exitoso.
+                    if self.__is_legacy_hash(passwordDB):
+                        self.__upgrade_password_hash(
+                            user['DIM_CustomerId'],
+                            user['username'],
+                            data_user['password'],
+                        )
                     # Se remueve la contraseña del objeto que se retorna por seguridad.
                     del user['password']
                     del user['DIM_AccountId']
@@ -460,7 +471,7 @@ class SecurityUsers:
         """
         try:
             passwordDB = get_admin_info()
-            if self.__hash_password(password) == passwordDB:
+            if self.__verify_password(password, passwordDB):
                 return 200, "Contrasenia correcta"
             else:
                 return 401, "Contrasenia incorrecta"
@@ -471,28 +482,74 @@ class SecurityUsers:
         
     def __hash_password(self, password: str) -> str:
         """
-        Genera un hash para la contraseña.
+        Genera un hash seguro para la contraseña usando Werkzeug (scrypt por defecto).
 
         Args:
             password (str): La contraseña a hashear.
 
         Returns:
-            str: El hash generado.
+            str: El hash generado con sal aleatoria.
         """
-        return hashlib.md5(password.encode()).hexdigest()  # MD5 es débil pero simple
+        return generate_password_hash(password)
 
     def __verify_password(self, password: str, hash_password_db: str) -> bool:
         """
-        Verifica si una contraseña coincide con su hash.
+        Verifica si una contraseña coincide con su hash almacenado.
+
+        Soporta los hashes seguros de Werkzeug y, de forma temporal, los hashes
+        MD5 heredados de la base de datos. Los MD5 se migran automáticamente
+        tras un inicio de sesión exitoso.
 
         Args:
             password (str): La contraseña a verificar.
-            hash_password (str): El hash de la contraseña.
+            hash_password_db (str): El hash de la contraseña almacenado.
 
         Returns:
             bool: True si coinciden, False en caso contrario.
         """
-        return self.__hash_password(password) == hash_password_db
+        if not hash_password_db:
+            return False
+
+        if self.__is_legacy_hash(hash_password_db):
+            legacy_hash = hashlib.md5(password.encode()).hexdigest()
+            return hmac.compare_digest(legacy_hash, hash_password_db.lower())
+
+        try:
+            return check_password_hash(hash_password_db, password)
+        except (TypeError, ValueError):
+            return False
+
+    def __is_legacy_hash(self, hash_password_db: str) -> bool:
+        """
+        Determina si un hash almacenado corresponde al formato MD5 heredado.
+
+        Args:
+            hash_password_db (str): Hash almacenado en la base de datos.
+
+        Returns:
+            bool: True si es un MD5 hexadecimal de 32 caracteres.
+        """
+        return bool(re.fullmatch(r"[a-fA-F0-9]{32}", hash_password_db or ""))
+
+    def __upgrade_password_hash(self, customer_id: str, username: str, password: str) -> None:
+        """
+        Reemplaza un hash MD5 heredado por un hash seguro tras autenticar al usuario.
+
+        Args:
+            customer_id (str): Identificador del cliente.
+            username (str): Nombre de usuario autenticado.
+            password (str): Contraseña en texto plano validada.
+        """
+        try:
+            status, message = update_user_info(
+                self.__hash_password(password),
+                username,
+                customer_id,
+            )
+            if status != 200:
+                print(f"No se pudo migrar el hash de la contraseña: {message}")
+        except Exception as e:
+            print(f"Error al migrar el hash de la contraseña: {e}")
 
 
 def role_required(required_role) :#-> Callable[..., _Wrapped[Callable[..., Any], Any, Callable[...:
