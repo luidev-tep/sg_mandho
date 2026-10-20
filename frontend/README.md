@@ -26,9 +26,9 @@ SPA (React 19 + Vite 6 + TailwindCSS v4) para la gestión comunitaria: personas,
 
 | Carpeta | Propósito |
 |---|---|
-| `api/` | Capa de servicios HTTP: una función por endpoint. Subcarpeta `pagos/` con su propio `axiosInstance.js` |
+| `api/` | Capa de servicios HTTP: una función por endpoint, todas unificadas sobre la instancia central con interceptor de refresco JWT (`src/api/axiosInstance.js`) |
 | `charts/` | 10 wrappers de Chart.js (`BarChart02/03/04`, `LineChart03/04`, `Doughnut`, `Pie`, `Polar`, `BarchartFraction`) + `ChartjsConfig.jsx` |
-| `components/` | UI reutilizable: modales (`ModalBlank`, `Modalmessaje`, `ModalValitePass`, `ModalSearch`), selects/dropdowns, `PaginationClassic`, `LoadingSpinner`, `Lista` |
+| `components/` | UI reutilizable: modales (`ModalBlank`, `Modalmessaje`, `ModalValitePass`, `ModalSearch`), selects/dropdowns, `PaginationClassic`, `LoadingSpinner` |
 | `components/accounts/` | Búsqueda de cliente y cuentas (`GetAccount`, `AccounsTable`) |
 | `components/alertas/` | `FormattedErrorMessage` |
 | `components/customers/` | `BarraBusqueda`, edición/reporte/desactivación de personas |
@@ -74,14 +74,13 @@ Definidas en `src/App.jsx:71-96` con `BrowserRouter` (montado en `main.jsx`).
 - `VITE_RECAPTCHA_SITE_KEY`
 - `VITE_ENVIRONMENT`
 
-### Instancias axios
+### Instancia central axios
 
-**Instancia central** `src/api/axiosInstance.js`:
+Todas las peticiones utilizan la **instancia central** `src/api/axiosInstance.js`:
 - `baseURL = import.meta.env.VITE_API_URL` (L6-8).
 - **Interceptor de petición** (L11-34): añade `Authorization: Bearer <access>` desde `localStorage['tokens']`.
-- **Interceptor de respuesta** `setupInterceptors` (L37-82): ante 401 → llama `RefrescarToken(refresh_token)` → reintenta la petición original; si falla → `CLEAR_USER` (logout).
-
-**Segunda instancia** `src/api/pagos/axiosInstance.js`: duplicado con Bearer pero **sin interceptor de refresh**.
+- **Interceptor de respuesta** `setupInterceptors` (L37-82): ante 401 → llama `RefrescarToken(refresh_token)` → reintenta la petición original con el nuevo token; si la renovación falla → emite `CLEAR_USER` y redirige al login.
+- *(La antigua segunda instancia duplicada en `src/api/pagos/axiosInstance.js` fue retirada para garantizar renovación consistente en todos los módulos).*
 
 ### Archivos de API (uno por endpoint)
 
@@ -129,9 +128,9 @@ pnpm build    # build de producción en dist/
 
 ## Notas técnicas
 
-1. Errata heredada: página de login llamada `Singup.jsx` (debería ser `Signup`); mantener por compatibilidad de rutas.
-2. `components/Lista.jsx` importa funciones inexistentes (`getAlldata`, `ListaCard`) — código huérfano no enrutado.
-3. `react-toast` está en `package.json` pero no se usa.
-4. Dos instancias axios (central y `pagos/`) — unificar para tener refresh en todo el flujo de pagos.
-5. El favicon en `index.html` apunta a `/src/favicon.svg` que no existe; el real es `src/images/favicon.png`.
+1. Errata heredada preservada: página de login llamada `Singup.jsx` (debe mantenerse intacta por compatibilidad de rutas y contratos existentes).
+2. `components/Lista.jsx`: eliminado del árbol de componentes por código huérfano.
+3. `react-toast`: desinstalado y depurado de `package.json`.
+4. Instancias axios: unificadas en `src/api/axiosInstance.js`, garantizando ciclo de vida JWT consistente en pagos y analíticas.
+5. Favicon: corregido y servido desde `/favicon.png`.
 6. Flujo ágil pendiente: impresión y tickets por módulo (ver roadmap en secciones anteriores del proyecto).

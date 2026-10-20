@@ -71,9 +71,9 @@ Fuente de verdad: `database/sistema_mandho.db` (el `.db` vivo puede diferir del 
 ## Autenticación y autorización
 
 - Login emite JWT con claims: `role`, `service`, `fraction`, `name` (`security_route.py:104-121`).
-- `@jwt_required()` + `@role_required(rol)` (`src/security/security.py:498`): 403 si el rol no coincide.
-- **Contraseñas**: hash (ver nota de seguridad abajo). Política de contraseñas en `security.py:365`.
-- Validación reCAPTCHA desactivada actualmente (endpoint de login, `security_route.py:25`).
+- `@jwt_required()` + `@role_required(rol)` (`src/security/security.py:555`): 403 si el rol no coincide.
+- **Contraseñas y Hashing**: Las contraseñas se almacenan mediante hashes seguros generados por Werkzeug (`scrypt`). Se soporta migración transparente en login: si un usuario cuenta con un hash MD5 heredado (hexadecimal de 32 caracteres), se valida contra `hmac.compare_digest` y se actualiza automáticamente a `scrypt`. Política de contraseñas en `security.py:365`.
+- **Protección contra bots**: Google reCAPTCHA v2 activo por defecto en `/api/security/login/` (`RECAPTCHA_ENABLED=true` y `RECAPTCHA_SECRET_KEY`). Puede deshabilitarse explícitamente para desarrollo local con `RECAPTCHA_ENABLED=false`.
 - Revalidación de contraseña para acciones críticas: `/security/validate_password/` y `/validate_password_service/`.
 
 ## Endpoints API
@@ -165,7 +165,7 @@ Los modelos POO (`User`, `DIM_Account`, `FACT_Revenue`, `DIM_DATE_MODEL`, etc.) 
 | python-dotenv 1.1.0 | Carga de variables `.env` |
 | gunicorn 23.0.0 | Servidor WSGI de producción (Procfile) |
 | pytz 2025.2 / zoneinfo | Zona horaria America/Mexico_City |
-| requests 2.32.3 | Google reCAPTCHA (desactivado actualmente) |
+| requests 2.32.3 | Google reCAPTCHA v2 (activo por defecto, desactivable con RECAPTCHA_ENABLED=false) |
 | sqlite3 (stdlib) | Persistencia: SQL manual sin ORM |
 | pytest 8.4.1 | Runner de los tests de `src/test/` |
 
@@ -195,8 +195,8 @@ Suites: `account`, `analytics`, `auth`, `dim_dates`, `payment`, `role`, `service
 
 ## Observaciones técnicas
 
-1. Lecturas vía **POST** (filtros en body) — convención poco estándar pero coherente.
-2. **MD5** para hashing de contraseñas (`security.py:482`) — migrar a bcrypt/argon2.
-3. reCAPTCHA implementado pero desactivado — reactivar en producción.
-4. Erratas heredadas manteniendo compatibilidad con BD y frontend: `gat_data`, `ServiceDetailesType`, `DIM_ServiceOnwers`.
-5. SQLite + gunicorn multi-worker: WAL y `busy_timeout` mitigan bloqueos; considerar PostgreSQL si se escala.
+1. Lecturas vía **POST** (filtros en body) — convención mantenida por compatibilidad de contratos con el frontend.
+2. **Hashing de contraseñas**: Migrado a `Werkzeug scrypt` con soporte de migración transparente y en caliente de hashes MD5 legados en el primer inicio de sesión.
+3. **reCAPTCHA**: Implementado y activo por defecto en `/api/security/login/`, controlable vía variable de entorno `RECAPTCHA_ENABLED`.
+4. **Erratas heredadas preservadas**: Mantienen estricta compatibilidad con frontend y esquema de datos: `Singup.jsx`, `gat_data`, `ServiceDetailesType`, `DIM_ServiceOnwers`.
+5. SQLite + gunicorn multi-worker: En proceso de migración a SQL Server con QueuePool transaccional.
