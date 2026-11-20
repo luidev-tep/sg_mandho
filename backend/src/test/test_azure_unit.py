@@ -69,6 +69,52 @@ def test_explicit_trusted_false_without_user_does_not_enable_integrated_auth():
     assert "Trusted_Connection=yes" not in conn_str
 
 
+def test_managed_identity_uses_secure_odbc_options():
+    with patch.dict(os.environ, {"DB_AUTHENTICATION": "ActiveDirectoryMsi"}, clear=True):
+        conn_str = _build_odbc_connection_string()
+    assert "Authentication=ActiveDirectoryMsi;" in conn_str
+    assert "Encrypt=yes;" in conn_str
+    assert "TrustServerCertificate=no;" in conn_str
+    assert "Trusted_Connection=yes" not in conn_str and "UID=" not in conn_str
+
+
+def test_user_assigned_identity_provides_fresh_sql_access_token(monkeypatch):
+    import struct
+    from types import SimpleNamespace
+    from src.utils import conexion
+    from azure import identity
+
+    tokens = iter(["first-token", "second-token"])
+    calls = []
+
+    class FakeCredential:
+        def __init__(self, client_id):
+            assert client_id == "identity-client-id"
+
+        def get_token(self, scope):
+            calls.append(scope)
+            return SimpleNamespace(token=next(tokens))
+
+    monkeypatch.setattr(identity, "ManagedIdentityCredential", FakeCredential)
+    monkeypatch.setenv("DB_AUTHENTICATION", "ManagedIdentity")
+    monkeypatch.setenv("AZURE_CLIENT_ID", "identity-client-id")
+    conexion.dispose_engine()
+    try:
+        engine = conexion._get_engine()
+        for expected in ("first-token", "second-token"):
+            args = ["DRIVER={test};Trusted_Connection=Yes"]
+            params = {}
+            for listener in engine.dialect.dispatch.do_connect:
+                listener(engine.dialect, None, args, params)
+            assert "Trusted_Connection" not in args[0]
+            token_data = params["attrs_before"][1256]
+            size = struct.unpack_from("<I", token_data)[0]
+            assert token_data[4:4 + size].decode("utf-16-le") == expected
+        assert calls == ["https://database.windows.net/.default"] * 2
+    finally:
+        conexion.dispose_engine()
+
+
 def test_generar_anio_real_leap_and_standard_years():
     days_2026 = generar_anio_real(2026)
     days_2028 = generar_anio_real(2028)

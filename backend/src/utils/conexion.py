@@ -1,9 +1,10 @@
 import os
 import urllib.parse
+import struct
 from typing import Optional, Tuple, Any
 import pyodbc
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.pool import QueuePool
 
@@ -21,8 +22,9 @@ def _build_odbc_connection_string() -> str:
     database = os.environ.get("DB_NAME", "sg_mandho")
     user = os.environ.get("DB_USER", "").strip()
     password = os.environ.get("DB_PASSWORD", "")
-    default_encrypt = "yes" if user else "no"
-    default_trust_cert = "no" if user else "yes"
+    authentication = os.environ.get("DB_AUTHENTICATION", "").strip()
+    default_encrypt = "yes" if user or authentication else "no"
+    default_trust_cert = "no" if user or authentication else "yes"
     encrypt = os.environ.get("DB_ENCRYPT") or default_encrypt
     trust_cert = os.environ.get("DB_TRUST_CERT") or default_trust_cert
     timeout = os.environ.get("DB_CONNECT_TIMEOUT", "30")
@@ -42,7 +44,12 @@ def _build_odbc_connection_string() -> str:
         "ConnectRetryCount=3",
         "ConnectRetryInterval=10",
     ]
-    if trusted_conn:
+    if authentication:
+        if authentication not in ("ActiveDirectoryMsi", "ManagedIdentity"):
+            raise ValueError("DB_AUTHENTICATION no soportada")
+        if authentication == "ActiveDirectoryMsi":
+            parts.append("Authentication=ActiveDirectoryMsi")
+    elif trusted_conn:
         parts.append("Trusted_Connection=yes")
     else:
         parts.append(f"UID={user}")
@@ -68,6 +75,18 @@ def _get_engine() -> Engine:
             # Desactivar autocommit en pyodbc para garantizar control transaccional explícito
             connect_args={"autocommit": False},
         )
+        if os.environ.get("DB_AUTHENTICATION", "").strip() == "ManagedIdentity":
+            from azure.identity import ManagedIdentityCredential
+            client_id = os.environ.get("AZURE_CLIENT_ID", "").strip()
+            credential = ManagedIdentityCredential(client_id=client_id or None)
+
+            @event.listens_for(_engine, "do_connect")
+            def provide_sql_token(dialect, conn_rec, cargs, cparams):
+                # SQLAlchemy can insert Trusted_Connection when no user is set;
+                # ODBC access-token authentication cannot be combined with it.
+                cargs[0] = cargs[0].replace(";Trusted_Connection=Yes", "")
+                raw = credential.get_token("https://database.windows.net/.default").token.encode("utf-16-le")
+                cparams["attrs_before"] = {1256: struct.pack(f"<I{len(raw)}s", len(raw), raw)}
     return _engine
 
 
