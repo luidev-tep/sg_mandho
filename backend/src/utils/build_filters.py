@@ -30,9 +30,10 @@ class BuildFilters:
         }
         
         for manzana in manzanas:
-            if manzana in manzanas_mapping:
-                condiciones.append(manzanas_mapping[manzana])
-                valores.append(manzana)
+            manzana_norm = str(manzana).strip().lower()
+            if manzana_norm in manzanas_mapping:
+                condiciones.append(manzanas_mapping[manzana_norm])
+                valores.append(manzana_norm)
 
         return " OR ".join(condiciones), valores
     

@@ -1,5 +1,4 @@
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.dim_servicedetails.models.DIM_ServiceDetails import DIM_Details
 
 
@@ -13,7 +12,7 @@ def insertar_registro(data: DIM_Details) -> bool:
     Returns:
         bool: True si se inserta correctamente, False en caso contrario.
     """
-    handler_coneccition = Conexion()
+    object_conetion = Conexion()
     query = """
     INSERT INTO DIM_ServiceDetails (
         DIM_ServiceDetailsId,
@@ -29,20 +28,20 @@ def insertar_registro(data: DIM_Details) -> bool:
     ) """
     try:
         values = (
-                data.DIM_ServiceDetailsId,
-                data.DIM_DateId,
-                data.DIM_ServiceId,
-                data.serviceDetailesType,
-                data.amount,
-                data.isOptional,
-                data.StartDate,
-                data.EndDate
-            )
-        handler_coneccition.cursor.execute(query, values)
-        handler_coneccition.save_changes()
+            data.DIM_ServiceDetailsId,
+            data.DIM_DateId,
+            data.DIM_ServiceId,
+            data.serviceDetailesType,
+            data.amount,
+            data.isOptional,
+            data.StartDate,
+            data.EndDate,
+        )
+        object_conetion.cursor.execute(query, values)
+        object_conetion.save_changes()
         return True
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al insertar el registro: {e}")
         return False
     finally:
-        handler_coneccition.close_conexion()
+        object_conetion.close_conexion()

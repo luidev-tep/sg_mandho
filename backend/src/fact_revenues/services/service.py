@@ -19,23 +19,24 @@ def get_status_payment(cost_service: float, amount: float) -> str:
     """Determina el estado de pago de un servicio.
 
     Compara el costo total del servicio con el monto pagado para definir
-    el estado. Si el monto pagado es igual al costo, el estado es "pagado".
-    Si el monto pagado es menor, el estado es "pendiente".
+    el estado. Si el monto pagado es igual al costo, el estado es "completo".
+    Si el monto pagado es menor, el estado es "pendiente". Si lo excede,
+    retorna "".
 
     Args:
         cost_service (float): El costo total del servicio.
         amount (float): El monto que se ha pagado por el servicio.
 
     Returns:
-        str: Retorna "pagado" si el monto coincide, o "pendiente" si el
-             monto es menor al costo del servicio.
+        str: Retorna "completo", "pendiente", o "" si el monto excede el costo.
     """
-    estado = cost_service - amount
+    estado = round(float(cost_service) - float(amount), 2)
+    data = ""
     if estado == 0:
         data = "completo"
     elif estado > 0:
         data = "pendiente"
-    
+
     return data
 
 
@@ -68,13 +69,16 @@ def get_status_payment_for_registers(
         dim_customer_id: str, 
         servicedetails: str, 
         service_name: str, 
-        year_pay: str) -> str:
+        year_pay: str,
+        db=None,
+        completo_status_id: str | None = None) -> str:
     """Determina el estado de pago de un servicio y actualiza los registros asociados.
 
     Compara el costo total del servicio con la suma de todos los montos pagados
-    para definir el estado. Si la suma total de pagos es igual o mayor al costo,
-    el estado es "pagado" y se actualizan los registros correspondientes en la
-    base de datos. Si la suma es menor, el estado es "pendiente".
+    para definir el estado. Si la suma total de pagos es igual al costo,
+    el estado es "completo" y se actualizan los registros correspondientes en la
+    base de datos. Si la suma es menor, el estado es "pendiente". Si excede
+    el costo total, retorna "" para abortar el registro.
 
     Args:
         cost_service (float): El costo total del servicio.
@@ -83,51 +87,39 @@ def get_status_payment_for_registers(
         servicedetails (str): Detalles del servicio.
         service_name (str): El nombre del servicio.
         year_pay (str): El año del pago.
+        db (Conexion | None): Conexión compartida opcional para transacciones atómicas.
+        completo_status_id (str | None): ID precalculado del estado 'completo' para evitar conexiones anidadas.
 
     Returns:
-        str: Retorna "pagado" si el monto total coincide o lo supera, o "pendiente" si es menor.
+        str: Retorna "completo", "pendiente", o "" si hay error/sobrepago.
     """
-    string =f"""
-    DETALLE DE VALORES DE ENTRADA:
-    -------------------------------
-    Costo del Servicio:        {cost_service}
-    Cantidad Recibida:         {cantidad_recibida}
-    ID del Cliente:            {dim_customer_id}
-    Tipo de Detalle de Servicio: {servicedetails}
-    Nombre del Servicio:       {service_name}
-    Año de Pago:               {year_pay}
-    -------------------------------
-    """
-    #Obtener primero la suma de los pagos que lleva hasta ahora le cliente
-    #Se actualizaran todos los pagos asociados a esta cuenta para que se marquen como pagados,
-    status,registros_cliente = get_fact_revenues_by_customer_id(dim_customer_id, service_name, servicedetails, year_pay )
+    status, registros_cliente = get_fact_revenues_by_customer_id(
+        dim_customer_id, service_name, servicedetails, year_pay, db=db
+    )
 
     if status != 200:
         print(f"Error al leer los pagos: {registros_cliente}")
         return ""
-    #print("Se obtuvieron los pagos", len(registros_cliente))
 
-    amount = cantidad_recibida
+    amount = float(cantidad_recibida)
     for registro in registros_cliente:
-        #print('Se imprime desde service.Get_ status payments for registers ')
-        #print(registro)
-        amount += registro['amount']
-        
-    estado = cost_service - amount
+        amount += float(registro['amount'])
+
+    estado = round(float(cost_service) - amount, 2)
     data = ""
     if estado == 0:
         data = "completo"
-        
-        
-        #Obtenemos el id de cada cuenta obtenida
         id_registros = [registro['FACT_RevenueId'] for registro in registros_cliente]
-        #Para esto ya se debe saber el nombre de la columna que se quiere actualizar
-        DIM_StatusId = hanlder_status.get_status_id(data, 'fact_revenues')
-        handler_edit.update_many_registers(id_registros, 'DIM_StatusId', DIM_StatusId )
+        dim_status_id = completo_status_id or hanlder_status.get_status_id(data, 'fact_revenues')
+        if not dim_status_id:
+            return ""
+        updated = handler_edit.update_many_registers(id_registros, 'DIM_StatusId', dim_status_id, db=db)
+        if not updated:
+            return ""
 
     elif estado > 0:
         data = "pendiente"
-        
+
     else:
-        print("No se le asigno ningun valor a la variable data")
+        print("El monto recibido excede el costo total del servicio")
     return data

@@ -91,9 +91,13 @@ class PaymentCrud:
             - Verifica que no existan pagos pendientes duplicados
             - Aplica reglas de negocio específicas para diferentes servicios
         """
-        data_json['amount'] = float(data_json['amount'])
-        data_json['FactAmount'] = float(data_json['FactAmount'])
-        data_json['AnioPago'] = str(data_json['AnioPago'])
+        try:
+            data_json['amount'] = float(data_json['amount'])
+            data_json['FactAmount'] = float(data_json['FactAmount'])
+            data_json['AnioPago'] = str(data_json['AnioPago'])
+        except (KeyError, TypeError, ValueError):
+            return 400, "Datos numéricos inválidos o faltantes", []
+
         fields_required = ['DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
 
         type_fields = [str, str, str, str, str, str, str, float, float]
@@ -108,10 +112,9 @@ class PaymentCrud:
         if not is_valid:
             return 400, message, []
         
-        #Validar que Amount sea una cantidad positiva
-        is_valid = data_json['amount'] >= 0
-        if not is_valid:
-            return 400, "La cantidad ingeresada debe ser mayor a 0 Pesos", []
+        #Validar que Amount sea no negativo y FactAmount sea mayor a 0
+        if data_json['amount'] < 0 or data_json['FactAmount'] <= 0:
+            return 400, "La cantidad ingresada debe ser mayor a 0 Pesos", []
         
         is_valid = validate_payment.is_account_active(data_json['DIM_AccountId'])
         if not is_valid:
@@ -344,12 +347,17 @@ class PaymentCrud:
         
         try:
             
-            #Cuando no se proporcionan filtros solo se devuelven todos los registros del servicio
-            code, data = get_fact_revenues_by_customer_id(**filters)
+            code, data = get_fact_revenues_by_customer_id(
+                DIM_CustomerId=filters['DIM_CustomerId'],
+                serviceName=filters['serviceName'],
+                service_type=filters['service_type'],
+                Year=str(filters['Year']),
+            )
 
             if code != 200:
                 print(f"Error al leer los pagos: {data}")
-                return code, "No se encontraron pagos", []
+                msg = "Servicio no válido" if code == 400 else "No se encontraron pagos"
+                return code, msg, []
             
             return code, "Datos obtenidos satisfactoriamente", data
         except Exception as e:
@@ -487,9 +495,12 @@ class PaymentCrud:
             - Agregar manejo de excepciones y logging de errores
         """
         for data_json in payment_json:
-            data_json['amount'] = float(data_json['amount'])
-            data_json['FactAmount'] = float(data_json['FactAmount'])
-            data_json['AnioPago'] = str(data_json['AnioPago'])
+            try:
+                data_json['amount'] = float(data_json['amount'])
+                data_json['FactAmount'] = float(data_json['FactAmount'])
+                data_json['AnioPago'] = str(data_json['AnioPago'])
+            except (KeyError, TypeError, ValueError):
+                return 400, "Datos numéricos inválidos o faltantes"
             fields_required = ['DIM_OnwerCustomerId', 'DIM_AccountId', 'DIM_CustomerId', 'ServiceName', 'serviceDetailsType', 'AnioPago','movementName', 'entrada', 'FactAmount', 'amount']
             
             type_fields = [str, str, str, str, str, str, str, str, float, float]

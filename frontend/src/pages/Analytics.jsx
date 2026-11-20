@@ -79,21 +79,12 @@ function Analytics() {
   // Obtener el mes formateado
   const mesFormateado = formatMonth(mes);
 
-  // Efecto para establecer el mes anterior como filtro por defecto al montar el componente
+  // Efecto para establecer el mes y año actual como filtro por defecto al montar el componente
   useEffect(() => {
     const today = new Date();
-    const currentMonth = today.getMonth(); // 0-11
-    
-    // Calcular el mes anterior
-    let previousMonth = currentMonth;
-    if (previousMonth === 0) {
-      previousMonth = 11;
-    } else {
-      previousMonth = currentMonth - 1;
-    }
-    
-    const defaultMonth = `M${String(previousMonth + 1).padStart(2, '0')}`;
+    const defaultMonth = `M${String(today.getMonth() + 1).padStart(2, '0')}`;
     setMes(defaultMonth);
+    setAnio(today.getFullYear().toString());
   }, []);
 
   // Función para obtener datos analíticos con useCallback

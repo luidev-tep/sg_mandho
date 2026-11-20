@@ -11,6 +11,7 @@ import { AgregarFechaActual } from '../../utils/add_date';
 import { AgregarFechaFinVacio } from "../../utils/add_date";
 import { useAuth } from "../../utils/AuthContext"; // Import useAuth
 import ConfirmationModal from '../../components/Modalmessaje'; // Importar el modal de confirmación
+import { getLocalDateISO } from '../../utils/dateUtils';
 
 /*
   This JavaScript function, capitalizeFirstLetter, takes a string as input and returns a new string
@@ -144,7 +145,7 @@ fecha_nacimiento: yup
         return originalValue;
       }
       if (value instanceof Date) {
-        return value.toISOString().split('T')[0];
+        return getLocalDateISO(value);
       }
       return value;
     })
@@ -531,7 +532,7 @@ function UserRegister() {
                             max={(() => {
                               const date = new Date();
                               date.setFullYear(date.getFullYear() - 5);
-                              return date.toISOString().split('T')[0];
+                              return getLocalDateISO(date);
                             })()}
                             disabled={isSubmitting}
                           />

@@ -11,6 +11,7 @@ import { useAuth } from "../../utils/AuthContext.jsx";
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getPagosPendientes } from '../../api/pagos/api_get_costo_servicio.js';
 import ServiciosElegiblesDropdown from '../../components/modules/tablas/ServiciosElegiblesDropdown.jsx';
+import { getLocalDateISO } from '../../utils/dateUtils.js';
 
 // Componentes dinámicos (carga diferida)
 const COMPONENT_CONFIG = {
@@ -61,9 +62,9 @@ const parentSchema = yup.object().shape({
     .typeError('La cantidad debe ser un número válido')
     .required('La cantidad recibida es requerida')
     .positive('La cantidad debe ser positiva')
-    .integer('La cantidad debe ser un número entero')
     .test(
       'max-amount',
+      'La cantidad no puede superar el costo del servicio',
       function(value) {
         const { amount } = this.options.context || {};
         return value <= (amount || Infinity);
@@ -76,7 +77,7 @@ const DynamicGeneratePay = () => {
   const { moduleName } = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fechaActual] = useState(new Date().toISOString().split('T')[0]);
+  const [fechaActual] = useState(() => getLocalDateISO());
   const [moduleConfig, setModuleConfig] = useState(null);
   const [moduleData, setModuleData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -315,7 +316,7 @@ const DynamicGeneratePay = () => {
 
       const response = await crearRegistroPago(payload);
       
-      if (response && response.message === "Pago creado satisfactoriamente") {
+      if (response?.success) {
         // Redirigir a página de éxito
         navigate(`/modulos/estado_pago/?type=success&text=${encodeURIComponent(
           `${moduleConfig.successMessage || 'Pago registrado exitosamente para'} ${accountData.customerName || 'el cliente'}`
@@ -533,11 +534,11 @@ const DynamicGeneratePay = () => {
                       placeholder={`Máximo: $${moduleData?.amount || 0}`}
                       min="1"
                       max={moduleData?.amount || undefined}
-                      step="1"
+                      step="0.01"
                     />
                     {errors.cantidadRecibida && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.cantidadRecibida?.type === 'max' 
+                        {errors.cantidadRecibida?.type === 'max' || errors.cantidadRecibida?.type === 'max-amount'
                           ? `La cantidad no puede ser mayor a $${moduleData?.amount || 0}`
                           : errors.cantidadRecibida?.message}
                       </p>
@@ -594,7 +595,7 @@ const DynamicGeneratePay = () => {
 
       {/* Modal de Confirmación */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">

@@ -30,7 +30,7 @@ function YearStatusButton({ year, status, details }) {
         <div className="mt-2 pl-4 border-l-2 border-gray-200 dark:border-gray-600 space-y-2 py-2">
           {details.map((detail, index) => (
             <div key={index} className="text-sm text-gray-700 dark:text-gray-300 flex justify-between">
-              <span>• {detail.ServiceDetailesType} <span className="font-mono text-xs opacity-80">(${detail.amount.toFixed(2)})</span></span>
+              <span>• {detail.ServiceDetailesType} <span className="font-mono text-xs opacity-80">(${Number(detail.amount || 0).toFixed(2)})</span></span>
               <span className={`font-medium ${detailStatusClasses[detail.status]}`}>{detail.status}</span>
             </div>
           ))}

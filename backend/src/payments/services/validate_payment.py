@@ -1,6 +1,5 @@
 from typing import Literal, Any, LiteralString
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.payments.repository.read_payments import ReadPayment
 #from src.dim_servicedetails.repository.show import get_count_servicetypes_by_service
 from src.dim_service.DIM_Service import DIM_Service
@@ -70,25 +69,33 @@ class ValidatePayment():
         else:
             return True, ''
         
-    def is_account_active(self, DIM_accountId) -> bool: 
+    def is_account_active(self, DIM_accountId: str) -> bool: 
         """
-        Verifica que la cuenta no sea de tipo estudiante o de tipo invalido, ya que los estudiantes no pueden 
-        realizar pagos y las cuentas invalidas no pueden realizar pagos.
-        Se han agregado otros 2 nuevos campos, los cuale sosn residente y vecino exento, ya que estos no pueden 
-        realizar pagos.
+        Verifica que la cuenta esté activa (`StatusName = 'activo'`), el cliente
+        no tenga fecha de defunción (`CustomerEndDate = 's/n'`) y su rol pueda
+        realizar pagos (excluyendo estudiante, invalido, vecino exento, residente).
         """
         handler_coneccion = Conexion()
         query = """
-            SELECT d.RoleName from DIM_Account as a, DIM_Role as d
-            WHERE a.DIM_RoleId = d.DIM_RoleId
-            and DIM_AccountId = ?
+            SELECT d.RoleName, s.StatusName, c.CustomerEndDate
+            FROM DIM_Account AS a
+            INNER JOIN DIM_Role AS d ON a.DIM_RoleId = d.DIM_RoleId
+            INNER JOIN DIM_Status AS s ON a.DIM_StatusId = s.DIM_StatusId
+            INNER JOIN DIM_Customer AS c ON a.DIM_CustomerId = c.DIM_CustomerId
+            WHERE a.DIM_AccountId = ?
         """
-
-        handler_coneccion.cursor.execute(query, (DIM_accountId,))
-        result = handler_coneccion.cursor.fetchone()
-        if result is None:
-            return False
-        elif result[0] in ['estudiante', 'invalido', 'vecino exento', 'residente']:
-            return False
-        else:
+        try:
+            handler_coneccion.cursor.execute(query, (DIM_accountId,))
+            result = handler_coneccion.cursor.fetchone()
+            if result is None:
+                return False
+            role_name, status_name, end_date = result[0], result[1], result[2]
+            if (status_name or "").strip().lower() != "activo":
+                return False
+            if (end_date or "").strip().lower() != "s/n":
+                return False
+            if (role_name or "").strip().lower() in ['estudiante', 'invalido', 'vecino exento', 'residente']:
+                return False
             return True
+        finally:
+            handler_coneccion.close_conexion()

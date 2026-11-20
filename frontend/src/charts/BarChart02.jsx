@@ -5,7 +5,11 @@ import { chartColors } from './ChartjsConfig';
 import {
   Chart, BarController, BarElement, LinearScale, TimeScale, Tooltip, Legend,
 } from 'chart.js';
+import moment from 'moment';
+import 'moment/locale/es';
 import 'chartjs-adapter-moment';
+
+moment.locale('es');
 
 // Import utilities
 import { formatValue } from '../utils/Utils';

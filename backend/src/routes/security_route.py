@@ -259,7 +259,8 @@ def refresh_token_fn() -> tuple[Any]:
             additional_claims={
                 "role": current_claims.get('role'),
                 "service": current_claims.get('service'),
-                "fraction": current_claims.get('fraction')
+                "fraction": current_claims.get('fraction'),
+                "name": current_claims.get('name')
             }
         )
         return send_success("Token actualizado", {'data': new_access_token}, 200)
@@ -328,7 +329,9 @@ def get_onwer_info():
         if 'create_onwer' in data_json and data_json['create_onwer']:
             estado, mensaje = security_options.insert_new_Onwer(data_json['create_onwer'])
             #print(f"Datos recibidos: {datos}")
-        
+
+        if estado is None:
+            return send_error("Debe especificar 'get_onwers_info' o 'create_onwer'", 400)
 
         if 200 <= estado <= 205:
             return send_success(mensaje, datos, estado)

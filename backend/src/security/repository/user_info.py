@@ -1,5 +1,4 @@
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 
 from src.security.model import VistaModel
 
@@ -45,18 +44,18 @@ def get_user_info(username: str, RoleName: str, manzana: str, StartDate: str, En
             - `None` si no se encuentra ningún usuario que coincida con todos los criterios.
 
     Raises:
-        sqlite3.Error: Si ocurre un error de bajo nivel durante la ejecución de la consulta
+        DatabaseError: Si ocurre un error de bajo nivel durante la ejecución de la consulta
                        o la conexión a la base de datos.
     """
-    handlers = Conexion()
+    handler_connection = Conexion()
     query = """SELECT 
             *
             FROM
                 SecurityUsers 
             WHERE  username = ? AND CustomerFraction = ? AND RoleName = ? AND StartDate = ? AND EndDate = ?"""
     try:
-        handlers.cursor.execute(query, (username, manzana, RoleName,  StartDate, EndDate))
-        user_info = handlers.cursor.fetchone()
+        handler_connection.cursor.execute(query, (username, manzana, RoleName, StartDate, EndDate))
+        user_info = handler_connection.cursor.fetchone()
 
         if user_info is None:
             return None
@@ -64,11 +63,11 @@ def get_user_info(username: str, RoleName: str, manzana: str, StartDate: str, En
         user_format = VistaModel(*user_info).to_dict()
         
         return user_format
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al obtener la informacion del usuario: {e}")
         raise
     finally:
-        handlers.close_conexion()
+        handler_connection.close_conexion()
 
 def validate_user_admin() -> bool:
     """
@@ -86,7 +85,7 @@ def validate_user_admin() -> bool:
             - `False`: Si ya existe un Delegado activo.
 
     Raises:
-        sqlite3.Error: Propaga cualquier error que ocurra durante la conexión o la
+        DatabaseError: Propaga cualquier error que ocurra durante la conexión o la
                        ejecución de la consulta SQL.
     """
     query = """
@@ -103,7 +102,7 @@ def validate_user_admin() -> bool:
             return True
         # print("Se encontró un usuario ya con este registro")
         return False
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al verificar la informacion de la persona: {e}")
         return False
     finally:
@@ -127,7 +126,7 @@ def validate_user_module(module_name: str) -> bool:
             - `False`: Si ya existe un Comitiva activo para el módulo dado.
 
     Raises:
-        sqlite3.Error: Propaga cualquier error de la base de datos.
+        DatabaseError: Propaga cualquier error de la base de datos.
     """
     query = """
         SELECT count( DIM_ServiceOwnersId ) active_account from SecurityUsers
@@ -144,7 +143,7 @@ def validate_user_module(module_name: str) -> bool:
             return True
         # print("Se encontró un usuario ya con este registro")
         return False
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al verificar la informacion de la persona: {e}")
         return False
     finally:
@@ -168,7 +167,7 @@ def validate_user_sub_admin(customerFraction: str) -> bool:
             - `False`: Si ya existe un Subdelegado activo para la fracción dada.
 
     Raises:
-        sqlite3.Error: Propaga cualquier error de la base de datos.
+        DatabaseError: Propaga cualquier error de la base de datos.
     """
     query = """
         SELECT count( DIM_ServiceOwnersId ) active_account from SecurityUsers
@@ -185,7 +184,7 @@ def validate_user_sub_admin(customerFraction: str) -> bool:
             return True
         # print("Se encontró un usuario ya con este registro")
         return False
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al verificar la informacion de la persona: {e}")
         return False
     finally:
@@ -194,33 +193,22 @@ def validate_user_sub_admin(customerFraction: str) -> bool:
 def insert_onwer_info(data: dict) -> tuple[int, str]:
     """
     Orquesta la inserción del registro de un nuevo usuario administrador (Service Owner/Propietario)
-    en el sistema, realizando múltiples operaciones en una secuencia que **debería ser transaccional**
-    para garantizar la atomicidad de los cambios.
+    en el sistema de forma atómica mediante una transacción compartida.
 
     Esta función asume el rol de un controlador que realiza los siguientes pasos críticos,
     todos necesarios para que el nuevo administrador pueda operar:
 
     1.  **Creación de Cuenta de Servicio:**
-        - Llama a `handler_account.insert_account` para crear un registro de cuenta de servicio.
-          Los datos utilizados incluyen el rol (`RoleName`), el ID del cliente (`DIM_CustomerId`),
-          y las fechas de vigencia (`start_date`, `end_date`), lo cual es vital para el control de acceso.
-
+        - Llama a `handler_account.insert_account(data_for_account, db=tx)` para crear
+          un registro de cuenta de servicio en la misma transacción.
     2.  **Actualización de Credenciales del Cliente (Customer):**
-        - Llama a `update_user_info` para actualizar los campos de `username` y `password`
-          (ya hasheada) en la tabla maestra del cliente (`DIM_Customer`). Esto vincula las
-          credenciales de acceso al registro principal del cliente.
-
+        - Llama a `update_user_info(..., db=tx)` para actualizar `username` y `password`
+          en `DIM_Customer`.
     3.  **Registro como Propietario de Servicio (Service Owner):**
-        - Llama a `insert_service_owner_info` para registrar al cliente en la tabla de
-          `DIM_ServiceOwners`, detallando el servicio (`serviceName`) y el periodo de vigencia.
-          Este paso otorga formalmente el cargo administrativo.
+        - Llama a `insert_service_owner_info(data_service_owner, db=tx)` para registrar
+          al cliente en `DIM_ServiceOwners`.
 
-    **Nota sobre la Transacción:**
-    Aunque el docstring original menciona que "se deshacen todos los cambios" en caso de falla,
-    y el código simula el flujo, la función actual sólo retorna un error (`return 500, ...`).
-    Para lograr un `rollback` real, las funciones internas (`insert_account`, `update_user_info`,
-    `insert_service_owner_info`) deberían recibir y operar sobre el mismo objeto de conexión
-    a la base de datos (como se insinúa en los comentarios del código).
+    Si cualquiera de estos pasos falla, se ejecuta `tx.rollback()` garantizando la atomicidad completa.
 
     Args:
         data (dict): Diccionario que contiene todos los datos necesarios para la creación
@@ -229,9 +217,9 @@ def insert_onwer_info(data: dict) -> tuple[int, str]:
 
     Returns:
         tuple[int, str]: Una tupla con el código de estado HTTP y un mensaje:
-            - (200, message): Si todas las operaciones se completaron exitosamente.
+            - (200, "Usuario insertado correctamente"): Si todas las operaciones se completaron exitosamente.
             - (CÓDIGO_ERROR, message): Si falló alguna de las sub-operaciones (ej. 400, 409).
-            - (500, message): Si ocurre un error de base de datos (`sqlite3.Error`) durante
+            - (500, message): Si ocurre un error de base de datos (`DatabaseError`) durante
                               la ejecución, indicando un fallo en la inserción.
     """
     try:
@@ -241,20 +229,6 @@ def insert_onwer_info(data: dict) -> tuple[int, str]:
             "start_date": data["StartDate"], 
             "end_date": data["EndDate"]
         }
-
-        estado, mensaje = handler_account.insert_account(data_for_account)
-        if estado != 200:
-            return estado, mensaje
-        # NOTA: Se asume que `insert_account` fue modificado para aceptar un objeto de conexión
-        # y no crear uno nuevo, para poder ser parte de la transacción.
-        # Lo mismo para las otras funciones. Aquí se simula el flujo correcto.
-        #print("Insertando propietario de servicio... Actualizar informacion del usuario...")
-        #Actualizar el password y de mas en Customer
-        estado, mensaje = update_user_info(data['password'], data['username'], data['DIM_CustomerId'])
-        if estado != 200:
-            return estado, mensaje
-        
-        #Ingresar al usuario en propietarios del sistema
         data_service_owner = {
             'DIM_ServiceOwnersId': create_id([data['DIM_CustomerId'], data['serviceName'], data['CustomerFraction']]),
             'DIM_CustomerId': data['DIM_CustomerId'],
@@ -262,17 +236,29 @@ def insert_onwer_info(data: dict) -> tuple[int, str]:
             'EndDate': data['EndDate'],
             'serviceName': data['serviceName']
         }
-        #print("Insertando propietario de servicio...Insetando propietario")
-        response  = insert_service_owner_info(data_service_owner)
-        if not response:
-            return 500, "No se pudo insertar el nuevo usuario"
-        
-        return 200, "Usuario insertado correctamente"
-    except sqlite3.Error as e:
+
+        with Conexion() as tx:
+            estado, mensaje = handler_account.insert_account(data_for_account, db=tx)
+            if estado != 200:
+                tx.rollback()
+                return estado, mensaje
+
+            estado, mensaje = update_user_info(data['password'], data['username'], data['DIM_CustomerId'], db=tx)
+            if estado != 200:
+                tx.rollback()
+                return estado, mensaje
+
+            if not insert_service_owner_info(data_service_owner, db=tx):
+                tx.rollback()
+                return 500, "No se pudo insertar el nuevo usuario"
+
+            tx.save_changes()
+            return 200, "Usuario insertado correctamente"
+    except DatabaseError as e:
         print(f"Error al insertar el usuario: {e}")
         return 500, "Error al insertar el usuario"
 
-def update_user_info(password: str, username: str, dim_customer_id: str) -> tuple[int, str]:
+def update_user_info(password: str, username: str, dim_customer_id: str, db: Conexion | None = None) -> tuple[int, str]:
     """
     Actualiza el nombre de usuario y la contraseña (ya hasheada) de un cliente
     específico en la tabla de dimensiones `DIM_Customer`.
@@ -281,20 +267,11 @@ def update_user_info(password: str, username: str, dim_customer_id: str) -> tupl
     administrativos (Owner) para otorgar credenciales de acceso al sistema
     al cliente seleccionado.
 
-    **NOTA SOBRE TRANSACCIONES:**
-    La firma de la función incluye un argumento `connection` comentado
-    (aunque no utilizado en el cuerpo actual), lo que indica la intención
-    de utilizar esta función dentro de una transacción mayor. Tal como está
-    implementada, la función maneja su propia conexión y `commit` (`save_changes`),
-    haciéndola atómica pero impidiendo un `rollback` externo si falla un paso
-    posterior en el flujo de creación del administrador.
-
     Args:
         password (str): La nueva contraseña para el usuario (se espera que ya esté hasheada).
         username (str): El nuevo nombre de usuario único para el acceso al sistema.
         dim_customer_id (str): El identificador único del cliente a actualizar (`DIM_CustomerId`).
-        connection (Conexion, optional): Conexión existente para usar en una transacción
-                                         (argumento en la firma original, no usado actualmente).
+        db (Conexion | None, optional): Conexión compartida opcional para participar en una transacción.
 
     Returns:
         tuple[int, str]: Una tupla con el código de estado HTTP y un mensaje descriptivo:
@@ -302,7 +279,7 @@ def update_user_info(password: str, username: str, dim_customer_id: str) -> tupl
             - (404, "Usuario no encontrado"): Si no se encontró ningún cliente con el `dim_customer_id` proporcionado.
             - (500, message): Si ocurre un error de bajo nivel durante la ejecución de la consulta SQL.
     """
-    handler_connection = Conexion()
+    handler_connection = Conexion(shared_conn=db)
     try:
         query = """
             UPDATE DIM_Customer
@@ -315,13 +292,13 @@ def update_user_info(password: str, username: str, dim_customer_id: str) -> tupl
             return 404, "Usuario no encontrado"
         handler_connection.save_changes()
         return 200, "Usuario actualizado correctamente"
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al actualizar la informacion del usuario: {e}")
         return 500, "Error al actualizar la informacion del usuario"
     finally:
         handler_connection.close_conexion()
 
-def insert_service_owner_info(data: dict) -> tuple[int, str]:
+def insert_service_owner_info(data: dict, db: Conexion | None = None) -> bool:
     """
     Registra un nuevo Propietario de Servicio (Service Owner) insertando un registro
     en la tabla dimensional `DIM_ServiceOwners`. Este paso formaliza la asignación
@@ -335,12 +312,6 @@ def insert_service_owner_info(data: dict) -> tuple[int, str]:
     el servicio/módulo que administra (`DIM_ServiceId`), y el periodo de tiempo
     durante el cual tiene la responsabilidad (`StartDate`, `EndDate`).
 
-    **NOTA SOBRE TRANSACCIONES:**
-    Al igual que otras funciones de persistencia, esta maneja su propia conexión y `commit`.
-    Para integrarla en una transacción mayor (como la creación completa de un administrador),
-    se debería modificar para aceptar una conexión externa (`connection`) como se sugiere
-    en la firma original, permitiendo un `rollback` si fallan otros pasos.
-
     Args:
         data (dict): Diccionario con la información necesaria para el registro:
                      - 'DIM_ServiceOwnersId' (str): ID único para el registro del propietario.
@@ -348,13 +319,14 @@ def insert_service_owner_info(data: dict) -> tuple[int, str]:
                      - 'serviceName' (str): Nombre del servicio/módulo (para obtener el ServiceId).
                      - 'StartDate' (str): Fecha de inicio de la vigencia (YYYY-MM-DD).
                      - 'EndDate' (str): Fecha de fin de la vigencia (YYYY-MM-DD).
+        db (Conexion | None, optional): Conexión compartida opcional para participar en una transacción.
 
     Returns:
         bool:
             - `True`: Si la inserción en `DIM_ServiceOwners` se completó con éxito.
-            - `False`: Si ocurrió un error de base de datos (`sqlite3.Error`).
+            - `False`: Si ocurrió un error de base de datos (`DatabaseError`).
     """
-    handler_connection = Conexion()
+    handler_connection = Conexion(shared_conn=db)
     handler = DIM_Service()
     serviceId = handler.get_service_id(data['serviceName'])
     handler_date = DIM_DATE()
@@ -388,7 +360,7 @@ def insert_service_owner_info(data: dict) -> tuple[int, str]:
         handler_connection.cursor.execute(query, values)
         handler_connection.save_changes()
         return True
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al insertar el propietario del servicio: {e}")
         return False
     finally:

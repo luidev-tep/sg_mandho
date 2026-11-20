@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { ObtenerUsuario } from '../api/api_auth';
 import AuthImage from "../images/auth-image.jpg";
@@ -24,7 +24,9 @@ function Signup() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isThrottled, setIsThrottled] = useState(false);
 
+  const recaptchaRef = useRef(null);
   const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  const RECAPTCHA_ENABLED = (import.meta.env.VITE_RECAPTCHA_ENABLED ?? 'true').toString().toLowerCase() !== 'false' && Boolean(RECAPTCHA_SITE_KEY);
 
   const onSubmit = handleSubmit(async (data) => {
     if (isThrottled) return;
@@ -32,7 +34,7 @@ function Signup() {
     setIsThrottled(true);
     setTimeout(() => setIsThrottled(false), 1000);
 
-    if (!data.recaptcha) {
+    if (RECAPTCHA_ENABLED && !data.recaptcha) {
       setRecaptchaError("Por favor completa el reCAPTCHA");
       return;
     }
@@ -61,6 +63,10 @@ function Signup() {
       console.error("Error al obtener datos del usuario:", error);
       const errorMessage = error.response?.data?.message || error.message || "Error al iniciar sesión. Verifique sus credenciales.";
       setApiError(errorMessage);
+      if (RECAPTCHA_ENABLED) {
+        recaptchaRef.current?.reset();
+        setValue('recaptcha', null);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -123,11 +129,11 @@ function Signup() {
                       {...register("name", {
                         required: 'El usuario es requerido',
                         pattern: {
-                          value: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9]+$/i,
-                          message: 'Solo se permiten letras sin espacios'
-                        }
+                          value: /^\S+$/,
+                          message: 'El usuario no debe contener espacios'
+                        },
+                        onChange: () => setApiError(null)
                       })}
-                      onChange={() => setApiError(null)}
                     />
                     {errors.name && (
                       <span className="text-red-500 text-sm">{errors.name.message}</span>
@@ -141,8 +147,10 @@ function Signup() {
                     <select 
                       id="role" 
                       className="text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-select w-full"
-                      {...register("role", { required: 'Selecciona un rol' })}
-                      onChange={() => setApiError(null)}
+                      {...register("role", {
+                        required: 'Selecciona un rol',
+                        onChange: () => setApiError(null)
+                      })}
                     >
                       <option value="">Selecciona un rol</option>
                       <option value="delegado">Delegado</option>
@@ -162,7 +170,7 @@ function Signup() {
                     </label>
                     <select 
                       id="manzana" 
-                      className={`form-select dark:text-gray-800 w-full rounded-lg ${errors.manzana ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-select w-full rounded-lg ${errors.manzana ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                       {...register("manzana", { 
                         required: 'La manzana es requerida',
                         validate: value => [
@@ -172,9 +180,9 @@ function Signup() {
                           'yhonda', 
                           'centro', 
                           'buenavista'
-                        ].includes(value) || 'Seleccione una manzana válida'
+                        ].includes(value) || 'Seleccione una manzana válida',
+                        onChange: () => setApiError(null)
                       })}
-                      onChange={() => setApiError(null)}
                       disabled={isSubmitting}
                     >
                       <option value="">Seleccione una opción</option>
@@ -207,9 +215,9 @@ function Signup() {
                           minLength: {
                             value: 8,
                             message: 'La contraseña debe tener al menos 8 caracteres'
-                          }
+                          },
+                          onChange: () => setApiError(null)
                         })}
-                        onChange={() => setApiError(null)}
                       />
                       <button 
                         type="button"
@@ -235,12 +243,15 @@ function Signup() {
                   </div>
                 </div>
                 <div className="mt-6">
-                  <div className="scale-80 origin-left mb-4">
-                    <ReCAPTCHA
-                      sitekey={RECAPTCHA_SITE_KEY}
-                      onChange={onRecaptchaChange}
-                    />
-                  </div>
+                  {RECAPTCHA_ENABLED && (
+                    <div className="scale-80 origin-left mb-4">
+                      <ReCAPTCHA
+                        ref={recaptchaRef}
+                        sitekey={RECAPTCHA_SITE_KEY}
+                        onChange={onRecaptchaChange}
+                      />
+                    </div>
+                  )}
                   <button 
                     type="submit" 
                     className="w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-lg shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"

@@ -17,7 +17,7 @@ function Header({
         <div className={`flex items-center justify-between h-20 ${variant === 'v2' || variant === 'v3' ? '' : 'lg:border-b border-gray-200 dark:border-gray-700/60'}`}>
 
           {/* Header: Left side */}
-          <div className="flex">
+          <div className="flex pl-12 lg:pl-0">
             <h1 className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white whitespace-nowrap">
               <span className="sm:hidden">S.R. El Mandho</span>
               <span className="hidden sm:inline">Sistema de Registro El Mandhó</span>
@@ -68,31 +68,3 @@ function Header({
 }
 
 export default Header;
-
-{/* <div>
-  Diseña un logotipo profesional y vectorizable (apto para exportar a SVG) inspirado en una iglesia tradicional mexicana. El diseño debe ser moderadamente detallado (nivel de complejidad 6 de 10), sin texturas ni degradados, estilo flat.
-
-El logo debe incluir los siguientes elementos clave:
-- Fachada frontal con **tres arcos redondeados** y columnas simplificadas
-- Un **campanario central** por encima del arco del medio, con una **cruz** encima
-- En el arco central, una **representación minimalista de la Virgen de Guadalupe**, con túnica larga, manos juntas en oración y aureola con rayos suaves
-
-Estilo visual:
-- Moderadamente detallado pero limpio y balanceado, con siluetas claras y trazos definidos
-- Sin sombras, sin degradados, sin texturas
-- Formas geométricas limpias y bien organizadas
-- Compatible para convertir a SVG fácilmente
-
-Colores:
-- El logo debe funcionar en **modo claro y oscuro**
-- En modo claro: fondo blanco (`#FFFFFF`), contornos oscuros (`#2D2D2D`), detalles en gris claro (`#E5E5E5`)
-- En modo oscuro: fondo gris oscuro (`bg-gray-800/90` equivalente a `#1F2937E6`), elementos visibles en blanco y gris claro
-- Se permite un toque sutil de color **beige dorado** (`#D6B56B`) para detalles como la aureola de la Virgen
-
-Formato:
-- Proporción cuadrada o vertical
-- Sin fondo (o fondo plano)
-- Estilo flat, ideal para ser usado como ícono de identidad visual religiosa
-
-El diseño debe transmitir espiritualidad, simplicidad.
-</div> */}

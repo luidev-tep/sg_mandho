@@ -770,3 +770,8 @@ Crear la carpeta `backend/src/test/test_e2e_sqlserver/` con 5 archivos:
 4. **Fase 3**: Migrar los 23 archivos de `sqlite3.Error` a `pyodbc.Error`, aplicar los fixes de dialecto SQL (§4.1 y §4.2) e implementar los 3 flujos transaccionales atómicos (§3.3).
 5. **Fase 4**: Implementar y ejecutar `pytest backend/src/test/test_e2e_sqlserver -v` (100% pass sin mocks contra SQL Server real).
 6. **Fase 5**: Crear `backend/Dockerfile`, `backend/.dockerignore`, `frontend/public/staticwebapp.config.json` y actualizar documentación de despliegue en Azure.
+7. **Fase 6**: Sincronización y visualización de pagos en el año fiscal en curso (2026):
+   - Poblar catálogo `DIM_ServiceDetails` y obligaciones `FACT_Revenue` para 2026 (Agua, Panteón, Feria y Delegación) y 2025.
+   - Expandir selector `DateSelectPayment.jsx` con `startYear = 2021` para permitir auditoría histórica completa.
+   - Depurar `INNER JOIN DIM_Date` redundante en `read_payments.py` e incluir autorización para `subdelegado` en `payment_route.py`.
+   - Implementar y validar `test_e2e_read_payments_all_modules_2026_and_authorization` con 100% de éxito en la suite E2E.

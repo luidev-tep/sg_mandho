@@ -1,13 +1,13 @@
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 
-def insert(data:object)  -> bool:
+
+def insert(data: object, db: Conexion | None = None) -> tuple[bool, str]:
     """
     Esta funcion se encargara de insertar una cuenta en la base de datos, para cuando se inrtes, ya se habran hechos todas las 
     validaciones y rekacciiones correspondientes con otras tablas de la base de datos
     """
-    object_conecction = Conexion()
+    object_conecction = Conexion(shared_conn=db)
     try:
-        
         # Consulta con columnas explícitas (ajustadas al número correcto de parámetros)
         query = """
         INSERT INTO DIM_Account (
@@ -31,10 +31,10 @@ def insert(data:object)  -> bool:
         )
         object_conecction.cursor.execute(query, values)
         object_conecction.save_changes()
-        object_conecction.close_conexion()
         #print("Rol insertado correctamente. Desde src.accounts.repository.insert_account")
         return True, ""
     except Exception as e:
-        object_conecction.close_conexion()
         print(e)
         return False, str(e)
+    finally:
+        object_conecction.close_conexion()

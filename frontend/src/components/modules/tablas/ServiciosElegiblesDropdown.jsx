@@ -30,7 +30,7 @@ function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess, 
     };
     document.addEventListener('click', clickHandler);
     return () => document.removeEventListener('click', clickHandler);
-  });
+  }, [dropdownOpen]);
 
   // Cerrar al presionar ESC
   useEffect(() => {
@@ -40,7 +40,7 @@ function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess, 
     };
     document.addEventListener('keydown', keyHandler);
     return () => document.removeEventListener('keydown', keyHandler);
-  });
+  }, [dropdownOpen]);
 
   const handleSelectService = (service) => {
     setSelectedService(service);
@@ -51,7 +51,9 @@ function ServiciosElegiblesDropdown({ serviciosValidos, serviceName, onSuccess, 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedService(null);
-    onDataUpdate(); // Llamar a onDataUpdate al cerrar el modal
+    if (typeof onDataUpdate === 'function') {
+      onDataUpdate();
+    }
   };
 
   if (!serviciosValidos || !serviciosValidos.servicios || serviciosValidos.servicios.length === 0) {

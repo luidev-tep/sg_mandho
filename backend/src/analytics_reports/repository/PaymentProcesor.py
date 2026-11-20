@@ -53,7 +53,7 @@ class PaymentProcessor(GetAnalytics):
             FROM [tabla] as vw
             JOIN (
                 SELECT 
-                    strftime(Year) as year,
+                    CAST(d.Year AS NVARCHAR(10)) as Year,
                     ServiceDetailesType,
                     amount
                 FROM DIM_ServiceDetails -- Asumiendo que esta es la tabla correcta
@@ -71,43 +71,46 @@ class PaymentProcessor(GetAnalytics):
         pagos_completos = []
         pagos_pendientes = []
         
-        for comitiva in list(self.comitivas):
-            tabla = self.get_table_by_fraction(comitiva)
-            if not tabla:  # Saltar comitivas no válidas
-                continue
+        try:
+            for comitiva in list(self.comitivas):
+                tabla = self.get_table_by_fraction(comitiva)
+                if not tabla:  # Saltar comitivas no válidas
+                    continue
+                    
+                current_query = query.replace("[tabla]", tabla)
+                service = self.select_service(tabla)
+                handler_conexion.cursor.execute(current_query, (service, dim_customerId))
+                result = handler_conexion.cursor.fetchall()
                 
-            current_query = query.replace("[tabla]", tabla)
-            service = self.select_service(tabla)
-            handler_conexion.cursor.execute(current_query, (service, dim_customerId))
-            result = handler_conexion.cursor.fetchall()
-            
-            # print(f"Se está ejecutando la tabla {tabla}")
-            # print(f'Número de resultados: {len(result)}')
-            
-            if not result:
-                continue
+                # print(f"Se está ejecutando la tabla {tabla}")
+                # print(f'Número de resultados: {len(result)}')
                 
-            pagos_crudo = [handler_vista.build_vista(*row) for row in result]
-            
-            # Clasificar pagos según estado de factura
-            completos_count = 0
-            pendientes_count = 0
-            for pago in pagos_crudo:
-                pago_formateado = self._formatear_pago(pago, "get_all_data_payments")
-                if pago['StatusFactura'] == 'completo' or pago['StatusFactura'] == 'trabajado':
-                    pagos_completos.append((comitiva, pago_formateado))
-                    completos_count += 1
-                elif pago['StatusFactura'] == 'pendiente':
-                    pagos_pendientes.append((comitiva, pago_formateado))
-                    pendientes_count += 1
-            # print(f'Número de pagos completos: {completos_count}')
-            # print(f'Número de pagos pendientes: {pendientes_count}')
-            # print(f'Es igual a {(completos_count + pendientes_count) == len(pagos_crudo)}')
-        # Formatear resultados finales
-        new_pagos_completos = self.__format_to_dict(pagos_completos)
-        new_pagos_pendientes = self.__format_to_dict(pagos_pendientes)
-            
-        return {'completos': new_pagos_completos, 'pendientes': new_pagos_pendientes}
+                if not result:
+                    continue
+                    
+                pagos_crudo = [handler_vista.build_vista(*row) for row in result]
+                
+                # Clasificar pagos según estado de factura
+                completos_count = 0
+                pendientes_count = 0
+                for pago in pagos_crudo:
+                    pago_formateado = self._formatear_pago(pago, "get_all_data_payments")
+                    if pago['StatusFactura'] == 'completo' or pago['StatusFactura'] == 'trabajado':
+                        pagos_completos.append((comitiva, pago_formateado))
+                        completos_count += 1
+                    elif pago['StatusFactura'] == 'pendiente':
+                        pagos_pendientes.append((comitiva, pago_formateado))
+                        pendientes_count += 1
+                # print(f'Número de pagos completos: {completos_count}')
+                # print(f'Número de pagos pendientes: {pendientes_count}')
+                # print(f'Es igual a {(completos_count + pendientes_count) == len(pagos_crudo)}')
+            # Formatear resultados finales
+            new_pagos_completos = self.__format_to_dict(pagos_completos)
+            new_pagos_pendientes = self.__format_to_dict(pagos_pendientes)
+                
+            return {'completos': new_pagos_completos, 'pendientes': new_pagos_pendientes}
+        finally:
+            handler_conexion.close_conexion()
     
     def select_service(self, view_name: str) -> str | None:
         """

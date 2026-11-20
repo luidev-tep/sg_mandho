@@ -19,7 +19,7 @@ from src.dim_servicedetails.serviceDetails import ServiceDetailsCrud
 from src.payments.cash_cut import cashCutCrud
 from src.security.security import SecurityUsers, role_required
 
-from flask_jwt_extended import jwt_required,  get_jwt
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 service_details_options = ServiceDetailsCrud()
 
 hanlder_cash_cut = cashCutCrud()
@@ -61,25 +61,30 @@ def create_payment() -> Response:
         if not payment_json:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
         
-        if isinstance(payment_json, list):
-            request_service_name = payment_json[0].get('ServiceName', '')
-        else:
-            request_service_name = payment_json.get('ServiceName', '')
-        # print(f"------IMPRIMIENTO INFORMACION DEBUG------")
-        # print(f"Rol del usuario: {user_role}")
-        # #print(f"Fraccion del usuario: {user_fraction}")
-        # print(f"Datos recibidos en la solicitud: {payment_json}")
-        # print(f"Servicio solicitado en la petición: {request_service_name}, compara {user_service} con {request_service_name} = {user_service==request_service_name}")
         if user_role != 'comitiva':
             return send_error("No tienes permiso para crear pagos", 403)
-        
-        if not request_service_name:
-                return send_error("Se debe especificar un servicio al crear pago", 400)
-            
+
         if not user_service:
-                return send_error("Se debe especificar un servicio", 400)
-        
-        if request_service_name != user_service: 
+            return send_error("Se debe especificar un servicio", 400)
+
+        if isinstance(payment_json, list):
+            if len(payment_json) == 0 or not all(isinstance(item, dict) for item in payment_json):
+                return send_error("Lista de pagos vacía o con formato inválido", 400)
+            request_services = {(item.get('ServiceName') or '').strip().lower() for item in payment_json}
+            if not all(request_services):
+                return send_error("Se debe especificar un servicio al crear pago", 400)
+            if request_services != {user_service}:
+                return send_error("No autorizado para crear pagos de este servicio", 403)
+            request_service_name = user_service
+        elif isinstance(payment_json, dict):
+            request_service_name = (payment_json.get('ServiceName') or '').strip().lower()
+        else:
+            return send_error("Formato de datos inválido", 400)
+
+        if not request_service_name:
+            return send_error("Se debe especificar un servicio al crear pago", 400)
+
+        if request_service_name != user_service:
             return send_error("No autorizado para crear pagos de este servicio", 403)
     
         estado = 200
@@ -140,7 +145,7 @@ def read_payment() -> Response:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
         
         request_service_name = payment_json.get('serviceName', '')
-        if user_role == 'delegado':
+        if user_role in ['delegado', 'subdelegado']:
             if not request_service_name:
                 return send_error("Se debe especificar un servicio", 400)
             
@@ -172,6 +177,8 @@ def read_payment() -> Response:
                 return send_success(mensaje, datos, estado)
             else:
                 return send_error(mensaje, estado)
+
+        return send_error("Debe proporcionar 'filters' o 'DIM_CustomerId'", 400)
             
     except Exception as e:
         print(f"Error al leer el pago: {e}")
@@ -199,11 +206,19 @@ def get_cost() -> Response:
                   costo calculado o un mensaje de error.
     """
     try:
+        claims = get_jwt()
+        user_service = (claims.get('service') or '').strip().lower()
         cost_json = request.json
         if not cost_json:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
-        
-        estado, mensaje, datos = payment_options.get_cost(cost_json)
+
+        req_service = (cost_json.get('ServiceName') or '').strip().lower()
+        if req_service and req_service != user_service:
+            return send_error("No autorizado para consultar costos de este servicio", 403)
+        if not req_service and user_service:
+            cost_json['ServiceName'] = user_service
+
+        estado, mensaje, datos = payment_options.get_cost_by_payment_year(cost_json)
 
         if 200 <= estado <= 205:
             return send_success(mensaje, datos, estado)
@@ -250,9 +265,8 @@ def get_any_data() -> Response:
     try:
         claims = get_jwt()
         user_role = claims.get('role')
-        if user_role == 'delegado' or user_role == 'comitiva' or user_role == 'subdelegado':
-            pass
-        else:
+        user_service = (claims.get('service') or '').strip().lower()
+        if user_role not in ['delegado', 'comitiva', 'subdelegado']:
             return send_error("No tienes permiso para obtener datos", 403)
         
         # Validar que se recibieron datos JSON en el cuerpo de la solicitud
@@ -260,29 +274,30 @@ def get_any_data() -> Response:
         if not data_json:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
 
-        #print(f"Datos recibidos: {data_json}")
+        estado, mensaje, datos = None, None, None
 
         # Procesar solicitud de costo de servicio por año
         if 'costoservicio' in data_json and data_json['costoservicio']:
+            req_service = (data_json['costoservicio'].get('ServiceName') or '').strip().lower()
+            if user_role == 'comitiva' and req_service and req_service != user_service:
+                return send_error("No autorizado para consultar costos de este servicio", 403)
             estado, mensaje, datos = payment_options.get_cost_by_payment_year(data_json['costoservicio'])
         
         if 'pagosPendientes' in data_json and data_json['pagosPendientes']:
-            #print('Se imprimen los la info obtendia')
-            # for data in data_json['pagosPendientes']:
-                
-            #     print(f'El valor es{data}= {data_json['pagosPendientes'][data]}')
+            req_service = (data_json['pagosPendientes'].get('ServiceName') or '').strip().lower()
+            if user_role == 'comitiva' and req_service and req_service != user_service:
+                return send_error("No autorizado para consultar pagos pendientes de este servicio", 403)
             estado, mensaje, datos = payment_options.get_pending_paids_per_customer(data_json['pagosPendientes'])
-            #print(f"Datos recibidos: {datos}")
             
         if 'servicios_corte_caja' in data_json and data_json['servicios_corte_caja']:
+            req_service = (data_json['servicios_corte_caja'].get('DIM_service') or '').strip().lower()
+            if user_role == 'comitiva' and req_service and req_service != user_service:
+                return send_error("No autorizado para consultar cortes de este servicio", 403)
             estado, datos = hanlder_cash_cut.get_service_chosen(data_json['servicios_corte_caja'])
             mensaje = "Datos obtenidos correctamente"
-            #print(f"Datos recibidos: {datos}")
-            
-        # Aquí se pueden agregar más condiciones para otros tipos de servicios en el futuro
-        # Ejemplo:
-        # elif 'otro_servicio' in data_json:
-        #     estado, mensaje, datos = otra_funcion(data_json['otro_servicio'])
+
+        if estado is None:
+            return send_error("No se especificó ninguna consulta válida", 400)
         
         # Validar y retornar respuesta según el estado recibido
         if 200 <= estado <= 205:
@@ -327,9 +342,18 @@ def cash_cut_route() -> Response:
         - DIM_service (str): El nombre del servicio (e.g., "luz", "internet").
     """
     try:
+        claims = get_jwt()
+        user_service = (claims.get('service') or '').strip().lower()
+        user_owner_id = get_jwt_identity()
         data_json = request.json
         if not data_json:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+
+        req_service = (data_json.get('DIM_service') or '').strip().lower()
+        if req_service != user_service:
+            return send_error("No autorizado para realizar corte de caja de este servicio", 403)
+        if data_json.get('DIM_ServiceOwnersId') != user_owner_id:
+            return send_error("No autorizado para suplantar otro propietario de servicio", 403)
         
         estado, mensaje = hanlder_cash_cut.CashCut(data_json)
         #print(f"Estado: {estado}, Mensaje: {mensaje}")
@@ -361,9 +385,15 @@ def insert_new_service() -> Response:
                   el estado HTTP y el costo calculado o un mensaje de error.
     """
     try:
+        claims = get_jwt()
+        user_service = (claims.get('service') or '').strip().lower()
         cost_json = request.json
         if not cost_json:
             return send_error("No se recibieron datos en el cuerpo de la solicitud", 400)
+
+        req_service = (cost_json.get('ServiceName') or '').strip().lower()
+        if req_service and req_service != user_service:
+            return send_error("No autorizado para crear servicios de otra comitiva", 403)
         
         estado, mensaje = service_details_options.insert_service_details(cost_json)
 

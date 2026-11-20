@@ -182,7 +182,7 @@ class GetAnalytics:
             -- FUNCIONAL
             SELECT 
                 cus.CustomerFraction,
-                IFNULL(SUM(vw.amount), 0) as revenue 
+                ISNULL(SUM(vw.amount), 0) as revenue 
             FROM DIM_Customer as cus 
             LEFT JOIN (
                 SELECT 
@@ -345,6 +345,7 @@ class GetAnalytics:
         where CustomerEndDate = 's/n'
         GROUP BY CustomerFraction
         """
+        handler_conexion = None
         try:
             handler_conexion = Conexion()
             handler_conexion.cursor.execute(query)
@@ -354,7 +355,8 @@ class GetAnalytics:
             print(f"Error al obtener la informacion de la comitiva: {e}")
             return []
         finally:
-            handler_conexion.close_conexion()
+            if handler_conexion:
+                handler_conexion.close_conexion()
     
     def get_admins_data(self, comitiva):
         """
@@ -380,6 +382,7 @@ class GetAnalytics:
                 SecurityUsers 
                 WHERE ServiceName = ? 
         """
+        handler_conexion = None
         try:
             handler_conexion = Conexion()
             handler_conexion.cursor.execute(query, (comitiva,))
@@ -392,4 +395,5 @@ class GetAnalytics:
             print(f"Error al obtener la informacion de la comitiva: {e}")
             return []
         finally:
-            handler_conexion.close_conexion()
+            if handler_conexion:
+                handler_conexion.close_conexion()

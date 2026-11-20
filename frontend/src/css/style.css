@@ -139,36 +139,13 @@
 
 
 
-/* En tu archivo CSS global */
-.bg-yellow-100 {
-  background-color: #fef9c3 !important;
-}
-
-.border-l-4 {
-  border-left-width: 4px !important;
-}
-
-.border-yellow-500 {
-  border-color: #f59e0b !important;
-}
-
-.min-w-full.bg-white tbody tr.bg-yellow-100 td {
-  color: #1e3a8a !important;
-  font-weight: 500 !important;
-}
-
-.min-w-full.bg-white tbody tr.bg-yellow-100:hover {
-  background-color: #fef08a !important;
-}
-
-
-/* Estilos modificados para tema claro y oscuro */
+/* Estilos para tema claro y oscuro */
 .bg-yellow-100 {
   background-color: #fef9c3 !important;
 }
 
 .dark .bg-yellow-100 {
-  background-color:  #721cab !important; /* amber-900 */
+  background-color: #78350f !important; /* amber-900 */
 }
 
 .border-l-4 {
@@ -198,5 +175,5 @@
 }
 
 .dark .min-w-full.bg-white tbody tr.bg-yellow-100:hover {
-  background-color: #831ec6 !important; /* amber-800 */
+  background-color: #92400e !important; /* amber-800 */
 }

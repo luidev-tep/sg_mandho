@@ -14,10 +14,10 @@ export const MostrarPagos = async (data) => {
         //console.log("Respuesta del servidor:", response.data);
 
         return {
-            success: response.data.status || false,
+            success: response.data.status === 'success',
             message: response.data.message,
             data: response.data.body || []
-        }; // ← Aquí faltaba cerrar el return y agregar el punto y coma
+        };
 
     } catch (error) {
         let errorMessage; // ← Declarar la variable errorMessage

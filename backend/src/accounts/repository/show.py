@@ -1,8 +1,10 @@
 from typing import Any
 
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.accounts.models.DIM_account import DIM_Account
-def show_account(account_id: str|None) -> list[DIM_Account]|list[Any]:
+
+
+def show_account(account_id: str | None) -> list[DIM_Account] | list[Any]:
     """
     Funcion la cual se engara de obtener la informacion de la cuenta que se desea mostrar
     recibe un parametro si el parametro es none devuelve toda la informacion de las cuentas
@@ -17,33 +19,29 @@ def show_account(account_id: str|None) -> list[DIM_Account]|list[Any]:
     constrains:
             Si no se encuentra el id se retorna un diccionario vacio
     """
+    conecion = Conexion()
+    try:
+        if account_id is None:
+            query = "SELECT * FROM DIM_Account"
+            conecion.cursor.execute(query)
+            accounts = conecion.cursor.fetchall()
+            if accounts:
+                return [DIM_Account(*account) for account in accounts]
+            else:
+                return []
 
-    if account_id is None:
-        conecion = Conexion()
+        elif account_id:
+            query = "SELECT * FROM DIM_Account WHERE DIM_CustomerId = ?"
+            conecion.cursor.execute(query, (account_id,))
+            accounts = conecion.cursor.fetchall()
+            if accounts:
+                return [DIM_Account(*account) for account in accounts]
+            else:
+                return []
 
-        query = f"SELECT * FROM DIM_Account"
-        conecion.cursor.execute(query)
-
-        accounts = conecion.cursor.fetchall()
-
+        return []
+    except DatabaseError as e:
+        print(f"Error al obtener cuentas: {e}")
+        return []
+    finally:
         conecion.close_conexion()
-        #print("Datos crudos de la bd: ", accounts)
-        if accounts:
-            return [DIM_Account(*account) for account in accounts]
-        else:
-            return []
-        
-    elif account_id:
-        conecion = Conexion()
-
-        query = f"SELECT * FROM DIM_Account WHERE DIM_CustomerId = ?"
-        conecion.cursor.execute(query, (account_id,))
-
-        accounts = conecion.cursor.fetchall()
-
-        conecion.close_conexion()
-        if accounts:
-            
-            return [DIM_Account(*account) for account in accounts]
-        else:
-            return []

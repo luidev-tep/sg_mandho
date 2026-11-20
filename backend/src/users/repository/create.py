@@ -1,7 +1,8 @@
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.users.models.user import User
-import sqlite3
 from src.utils.id_generator import create_id
+
+
 class Create():
     def insert_user(self, data: User) -> bool:
         """Método responsable de insertar un usuario a la base de datos
@@ -27,9 +28,8 @@ class Create():
         Returns:
             bool: True si se insertó correctamente, False si hubo error
         """
+        object_conecction = Conexion()
         try:
-            object_conecction = Conexion()
-            
             # Consulta con columnas explícitas (ajustadas al número correcto de parámetros)
             query = """
             INSERT INTO DIM_Customer (
@@ -57,7 +57,7 @@ class Create():
             username = data.CustomerName
             values = (
                 str(data.DIM_CustomerId),
-                str(data.DIM_DateId),
+                int(data.DIM_DateId),
                 data.CustomerName,
                 data.CustomerMiddleName,
                 data.CustomerLastName,
@@ -75,10 +75,10 @@ class Create():
             object_conecction.cursor.execute(query, values)
             
             object_conecction.save_changes()  # Comentado según lo indicado
-            object_conecction.close_conexion()
             
             return True
-        except sqlite3.Error as e:
-            object_conecction.close_conexion()
+        except DatabaseError as e:
             print(f"Error al insertar la persona: {e}")
             return False
+        finally:
+            object_conecction.close_conexion()

@@ -62,13 +62,29 @@ function authReducer(state, action) {
         timestamp: Date.now()
       }));
       return { ...state, usuario };
-    case "SET_TOKENS":
+    case "SET_TOKENS": {
       const tokens = action.payload;
+      let existingRefreshTs = Date.now();
+      try {
+        const prevTokens = JSON.parse(localStorage.getItem('tokens') || 'null');
+        if (prevTokens?.refreshTokenTimestamp) {
+          existingRefreshTs = prevTokens.refreshTokenTimestamp;
+        }
+      } catch {
+        // Ignorar error de parseo
+      }
       localStorage.setItem('tokens', JSON.stringify({
         tokens,
-        refreshTokenTimestamp: Date.now()
+        refreshTokenTimestamp: existingRefreshTs
       }));
+      if (state.usuario) {
+        localStorage.setItem('usuario', JSON.stringify({
+          usuario: state.usuario,
+          timestamp: Date.now()
+        }));
+      }
       return { ...state, tokens };
+    }
     case "SET_USER_AND_TOKENS":
       const { usuario: user, tokens: userTokens } = action.payload;
       localStorage.setItem('usuario', JSON.stringify({
@@ -95,9 +111,12 @@ export function AuthProvider({ children }) {
     tokens: loadTokensFromStorage()
   });
 
-  // Configurar interceptores de Axios una sola vez
+  // Configurar interceptores de Axios una sola vez y limpiar al desmontar
   useEffect(() => {
-    setupInterceptors({ dispatch });
+    const eject = setupInterceptors({ dispatch });
+    return () => {
+      if (typeof eject === 'function') eject();
+    };
   }, []);
 
   const navigate = useNavigate();
@@ -129,17 +148,23 @@ export function AuthProvider({ children }) {
   const startWarning = () => {
     setCountdown(COUNTDOWN_SECONDS);
     setShowIdleModal(true);
+    clearInterval(countdownTimer.current);
     countdownTimer.current = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
           clearInterval(countdownTimer.current);
-          handleLogout();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
   };
+
+  useEffect(() => {
+    if (showIdleModal && countdown <= 0) {
+      handleLogout();
+    }
+  }, [showIdleModal, countdown, handleLogout]);
 
   const resetIdleTimer = useCallback(() => {
     clearTimeout(idleTimer.current);
@@ -238,6 +263,8 @@ export function AuthProvider({ children }) {
     }
   }, [state.usuario, state.tokens, location.pathname, navigate]);
 
+  const isUnauthenticatedProtected = (!state.usuario || !state.tokens) && location.pathname !== '/Signup';
+
   return (
     <AuthContext.Provider value={{ state, dispatch }}>
       <IdleTimeoutModal
@@ -246,7 +273,7 @@ export function AuthProvider({ children }) {
         onLogout={handleLogout}
         countdown={countdown}
       />
-      {children}
+      {isUnauthenticatedProtected ? null : children}
     </AuthContext.Provider>
   );
 }

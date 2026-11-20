@@ -8,6 +8,7 @@ import { EditarUsuario } from "../../api/api_user";
 import { MostrarCuentas } from '../../api/api_account';
 import FormattedErrorMessage from "../alertas/FormattedErrorMessage";
 import ConfirmationModal from "../Modalmessaje";
+import { getLocalDateISO } from "../../utils/dateUtils";
 
 // Esquema de validación
 const editSchema = yup.object().shape({
@@ -51,7 +52,7 @@ const editSchema = yup.object().shape({
     .notRequired()
     .oneOf([
       'Estudiante', 'Inmigrante', 'Pequeño propietario',
-      'Vecino', 'Ranchero', 'Invalido', null
+      'Vecino', 'Ranchero', 'Invalido', 'Residente', 'Vecino exento', null
     ], 'Estado no válido'),
 });
 
@@ -59,7 +60,7 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
   // Estados
   const [customer, setCustomer] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [fechaActual] = useState(new Date().toISOString().split('T')[0]);
+  const [fechaActual] = useState(() => getLocalDateISO());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -242,7 +243,7 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
 
 return (
   // Contenedor principal: centra el modal y añade el fondo oscuro
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-2 sm:p-4 z-50">
+  <div className="fixed inset-0 bg-black/50 flex justify-center items-center p-2 sm:p-4 z-50">
     {/* Panel del modal: ahora con altura máxima y flexbox vertical */}
     <div
       className="bg-white dark:bg-gray-800 shadow-xs rounded-xl relative w-full max-w-4xl max-h-[90vh] flex flex-col"
@@ -414,6 +415,9 @@ return (
                       </option>
                     ))}
                   </select>
+                  {errors.DIM_RoleId && (
+                    <p className="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400">{errors.DIM_RoleId.message}</p>
+                  )}
                 </div>
               ) : (
                 <div className="p-3 bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-400 dark:border-yellow-700 text-yellow-900 dark:text-white rounded-lg mt-2 text-sm sm:text-base">

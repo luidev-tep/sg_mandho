@@ -1,5 +1,5 @@
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
+
 
 def edit_user(data_edit: dict) -> bool:
     """Esta funcion se encarga de editar la informacion de un usuario en la tabla DIM_Customer.
@@ -22,9 +22,8 @@ def edit_user(data_edit: dict) -> bool:
         bool: Retorna True si la edicion se realizo correctamente, y False en caso de que ocurra
               un error durante la operacion, como un error de base de datos.
     """
-    handler_coon = Conexion()
+    object_conetion = Conexion()
     try:
-
         #print('Datos a ingresar', data_edit)
         query = """
         UPDATE DIM_Customer
@@ -39,12 +38,11 @@ def edit_user(data_edit: dict) -> bool:
             data_edit['CustomerNumberExt'],
             data_edit['DIM_CustomerId']
         )
-        handler_coon.cursor.execute(query, values)
-
-        handler_coon.save_changes()
+        object_conetion.cursor.execute(query, values)
+        object_conetion.save_changes()
         return True
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print("Error al editar el usuario", e)
         return False
     finally:
-        handler_coon.close_conexion()
+        object_conetion.close_conexion()

@@ -1,19 +1,19 @@
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.payments.model.pending_paid import CashCutModel
 
 
-def create_cash_cut_register(data_json: CashCutModel) -> bool:
+def create_cash_cut_register(data_json: CashCutModel, db: Conexion | None = None) -> bool:
     """
     Inserta un nuevo registro a la tabla DIM_cash cut.
 
     Args:
         data_json (CashCutModel): Objeto que contiene los datos a insertar.
+        db (Conexion | None): Conexión compartida para transacciones atómicas.
 
     Returns:
         bool: True si el registro se insertó correctamente, False en caso de error.
     """
-    handler = Conexion()
+    handler = Conexion(shared_conn=db)
     query  = """
     INSERT INTO DIM_CashCut (DIM_CashCutId, DIM_ServiceDetailsId, DIM_DateId, DIM_ServiceOwnersId, DIM_CountRegisters)
     VALUES (?, ?, ?, ?, ?)
@@ -29,52 +29,76 @@ def create_cash_cut_register(data_json: CashCutModel) -> bool:
         handler.cursor.execute(query, values)
         handler.save_changes()
         return True
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(e)
         return False
     finally:
         handler.close_conexion()
         
 
-def found_pending(DIM_ServiceDetailesType:str, ServiceName: str) -> list:
+def found_pending(
+    DIM_ServiceDetailesType: str,
+    ServiceName: str,
+    service_details_id: str | None = None,
+) -> list:
     """
-    Función encargada de recopilar las cuentas de usuarios a los que se les
-    creará un registro de pago con 0 para contabilizar los pagos pendientes.
-    Solo se pueden hacer cortes de caja en el año actual para no afectar registros anteriores.
+    Recopila las cuentas activas a las que aún no se les ha registrado ningún pago
+    para el detalle de servicio indicado.
+
+    Usa `NOT EXISTS` (inmune a `NULL` en `FACT_Revenue.DIM_AccountId`) y filtra
+    por `DIM_ServiceDetailsId` cuando se proporciona (o por servicio/tipo/año actual).
 
     Args:
         DIM_ServiceDetailesType (str): El tipo de detalle del servicio.
         ServiceName (str): El nombre del servicio.
+        service_details_id (str | None): ID específico de `DIM_ServiceDetails` del año en curso.
 
     Returns:
-        list: Una lista de tuplas con los DIM_AccountId de los clientes pendientes.
-              Devuelve una lista vacía en caso de no encontrar resultados o si ocurre un error.
+        list: Lista de tuplas `(DIM_AccountId,)` de cuentas pendientes.
     """
     handler = Conexion()
-    query  = """
-             SELECT 
-                 vw.DIM_AccountId
-             FROM VISTA_CLIENTES_ACTIVOS as vw 
-             WHERE vw.DIM_AccountId NOT IN (
-                 SELECT 
-                     fa.DIM_AccountId
-                 FROM FACT_Revenue as fa
-                 JOIN DIM_ServiceDetails as sd
-                 ON sd.DIM_ServiceDetailsId = fa.DIM_ServiceDetailsId
-                 JOIN DIM_Service as s
-                 ON s.DIM_ServiceId = sd.DIM_ServiceId
-                 WHERE s.ServiceName = ? AND sd.ServiceDetailesType = ?
-             );
-    """
+    if service_details_id:
+        query = """
+            SELECT vw.DIM_AccountId
+            FROM VISTA_CLIENTES_ACTIVOS AS vw
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM FACT_Revenue AS fa
+                WHERE fa.DIM_AccountId = vw.DIM_AccountId
+                  AND fa.DIM_ServiceDetailsId = ?
+            );
+        """
+        params = (service_details_id,)
+    else:
+        query = """
+            SELECT vw.DIM_AccountId
+            FROM VISTA_CLIENTES_ACTIVOS AS vw
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM FACT_Revenue AS fa
+                INNER JOIN DIM_ServiceDetails AS sd
+                    ON sd.DIM_ServiceDetailsId = fa.DIM_ServiceDetailsId
+                INNER JOIN DIM_Service AS s
+                    ON s.DIM_ServiceId = sd.DIM_ServiceId
+                INNER JOIN DIM_Date AS d_sd
+                    ON d_sd.DIM_DateId = sd.DIM_DateId
+                WHERE fa.DIM_AccountId = vw.DIM_AccountId
+                  AND s.ServiceName = ?
+                  AND sd.ServiceDetailesType = ?
+                  AND d_sd.[Year] = YEAR(GETDATE())
+            );
+        """
+        params = (ServiceName, DIM_ServiceDetailesType)
+
     try:
-        handler.cursor.execute(query, (ServiceName, DIM_ServiceDetailesType))
+        handler.cursor.execute(query, params)
         result = handler.cursor.fetchall()
-        
-        if result is None or len(result) == 0:
+
+        if not result:
             return []
-        
+
         return result
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(e)
         return []
     finally:
@@ -118,7 +142,7 @@ def search_service_Valid(year: int, service_details_id: str) -> bool:
             return True
         
         return False
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(e)
         return False
     finally:
@@ -155,7 +179,7 @@ def is_service_exist(service_details_id: str) -> bool:
         
         #print(result)
         return True
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(e)
         # Si hay un error, asumimos que no se pudo verificar la existencia,
         # lo que en este contexto significa que no se puede proceder.

@@ -1,5 +1,4 @@
-import sqlite3 
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.security.model import VistaModel
 from src.dim_dates.dim_date import DIM_DATE
 
@@ -34,19 +33,20 @@ def get_securyty_users_info():
             - `None` si la base de datos retorna un conjunto de resultados vacío.
 
     Raises:
-        sqlite3.Error: Si ocurre un error durante la conexión o la ejecución de la consulta.
+        DatabaseError: Si ocurre un error durante la conexión o la ejecución de la consulta.
                        El error se imprime y luego se propaga.
     """
-    hanlder_conection = Conexion()
+    handler_conection = Conexion()
     query = """
     SELECT 
             *
     FROM
         SecurityUsers
+    ORDER BY StartDate DESC
     """
     try:
-        hanlder_conection.cursor.execute(query)
-        user_info = hanlder_conection.cursor.fetchall()
+        handler_conection.cursor.execute(query)
+        user_info = handler_conection.cursor.fetchall()
 
         if user_info is None:
             return None
@@ -65,11 +65,11 @@ def get_securyty_users_info():
             list_data.append(data_onwers_info_format)
         
         return list_data
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al obtener la informacion del usuario: {e}")
         raise
     finally:
-        hanlder_conection.close_conexion()
+        handler_conection.close_conexion()
 
 def get_admin_info():
     """
@@ -91,7 +91,7 @@ def get_admin_info():
         -   Busca el registro donde `RoleName` sea **'delegado'**.
         -   Filtra adicionalmente por el rango de fechas (`StartDate` y `EndDate`),
             asegurando que se extraiga la información válida para el año en curso.
-    4.  **Extracción de Resultado:** Llama a `hanlder_conection.cursor.fetchone()`
+    4.  **Extracción de Resultado:** Llama a `handler_conection.cursor.fetchone()`
         para obtener el primer (y esperado único) resultado de la consulta.
     5.  **Manejo de Nulos/Ausencia de Datos:**
         -   Verifica si `user_info` es `None` (no se encontró el usuario).
@@ -101,17 +101,16 @@ def get_admin_info():
         `password` (`user_info[0]`).
 
     Manejo de Errores:
-    -   Captura explícitamente `sqlite3.Error` (si la conexión o la base de datos
-        es SQLite) para imprimir el error y luego relanzarlo (`raise`).
+    -   Captura explícitamente `DatabaseError` para imprimir el error y luego relanzarlo (`raise`).
 
     Cierre de Recursos:
-    -   Garantiza que la conexión a la base de datos se cierre siempre (`finally: hanlder_conection.close_conexion()`).
+    -   Garantiza que la conexión a la base de datos se cierre siempre (`finally: handler_conection.close_conexion()`).
 
     Returns:
         str | None: La contraseña hasheada del delegado si se encuentra, o `None`
         si el usuario no existe o el campo de contraseña está vacío.
     """
-    hanlder_conection = Conexion()
+    handler_conection = Conexion()
     
     year, month, day = DIM_DATE()._get_full_date()
     
@@ -129,8 +128,8 @@ def get_admin_info():
         AND EndDate = ?
     """
     try:
-        hanlder_conection.cursor.execute(query, (start_date, end_date))
-        user_info = hanlder_conection.cursor.fetchone()
+        handler_conection.cursor.execute(query, (start_date, end_date))
+        user_info = handler_conection.cursor.fetchone()
 
         # Corrección: Verificar si fetchone() devuelve None antes de acceder al índice
         if user_info is None:
@@ -141,8 +140,8 @@ def get_admin_info():
         
         return user_info[0]
     
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al obtener la informacion del usuario: {e}")
         raise
     finally:
-        hanlder_conection.close_conexion()
+        handler_conection.close_conexion()

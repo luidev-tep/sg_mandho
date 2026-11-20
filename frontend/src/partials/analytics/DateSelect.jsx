@@ -64,8 +64,8 @@ function DateSelect({ onFilterChange }) {
       return options;
     }
 
-    // Lógica general: Generar hasta 12 meses hacia atrás desde el mes anterior al actual.
-    for (let i = 1; i <= 12; i++) {
+    // Generar hasta 12 meses hacia atrás incluyendo el mes actual (i = 0)
+    for (let i = 0; i <= 12; i++) {
       const dateIterator = new Date(today.getFullYear(), today.getMonth() - i, 1);
 
       // Detener si el mes a generar es anterior a la fecha de inicio.
@@ -153,11 +153,11 @@ function DateSelect({ onFilterChange }) {
         tag="div"
         className="z-20 absolute mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden"
         enter="transition ease-out duration-100"
-        enterFrom="opacity-0 scale-95"
-        enterTo="opacity-100 scale-100"
+        enterStart="opacity-0 scale-95"
+        enterEnd="opacity-100 scale-100"
         leave="transition ease-in duration-75"
-        leaveFrom="opacity-100 scale-100"
-        leaveTo="opacity-0 scale-95"
+        leaveStart="opacity-100 scale-100"
+        leaveEnd="opacity-0 scale-95"
       >
         <div
           ref={dropdown}

@@ -1,5 +1,4 @@
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.dim_service.DIM_Service import DIM_Service
 
 def get_amount_by_id(serviceDetails_id: str) -> float:

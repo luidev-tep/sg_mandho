@@ -16,7 +16,7 @@ export const crearRegistroPago = async (data) => {
         //console.log("Respuesta del servidor al crear pago(s):", response.data);
         
         return {
-            success: response.data.status || false,
+            success: response.data.status === 'success',
             message: response.data.message ,
             data: response.data.body
         };

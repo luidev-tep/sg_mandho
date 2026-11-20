@@ -196,11 +196,11 @@ class SecurityUsers:
         hanlder_date = DIM_DATE()
 
         #Hashear la contrasenia
-        is_valid, message = self.validate_password_with_feedback(data_json['password'])
+        password_check = self.validate_password_with_feedback(data_json['password'])
 
-        if not is_valid:
-            print(f"La constrasenia fallo por {message}")
-            return 400, message
+        if not password_check['is_valid']:
+            print(f"La constrasenia fallo por {password_check['errors']}")
+            return 400, password_check['errors']
         
         hash_password = self.__hash_password(data_json['password'])
         year, month, day = hanlder_date.full_date
@@ -344,9 +344,10 @@ class SecurityUsers:
             'comitiva': {'feria', 'delegacion', 'panteon', 'agua'},
             'subdelegado': {'personas'}
         }
+        valid_fractions = {'cerritos', 'centro', 'yhonda', 'tepetate', 'garambullo', 'buenavista'}
         role = data_json.get('RoleName', '')
-        if not role:
-            return 400, "El campo 'RoleName' es obligatorio y debe ser una cadena de texto."
+        if not role or role not in validaciones:
+            return 400, f"El campo 'RoleName' es obligatorio y debe ser un rol válido."
         
         if role == 'delegado':
             if not validate_user_admin():
@@ -364,11 +365,14 @@ class SecurityUsers:
         
         if role == 'subdelegado':
             fraction = data_json['CustomerFraction']
+            if fraction.strip().lower() not in valid_fractions:
+                return 409, f"No se puede agregar un subdelegado para la manzana de  {fraction}"
+
             if not validate_user_sub_admin(fraction):
                 return 409, f"Ya existe un usuario activo en el sistema para la manzana de  {fraction}"
             
-            if data_json['CustomerFraction'] not in validaciones['subdelegado']:
-                return 409, f"No se puede agregar un subdelegado para la manzana de  {data_json['CustomerFraction']}"
+            if data_json['serviceName'] not in validaciones['subdelegado']:
+                return 409, f"No se puede agregar un subdelegado para el servicio de  {data_json['serviceName']}"
         
         return 200, "Validación exitosa"
     #Se ha puesto el decorador como como una funcion py no como un metodo para poder usarlo en cualquier blueprint
@@ -408,7 +412,7 @@ class SecurityUsers:
         # Validar que la contraseña no sea None o vacía
         if not password:
             errors.append("La contraseña no puede estar vacía")
-            return {'is_valid': False, 'errors': errors}
+            return {'is_valid': False, 'errors': ' '.join(errors)}
         
         if len(password) < 8:
             errors.append("La contraseña debe tener al menos 8 caracteres")

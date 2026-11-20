@@ -28,13 +28,13 @@ function PaymentsTableModal({ id_user, serviceName, onClose , service_type, Year
       //console.log('Respuesta del backend:', response);
       
       // CORRECCIÓN: Verificar la estructura de la respuesta correctamente
-      if (response?.success === "success" && Array.isArray(response.data)) {
+      if (response?.success === true && Array.isArray(response.data)) {
         setPagos(response.data);
-      } else if (response?.success === "success" && !Array.isArray(response.data)) {
-        // Si success es "success" pero data no es array, usar array vacío
+      } else if (response?.success === true && !Array.isArray(response.data)) {
+        // Si success es true pero data no es array, usar array vacío
         setPagos([]);
       } else {
-        if (response?.message && response.success !== "success") {
+        if (response?.message && !response?.success) {
           throw new Error(response.message);
         }
         setPagos([]);
@@ -56,7 +56,7 @@ function PaymentsTableModal({ id_user, serviceName, onClose , service_type, Year
       setIsLoading(false);
       setPagos([]);
     }
-  }, [id_user, serviceName]);
+  }, [id_user, serviceName, service_type, Year]);
 
   // Memoizamos el nombre del cliente para evitar recálculos innecesarios
   const clienteNombre = useMemo(() => {

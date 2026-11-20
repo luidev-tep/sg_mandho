@@ -5,6 +5,7 @@ import React from 'react';
 
 function PaymentItem({ StatusFactura, amount, DIM_DateId }) {
   const statusInfo = {
+    'completo': { text: 'Completo', color: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' },
     'pagado': { text: 'Pagado', color: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' },
     'pendiente': { text: 'Pendiente', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' },
     'vencido': { text: 'Vencido', color: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' },
@@ -29,7 +30,7 @@ function PaymentItem({ StatusFactura, amount, DIM_DateId }) {
       {/* Monto */}
       <div className="flex items-center justify-between sm:w-1/3 mb-2 sm:mb-0">
         <span className="sm:hidden text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Monto</span>
-        <span className="font-medium text-gray-800 dark:text-gray-200">${amount.toFixed(2)}</span>
+        <span className="font-medium text-gray-800 dark:text-gray-200">${Number(amount || 0).toFixed(2)}</span>
       </div>
 
       {/* Fecha */}

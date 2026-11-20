@@ -1,5 +1,5 @@
 import axiosInstance from "./axiosInstance";
-import { id } from "date-fns/locale/id";
+import { formatLocalDate } from "../utils/dateUtils";
 
 // Instancia de Axios con la URL base configurada
 // Ya no se necesita una instancia local, usaremos la centralizada
@@ -22,14 +22,7 @@ Lo mismo para cuando se quiere leer y se quiere actualizar la cuenta, la ifnorma
  * @returns {string} - Fecha formateada o string vacío si no hay fecha.
  */
 export const formatDate = (dateString) => {
-  if (!dateString) return '';
-  
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES');
-  } catch {
-    return dateString;
-  }
+  return formatLocalDate(dateString, 'es-MX');
 };
 
 /**
@@ -111,8 +104,6 @@ export const MostrarCuentas = async (filters) => {
         data: { body: [] }
       };
     }
-    //console.log("Desde api account, mostrar cuentas")
-    console.log(id_user)
     const response = await axiosInstance.post('account/read/', { id_user });
     
     // Si la respuesta es un array vacío o no tiene body
@@ -181,8 +172,8 @@ export const validate_edit_account = async (data) => {
     return false;
   }
 
-  const estado_original = data.orginal_status;
-  const estado_persona = data.status.toLowerCase();
+  const estado_original = typeof data.orginal_status === 'string' ? data.orginal_status.toLowerCase() : data.orginal_status;
+  const estado_persona = typeof data.status === 'string' ? data.status.toLowerCase() : data.status;
   // Manejo de comparación para objetos
   if (typeof estado_original === 'object' && typeof estado_persona === 'object') {
     const sonIguales = JSON.stringify(estado_original) === JSON.stringify(estado_persona);

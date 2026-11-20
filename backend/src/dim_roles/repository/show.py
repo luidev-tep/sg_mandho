@@ -1,6 +1,5 @@
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.dim_roles.models.DIM_role import DIM_ROLE
-import sqlite3
 
 def get_role(id_role = str()):# -> DIM_ROLE | list:# -> DIM_ROLE | list:
     """
@@ -30,7 +29,6 @@ def get_role(id_role = str()):# -> DIM_ROLE | list:# -> DIM_ROLE | list:
 
         # Obtener los resultados
         result = cursor.fetchone()
-        object_connection.close_conexion()
 
         if result:  # Si se encontraron resultados
             # Tomamos el primer registro (asumiendo búsqueda por ID devuelve solo 1)
@@ -39,7 +37,8 @@ def get_role(id_role = str()):# -> DIM_ROLE | list:# -> DIM_ROLE | list:
         else:
             return []
 
-    except sqlite3.Error as error:
+    except DatabaseError as error:
         print(f"Error al obtener el rol: {error}")
-        object_connection.close_conexion()
         return []
+    finally:
+        object_connection.close_conexion()

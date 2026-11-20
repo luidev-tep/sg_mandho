@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import {
   Routes,
   Route,
+  Navigate,
   useLocation,
   BrowserRouter
 } from 'react-router-dom';
@@ -12,7 +13,6 @@ import './css/style.css';
 import Signup from './pages/Singup.jsx';
 import CompanyProfile from './pages/CompanyProfile.jsx';
 import Analytics from './pages/Analytics.jsx';
-import ModalPage from './pages/ModalPage.jsx';
 //import DynamicModule from './pages/DynamicModule.jsx';
 
 //Personas modulo
@@ -72,7 +72,6 @@ function App() {
           <Route path='/' element={<CompanyProfile />} />
           <Route path="/Signup" element={<Signup />} />
           <Route path="/CompanyProfile" element={<CompanyProfile />} />
-          <Route path="/ModalPage" element={<ModalPage />} />
           {/* <Route path="/modulo/:moduleName" element={<DynamicModule />} /> */}
 
           <Route path="/personas/registro_exito/:id" element={<UserSucces />} />
@@ -92,7 +91,7 @@ function App() {
           <Route path="/modulos/crear_servicio/:moduleName" element={<AgregarServicio />} />
 
           <Route path="/modulos/agregar_administrador/" element={<AgregarUsuario />} />
-          {/* Rutas adicionales */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     </>
   )
