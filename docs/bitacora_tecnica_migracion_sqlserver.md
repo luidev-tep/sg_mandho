@@ -2,7 +2,7 @@
 
 **Proyecto:** SG Mandho  
 **Fecha:** 21 de Octubre de 2026  
-**Estado:** Implementación Completada y Verificada (16/16 E2E Tests Aprobados sin Mocks)  
+**Estado:** Implementación completada y verificada (30/30 pruebas E2E aprobadas; 0 fugas del pool).
 
 ---
 
@@ -11,8 +11,8 @@
 La aplicación **SG Mandho** operaba históricamente sobre un archivo monolítico **SQLite** (`sistema_mandho.db`), con conexiones directas no agrupadas (`sqlite3.connect`), ausencia de control transaccional distribuido, fugas sistemáticas de descriptores de conexión en múltiples controladores y hashing legado no estándar (MD5 sin sal).
 
 Esta migración transformó integralmente la capa de persistencia y seguridad hacia una arquitectura empresarial basada en **Microsoft SQL Server 2022 / Azure SQL**, introduciendo:
-1. **Pool de conexiones de alto rendimiento (`QueuePool`)** gestionado mediante SQLAlchemy sobre `pyodbc` con `ODBC Driver 17 for SQL Server`.
-2. **Cierre riguroso de las 12 fugas de conexión** identificadas en la base de código mediante bloques deterministas `try ... finally`.
+1. **Pool de conexiones de alto rendimiento (`QueuePool`)** gestionado mediante SQLAlchemy sobre `pyodbc` con `ODBC Driver 18 for SQL Server`.
+2. **Cierre riguroso de las 12 fugas de conexión** identificadas en la base de código: las conexiones autónomas se liberan mediante bloques `try/finally` y las unidades de trabajo con `with Conexion() as tx:` (con rollback ante excepciones).
 3. **Transaccionalidad atómica real (`ACID`)** mediante el patrón `shared_conn` y administradores de contexto (`with Conexion() as tx:`), erradicando estados huérfanos o inconsistencias intermedias ante fallos.
 4. **Traducción completa de dialectismos SQLite a T-SQL estándar**, optimizando vistas, consultas de agregación y pre-filtrado de inserciones.
 5. **Capa de seguridad moderna**: Hashing con `scrypt` (Werkzeug), migración transparente y automática de contraseñas heredadas en MD5 durante el login, reCAPTCHA configurable y expiración temporal anual.
@@ -24,7 +24,7 @@ Esta migración transformó integralmente la capa de persistencia y seguridad ha
 ## 2. Arquitectura de Datos y Motor SQL Server
 
 ### 2.1 Tablas de Base de Datos (DDL T-SQL)
-Se diseñó y aplicó el esquema en `backend/database/schema_sqlserver.sql`, compuesto por **11 tablas relacionales**:
+El esquema versionado en `backend/db/migrations/V1__initial_schema.sql` define **11 tablas relacionales**:
 
 | Tabla | Clave Primaria | Propósito | Características Especiales |
 | :--- | :--- | :--- | :--- |
@@ -42,10 +42,10 @@ Se diseñó y aplicó el esquema en `backend/database/schema_sqlserver.sql`, com
 
 ### 2.2 Vistas T-SQL Optimizadas
 Se implementaron **10 vistas T-SQL** corrigiendo limitaciones y errores de SQLite:
-1. `SecurityUsers`: Vista de autenticación sin cláusulas `ORDER BY` internas (prohibidas en vistas T-SQL estándar sin TOP).
-2. `Cobro_Agua_Total`, `Cobro_Feria_Total`, `Cobro_Panteon_Total`, `Cobro_Delegacion_Total`: Vistas de cobros históricos con agregaciones `SUM(amount)` y cláusulas `GROUP BY` explícitas para cumplir con el estándar ANSI/T-SQL.
-3. `Cobro_Agua_Total_mes`, `Cobro_Feria_Total_mes`, `Cobro_Panteon_Total_mes`, `Cobro_Delegacion_Total_mes`: Vistas agregadas por año y mes con `GROUP BY`.
-4. `TotalRecaudado`: Consolidación global de ingresos por cuenta y servicio.
+1. `SecurityUsers`: Datos de autenticación, rol, servicio y vigencia de las cuentas administrativas.
+2. `VISTA_CLIENTES_ACTIVOS`: Clientes activos y sus datos de cuenta.
+3. `VISTA_PAGOS_AGUA`, `VISTA_PAGOS_DELEGACION`, `VISTA_PAGOS_FERIA`, `VISTA_PAGOS_PANTEON`: Resumen de facturación y pagos por servicio.
+4. `VISTA_PAGOS_DETALLADO_AGUA`, `VISTA_PAGOS_DETALLADO_DELEGACION`, `VISTA_PAGOS_DETALLADO_FERIA`, `VISTA_PAGOS_DETALLADO_PANTEON`: Detalle de pagos por cliente y servicio.
 
 ---
 
@@ -60,6 +60,7 @@ Se implementaron **10 vistas T-SQL** corrigiendo limitaciones y errores de SQLit
   - `recycle=1800`: Reciclaje cada 30 minutos para evitar desconexiones por inactividad en Azure.
 - **Manejo Unificado de Excepciones (`DatabaseError`)**: Envoltorio que unifica excepciones de `pyodbc.Error`, `sqlalchemy.exc.DBAPIError` y errores de base de datos en una clase única capturable en todos los repositorios.
 - **Soporte de Conexión Compartida (`shared_conn`)**: Permite inyectar una conexión abierta y transaccional existente a cualquier repositorio sin solicitar una nueva conexión al pool ni cerrarla anticipadamente.
+- **Liberación determinista**: Las conexiones administradas directamente por repositorios se devuelven al pool en bloques `try/finally`. Las operaciones transaccionales usan `with Conexion() as tx:`, que revierte ante excepciones y libera la conexión al salir del contexto.
 - **Teardown de Flask (`init_db_teardown(app)`)**: Registrado en `backend/app.py` para asegurar que al finalizar cada petición HTTP se liberen las conexiones asociadas al contexto de la solicitud.
 - **Métrica del Pool (`get_pool_status()`)**: Expone `size`, `checkedin`, `checkedout` y `overflow` para auditoría y aserciones de pruebas E2E.
 
@@ -143,43 +144,42 @@ backend/src/tests_e2e/
 ├── test_01_pool_and_concurrency.py         (25 hilos concurrentes + 12 funciones auditadas)
 ├── test_02_atomic_transactions.py          (Rollback y Commit real en los 4 flujos transaccionales)
 ├── test_03_tsql_queries_and_views.py       (10 vistas T-SQL + consultas migradas)
-└── test_04_api_full_journey.py             (Ciclo HTTP completo: login MD5->scrypt, usuario, cuenta, analíticas)
+├── test_04_api_full_journey.py             (Ciclo HTTP: login MD5->scrypt, usuarios, cuentas, pagos y autorización)
+├── test_05_block1_security_and_fixes.py    (Regresiones de seguridad y reglas de negocio)
+└── test_06_azure_readiness.py              (Health check, configuración y seed sintético)
 ```
 
 **Resultado de Ejecución:**
 ```text
-======================== 16 passed in 76.98s (0:01:16) ========================
+======================= 30 passed in 209.53s (0:03:29) ========================
 ```
-- **Cero fugas de conexión**: Verificado con `pool.checkedout() == 0` tras cada prueba individual y al finalizar la batería completa.
+- **Cero fugas de conexión**: La suite comprueba `pool.checkedout() == 0` tras las pruebas relevantes y al finalizar sus fixtures.
 - **Rollbacks comprobados en disco**: Las tablas `DIM_Customer`, `DIM_Account`, `DIM_ServiceOwners` y `FACT_Revenue` demostraron retornar a su estado exacto ante inyecciones de fallo simuladas.
 
 ---
 
 ## 9. Despliegue en la Nube (Azure)
 
-1. **`backend/Dockerfile`**:
-   - Base `python:3.11-slim-bullseye`.
-   - Instalación automatizada de `msodbcsql17` y dependencias de UnixODBC.
-   - Configuración de Gunicorn en puerto 5000 con workers desacoplados.
-2. **`backend/.dockerignore`**: Exclusión de entornos virtuales, archivos `.db`, `.pyc` y logs.
-3. **`frontend/staticwebapp.config.json`**:
-   - Rutas de SPA con fallback hacia `/index.html`.
-   - Headers de seguridad HTTP (`X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`).
+1. **`backend/Dockerfile`**: Parte de `python:3.13-slim-bookworm`, instala `msodbcsql18`, ejecuta Gunicorn como usuario no-root y configura `HEALTHCHECK` contra `/health`.
+2. **`frontend/public/staticwebapp.config.json`**: Define fallback SPA hacia `/index.html`, exclusiones de assets, respuesta para 404 y headers `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` y `Strict-Transport-Security`. No configura `Content-Security-Policy`.
+3. **Flyway (`backend/db/`)**: Versiona el esquema con migraciones `V*` y vistas repetibles `R__*`.
+4. **Terraform (`infra/`)**: Mantiene la infraestructura como código.
+5. **GitHub Actions (`.github/workflows/`)**: Incluye CI, despliegue Azure de base de datos/backend/frontend y flujo de Terraform.
 
 ---
 
-## 10. Matriz de Usuarios y Credenciales de Prueba (2026)
+## 10. Matriz sintética de cuentas para el entorno demo
 
-Se configuraron los siguientes usuarios en la instancia de SQL Server para pruebas funcionales:
+`backend/scripts/seed_demo_azure.py` crea seis cuentas y datos ficticios de forma idempotente. La contraseña se inyecta mediante `DEMO_ADMIN_PASSWORD`; el repositorio no almacena una contraseña de demo.
 
-| Perfil | Usuario | Contraseña | Rol | Manzana | Capacidades Principales |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Delegado** | `luisTorres` | `Admin1234!` | `delegado` | `tepetate` | Administración integral, reportes, creación de usuarios y cortes globales. |
-| **Comitiva (Agua)** | `Arcov` | `Admin1234!` | `comitiva` | `tepetate` | Módulo de agua, checklist de pagos, cobro de servicios, corte de caja. |
-| **Subdelegado** | `monseLopez` | `Admin1234!` | `subdelegado` | `garambullo` | Gestión y consulta de vecinos correspondientes a su manzana. |
-| *Comitiva (Feria)* | `Arely12345` | `Admin1234!` | `comitiva` | `garambullo` | Módulo y cobros de festividades/feria. |
-| *Comitiva (Panteón)* | `miriamComitiva` | `Admin1234!` | `comitiva` | `yhonda` | Módulo y cobros de panteón. |
-| *Subdelegado (Cerritos)* | `noriel1` | `Admin1234!` | `subdelegado` | `cerritos` | Gestión de manzana Cerritos. |
+| Usuario demo | Rol | Servicio | Fracción |
+| :--- | :--- | :--- | :--- |
+| `demo_delegado` | `delegado` | `delegado` | `centro` |
+| `demo_agua` | `comitiva` | `agua` | `tepetate` |
+| `demo_feria` | `comitiva` | `feria` | `garambullo` |
+| `demo_panteon` | `comitiva` | `panteon` | `yhonda` |
+| `demo_delegacion` | `comitiva` | `delegacion` | `centro` |
+| `demo_subdelegado` | `subdelegado` | `personas` | `cerritos` |
 
 ---
 
@@ -220,7 +220,7 @@ A partir de la inspección exhaustiva de la pila completa (Frontend React → AP
      else:
          return send_error("Rol de usuario no autorizado para crear pagos", 403)
      ```
-   - Usuarios con rol `subdelegado` (como `monseLopez`) eran rechazados con error HTTP 403 al consultar cobros.
+   - Usuarios con rol `subdelegado` eran rechazados con error HTTP 403 al consultar cobros.
 
 ---
 

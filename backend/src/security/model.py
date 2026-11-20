@@ -1,35 +1,5 @@
 from typing import Any
 
-#Este no me acuerdo para que se utiliza xdxd
-class SecurytyModel:
-    def __init__(self, SecurityUsersId: str, DIM_serviceOnwersId: str, username: str,
-    password: str,
-	Fraction: str,
-    DIM_AccountId: str,
-    StartDate: str,
-    EndDate: str
-        ) -> None:
-        self.SecurityUsersId = SecurityUsersId
-        self.DIM_serviceOnwersId = DIM_serviceOnwersId
-        self.username = username
-        self.password = password
-        self.Fraction = Fraction
-        self.DIM_AccountId = DIM_AccountId
-        self.StartDate = StartDate
-        self.EndDate = EndDate
-        
-    def to_dict(self) -> dict[str, str | Any]:
-        return {
-            "SecurityUsersId": self.SecurityUsersId,
-            "DIM_serviceOnwersId": self.DIM_serviceOnwersId,
-            "username": self.username,
-            "password": self.password,
-            "Fraction": self.Fraction,
-            "DIM_AccountId": self.DIM_AccountId,
-            "StartDate": self.StartDate,
-            "EndDate": self.EndDate
-        }
-
 
 class VistaModel:
     """

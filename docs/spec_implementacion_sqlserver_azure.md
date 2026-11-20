@@ -1,7 +1,7 @@
 # Especificaciones Técnicas de Implementación (SPECs) — S.G. El Mandhó
 
 > [!IMPORTANT]
-> **Alcance del documento**: Especificación técnica exhaustiva y accionable para que el modelo ejecutor implemente de principio a fin la migración de SQLite a SQL Server (Local + Azure SQL Serverless), el rediseño del pool de conexiones (`QueuePool`), las transacciones atómicas (`shared_conn`), el cierre de las 12 fugas de conexión y la **Suite de Tests End-to-End (E2E) sin mocks contra SQL Server real**.
+> **Estado:** Implementada. Esta especificación documenta la arquitectura desplegada para SQL Server local y Azure SQL, el pool `QueuePool`, las transacciones atómicas con `shared_conn` y las pruebas E2E ejecutadas contra SQL Server.
 
 ---
 

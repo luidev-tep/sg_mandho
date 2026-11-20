@@ -1,8 +1,6 @@
 # Migración de SQLite a SQL Server (Azure SQL) + pool de conexiones
 
-> Estado: **propuesta técnica no implementada**. Este documento inventaría el impacto real
-> en el código, define el plan de migración y explica cómo montar el entorno local.
-> Fuente de verdad actual de los datos: `backend/database/sistema_mandho.db` (el `.db` vivo).
+> **Histórico — Migración completada (ver `bitacora_tecnica_migracion_sqlserver.md` y `backend/db/`).**
 
 ## 1. Objetivo
 
@@ -355,14 +353,14 @@ volumes:
 
 ```powershell
 # 1. Definir password fuerte (mín. 8 chars, mayúscula, minúscula, número y símbolo)
-$env:MSSQL_SA_PASSWORD = "MandhoDev2026!"
+$env:MSSQL_SA_PASSWORD = Read-Host 'SQL Server SA password'
 docker compose up -d
 
 # 2. Ejecutar esquema y seeds (la imagen 2022 trae sqlcmd en mssql-tools18)
 docker exec -it sg_mandho_sqlserver /opt/mssql-tools18/bin/sqlcmd `
-  -S localhost -U sa -P "MandhoDev2026!" -C -i /scripts/01_schema.sql
+  -S localhost -U sa -P "$env:MSSQL_SA_PASSWORD" -C -i /scripts/01_schema.sql
 docker exec -it sg_mandho_sqlserver /opt/mssql-tools18/bin/sqlcmd `
-  -S localhost -U sa -P "MandhoDev2026!" -C -i /scripts/02_seed.sql
+  -S localhost -U sa -P "$env:MSSQL_SA_PASSWORD" -C -i /scripts/02_seed.sql
 ```
 
 Nota Apple Silicon: la imagen oficial de SQL Server es `amd64`; Docker Desktop la emula
@@ -389,7 +387,7 @@ DB_DRIVER=ODBC Driver 18 for SQL Server
 DB_SERVER=localhost,1433
 DB_NAME=sg_mandho
 DB_USER=sa
-DB_PASSWORD=MandhoDev2026!
+DB_PASSWORD=<SQL_SERVER_PASSWORD>
 DB_POOL_SIZE=5
 DB_MAX_OVERFLOW=10
 ```

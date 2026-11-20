@@ -353,21 +353,13 @@ def check_admin_password() -> tuple[Any]:
     """
     Endpoint para validar una contraseña de forma aislada.
 
-    Este endpoint se utiliza para verificar una contraseña específica (hardcodeada
-    como 'qwerty' en la lógica actual) para una funcionalidad secundaria, como
-    una doble verificación de seguridad antes de una acción crítica (ej. un corte de caja).
+    Valida la contraseña del rol `delegado` para autorizar una acción crítica.
+    La contraseña se verifica contra el hash guardado en la base de datos mediante
+    el verificador de contraseñas del sistema.
 
-    Restricción de Acceso:
-    - Solo usuarios con el rol **'comitiva'** pueden acceder a esta ruta (debido al decorador `@role_required('comitiva')`).
-
-    Flujo de ejecución:
-    1. **Validación de Datos:** Verifica si se recibió el cuerpo JSON y extrae la clave 'password'.
-    2. **Validación de Lógica:** Compara la contraseña recibida con la contraseña predefinida.
-    3. **Manejo de Resultado:**
-       - Si es **incorrecta**, retorna un mensaje de error, pero con un estado **200** para
-         indicar que el servidor procesó la solicitud exitosamente, pero el resultado
-         de la validación es negativo.
-       - Si es **correcta**, retorna un mensaje de éxito con un objeto `{'data': True}`.
+    Solo un usuario autenticado con el rol `comitiva` puede solicitar esta
+    verificación adicional. Una contraseña incorrecta se devuelve como error 401;
+    una validación correcta devuelve `{'data': True}`.
 
     JSON Body esperado:
     {
@@ -375,9 +367,7 @@ def check_admin_password() -> tuple[Any]:
     }
 
     Returns:
-        Response: Un objeto de respuesta de Flask que indica si la contraseña es válida o no.
-        Esta sera exclusiva del delegado para que el escriba su contrasenia y se valida si es correcta
-        Se debe temrinar de implementar este endpoint para toda la parte de validaciones de comitiva
+        Response: Respuesta JSON que indica si la contraseña del delegado es válida.
     """
     try:
         claims = get_jwt()

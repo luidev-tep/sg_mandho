@@ -7,10 +7,10 @@ class TestSecurityUsersRobustness(unittest.TestCase):
     def setUp(self):
         self.security = SecurityUsers()
         self.valid_data = {
-            'DIM_CustomerId': 'f8031307-67be-5ec8',
+            'DIM_CustomerId': 'test-customer-001',
             'CustomerFraction': 'tepetate',
-            'username': 'Arcov',
-            'password': 'SecurePass123!',
+            'username': 'demo_user',
+            'password': 'ChangeMe123!',
             'RoleName': 'comitiva',
             'serviceName': 'delegacion',
         }

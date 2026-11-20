@@ -175,8 +175,8 @@ class GetAnalytics:
                   `[{"fraction": "Manzana A", "revenue": 15000}, ...]`.
                   Retorna una lista vacía en caso de error o si no hay datos.
                   
-        ESTA QUERY AUN NO ES FUNCIONAL, YA QUE LA VISTA EN LA QUE SE BASA NO ES FUNCIONAL, YA QUE NO FILTRA POR LOS PAGOS PENDIENTES
-        Y HECHOS PERO FICTICIOS AL SER SALTABLES
+        Suma los importes de pagos completos y pendientes por fracción, filtrados
+        por el servicio, mes fiscal y año fiscal solicitados.
         """
         query = """
             -- FUNCIONAL
@@ -238,28 +238,16 @@ class GetAnalytics:
     
     def get_data_payments(self, comitiva:str, anio:str ) -> list | dict[str, list]:
         """
-        Obtiene un resumen del estado de pagos por manzana para un mes y comitiva.
-
-        Esta función aún no está implementada y se usa como marcador de posición.
-        Se espera que devuelva datos como el total de personas, pagados,
-        pendientes y un porcentaje de pago por manzana.
+        Obtiene por fracción los conteos de pagos completos y pendientes para el
+        servicio y año fiscal solicitados, junto con el total y el porcentaje pagado.
 
         Args:
-            mes (str): El mes de referencia.
-            comitiva (str): La comitiva de la cual se obtendrán los datos.
-            debe enviar informacion en este formato:     "manzanas": [
-      {
-        "id": 1,
-        "nombre": "Manzana A",
-        "color": "#4F46E5",
-        "personas": 150,
-        "pagados": 120,
-        "pendientes": 30,
-        "porcentaje": 80
-      },
+            comitiva (str): Nombre del servicio cuya vista de pagos se consulta.
+            anio (str): Año fiscal en formato `Y##`, por ejemplo `Y26`.
 
         Returns:
-            list: Una lista de diccionarios con la información de pagos por manzana.
+            list[dict]: Elementos con las claves `nombre`, `personas`, `pagados`,
+                `pendientes` y `porcentaje`, agrupados por fracción.
         """
         table_name = self.get_table_by_fraction(comitiva)
         if not table_name:
@@ -329,16 +317,11 @@ class GetAnalytics:
     
     def get_population_by_manzana(self) -> list[dict] | list:
         """
-        Obtiene el total de personas por manzana para un mes y comitiva específicos.
-
-        Esta función aún no está implementada y se usa como marcador de posición.
-        Se espera que devuelva una lista de diccionarios con el nombre de la
-        manzana y el total de personas asociadas.
-
-        Args:
+        Obtiene el número de clientes activos por fracción, excluyendo registros
+        cuya fecha de baja no esté marcada con el valor histórico `s/n`.
 
         Returns:
-            list: Una lista de diccionarios con la población por manzana.
+            list[dict]: Registros con el nombre de la fracción y su población activa.
         """
         query = """
         SELECT CustomerFraction , count(DIM_CustomerId) as n_customers from DIM_Customer
@@ -360,17 +343,14 @@ class GetAnalytics:
     
     def get_admins_data(self, comitiva):
         """
-        Obtiene la información de los administradores de una comitiva.
-
-        Esta función aún no está implementada y se usa como marcador de posición.
-        Se espera que devuelva una lista de diccionarios con los detalles
-        de los administradores de la comitiva.
+        Obtiene nombre, rol y período de vigencia de los administradores asociados
+        al servicio indicado.
 
         Args:
             comitiva (str): La comitiva para la cual se buscan los administradores.
 
         Returns:
-            list: Una lista de diccionarios con los datos de los administradores.
+            list[dict]: Registros con `fullname`, `RoleName`, `StartDate` y `EndDate`.
         """
         query = """
             SELECT 

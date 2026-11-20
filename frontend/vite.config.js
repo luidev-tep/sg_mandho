@@ -11,4 +11,21 @@ export default defineConfig(({ mode }) => ({
   esbuild: {
       drop: mode === 'production' ? ['console', 'debugger'] : [],
     },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('/node_modules/')) return;
+
+          if (/\/node_modules\/(react|react-dom|react-router-dom|@remix-run\/router)\//.test(id)) {
+            return 'react-vendor';
+          }
+
+          if (/\/node_modules\/(chart\.js|moment|chartjs-adapter-moment)\//.test(id)) {
+            return 'chart-vendor';
+          }
+        },
+      },
+    },
+  },
 }));

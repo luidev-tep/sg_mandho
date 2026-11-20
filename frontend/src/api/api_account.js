@@ -119,7 +119,6 @@ export const MostrarCuentas = async (filters) => {
     let cuentas = [];
     if (response.data && Array.isArray(response.data.body)) {
       cuentas = response.data.body;
-      //console.log('Cuentas obtenidas: desde la api xdxd', cuentas);
     } else if (Array.isArray(response.data)) {
       cuentas = response.data;
     }
