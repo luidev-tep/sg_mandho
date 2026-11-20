@@ -42,14 +42,19 @@ const GenericServicePayment = ({ onValidityChange, onModuleData, paymentData, se
   }, [serviceName, setValue]);
 
   useEffect(() => {
-    if (serviceType && paymentData) {
+    if (serviceType && Array.isArray(paymentData)) {
       const selected = paymentData.find(p => p.serviceType === serviceType);
       if (selected) {
         setValue('amount', selected.amount, { shouldValidate: true });
         const newDescription = `Pago por ${selected.serviceType.replace(/_/g, ' ')} del año seleccionado.`;
         setValue('description', newDescription, { shouldValidate: true });
+      } else {
+        setValue('serviceType', '', { shouldValidate: true });
+        setValue('amount', 0, { shouldValidate: true });
+        setValue('description', '', { shouldValidate: true });
       }
     } else {
+      if (serviceType) setValue('serviceType', '', { shouldValidate: true });
       setValue('amount', 0, { shouldValidate: true });
       setValue('description', '', { shouldValidate: true });
     }

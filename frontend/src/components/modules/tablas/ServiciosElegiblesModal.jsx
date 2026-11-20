@@ -98,8 +98,6 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
       };
     }).filter(Boolean); // Filtramos por si algún usuario no se encontró
 
-    console.log("Payloads a enviar:", payloads);
-
     try {
       // Enviamos todos los payloads en una sola petición
       const response = await crearRegistroPago(payloads);

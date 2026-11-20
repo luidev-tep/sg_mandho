@@ -1,3 +1,4 @@
+import { communityConfig } from '../config/communityConfig';
 import React, { useState } from 'react';
 import SearchDropdown from '../components/ModalSearch';
 import UserMenu from '../components/DropdownProfile';
@@ -19,8 +20,8 @@ function Header({
           {/* Header: Left side */}
           <div className="flex pl-12 lg:pl-0">
             <h1 className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white whitespace-nowrap">
-              <span className="sm:hidden">S.R. El Mandho</span>
-              <span className="hidden sm:inline">Sistema de Registro El Mandhó</span>
+              <span className="sm:hidden">{communityConfig.branding.shortName}</span>
+              <span className="hidden sm:inline">{communityConfig.branding.appName}</span>
             </h1>
           </div>
           {/* Header: Right side */}

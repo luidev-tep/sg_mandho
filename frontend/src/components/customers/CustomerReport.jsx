@@ -58,7 +58,6 @@ function UserReportModal({ id_user, onClose }) {
             if (!allPayments[serviceName][year]) allPayments[serviceName][year] = { details: [] };
             allPayments[serviceName][year].details.push({ ...payment, status });
         };
-        console.log("Datos de la API:", apiData);
 
         // Procesar pagos completos. La API devuelve un array de pagos por servicio.
         Object.entries(apiData.completos || {}).forEach(([service, dataArray]) => {

@@ -34,12 +34,7 @@ function AgregarServicio() {
 
   // Efecto para ajustar 'esOpcional' basado en 'moduleName'
   useEffect(() => {
-    if (moduleName === 'delegacion') {
-      setEsOpcional(true);
-    } else if (moduleName === 'agua') {
-      setEsOpcional(false);
-    }
-    // No es necesario resetear para otros casos, ya que el estado inicial es 'false'
+    setEsOpcional(moduleName === 'delegacion');
   }, [moduleName]);
 
   // Función para regresar a la página anterior
@@ -72,7 +67,7 @@ function AgregarServicio() {
 
   // Función que se ejecuta cuando la contraseña es verificada exitosamente
   const handlePasswordVerificationSuccess = (verificationData) => {
-    console.log('Contraseña verificada exitosamente:', verificationData);
+
     setIsPasswordVerified(true);
     
     // Si hay datos del formulario pendientes, proceder con el envío
@@ -89,7 +84,6 @@ function AgregarServicio() {
     setIsError(false); // Resetear estado de error
 
     try {
-      console.log('Payload a enviar:', formData);
 
       const response = await generarServicio(formData);
       
@@ -133,8 +127,8 @@ function AgregarServicio() {
       return;
     }
 
-    if (parseFloat(cantidad) > 1000) {
-      setMensaje('La cantidad no puede exceder 1000');
+    if (parseFloat(cantidad) > 5000) {
+      setMensaje('La cantidad no puede exceder 5000');
       setIsError(true);
       return;
     }

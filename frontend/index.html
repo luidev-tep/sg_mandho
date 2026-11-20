@@ -1,22 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>S.G. El Mandhó</title>
+    <title>S.G. Comunitario — El Mandhó</title>
     <script>
-      if (localStorage.theme === 'dark' || !('theme' in localStorage)) {
-        document.querySelector('html').classList.add('dark');
-        document.querySelector('html').style.colorScheme = 'dark';
-      } else {
-        document.querySelector('html').classList.remove('dark');
-        document.querySelector('html').style.colorScheme = 'light';
-      }        
+      try {
+        const saved = localStorage.getItem('theme');
+        const dark = saved === 'dark' || (saved !== 'light' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', !!dark);
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+      } catch { document.documentElement.style.colorScheme = 'light'; }
     </script>      
   </head>
   <body class="font-inter antialiased bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>Activa JavaScript para usar esta aplicación.</noscript>
     <script>
         if (localStorage.getItem('sidebar-expanded') == 'true') {
             document.querySelector('body').classList.add('sidebar-expanded');

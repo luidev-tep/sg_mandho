@@ -31,8 +31,6 @@ function AccountsTableModal({ id_user, onClose }) {
               }))
             : [];
 
-          console.log(accountsData);
-          
           setAccounts(accountsData);
           
           // Establecer el nombre del cliente si hay cuentas

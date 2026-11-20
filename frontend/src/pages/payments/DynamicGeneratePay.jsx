@@ -221,7 +221,7 @@ const DynamicGeneratePay = () => {
           };
           const response = await getPagosPendientes(data); // Usamos getAmount
           setPendingPayments(response.data || []); // Asumimos que la respuesta tiene un campo 'data' con el array
-          console.log('Información de pagos pendientes recibida con getAmount:', response.data);
+
         } catch (error) {
           console.error('Error al obtener los pagos pendientes con getAmount:', error);
           setError(error.message || 'No se pudieron obtener los pagos pendientes.');

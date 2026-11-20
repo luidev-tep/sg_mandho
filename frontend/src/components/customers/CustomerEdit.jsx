@@ -1,3 +1,4 @@
+import { communityConfig } from '../../config/communityConfig';
 import { useState, useEffect } from "react";
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -14,14 +15,7 @@ import { getLocalDateISO } from "../../utils/dateUtils";
 const editSchema = yup.object().shape({
   CustomerFraction: yup.string()
     .required('La manzana es requerida')
-    .oneOf([
-      'tepetate',
-      'cerritos',
-      'garambullo',
-      'yhonda',
-      'centro',
-      'buenavista'
-    ], 'Seleccione una manzana válida'),
+    .oneOf(communityConfig.geography.zones.map(zone => zone.value), 'Seleccione una manzana válida'),
 
   CustomerAddress: yup.string()
     .required('La calle es requerida')
@@ -81,14 +75,7 @@ function EditCustomerModal({ id_user, onClose, onUpdate }) {
   });
 
   // Opciones
-  const fractionOptions = [
-    { value: 'tepetate', label: 'Tepetate' },
-    { value: 'cerritos', label: 'Cerritos' },
-    { value: 'garambullo', label: 'Garambullo' },
-    { value: 'yhonda', label: 'Yhonda' },
-    { value: 'centro', label: 'Centro' },
-    { value: 'buenavista', label: 'Buenavista' },
-  ];
+  const fractionOptions = communityConfig.geography.zones;
 
   const roleOptions = [
     { value: 'Estudiante', label: 'Estudiante' },

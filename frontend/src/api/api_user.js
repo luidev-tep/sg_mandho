@@ -175,12 +175,10 @@ export const EditarUsuario = async (data) => {
 
         const shouldCreateAccount = await validate_edit_account(data_account);
         if (shouldCreateAccount) {
-            console.log("Actualizando cuenta");
+
             await crearCuenta(data_account);
-        } else {
-            console.log("No se requiere actualización de cuenta");
         }
-        console.log("Data de la cuenta", updateResponse.data.body);
+
         return {
             
             data: normalizeUserData(updateResponse.data.body),

@@ -123,7 +123,7 @@ function DashboardCard10({ comitiva, mes_format, data, loading }) {
           <div className="text-3xl font-bold text-gray-800 dark:text-gray-100 mr-2">
             ${totalIngresos.toLocaleString()}
           </div>
-          <div className="text-sm font-medium px-2.5 rounded-md text-indigo-800 bg-indigo-500/20 text-center text-2x1">
+          <div className="text-sm font-medium px-2.5 rounded-md text-indigo-800 bg-indigo-500/20 text-center text-2xl">
             Mayor: {manzanaMayorIngreso}
           </div>
         </div>

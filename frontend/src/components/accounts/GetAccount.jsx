@@ -44,6 +44,7 @@ const BarraBusquedaConCuentas = ({ onValidityChange, onAccountData}) => {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectionError, setSelectionError] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -142,10 +143,11 @@ const BarraBusquedaConCuentas = ({ onValidityChange, onAccountData}) => {
 
   const selectClient = async (client) => {
     if (!client.selectable) {
-      alert(client.reason || 'Este usuario no está disponible');
+      setSelectionError(client.reason || 'Este usuario no está disponible');
       return;
     }
 
+    setSelectionError('');
     setValue('cliente', client, { shouldValidate: true });
     setSearchResults([]);
     setSearchQuery('');
@@ -156,6 +158,7 @@ const BarraBusquedaConCuentas = ({ onValidityChange, onAccountData}) => {
 
 return (
     <div className="mb-6">
+      {selectionError && <p role="alert" className="mb-3 text-red-700 dark:text-red-300">{selectionError}</p>}
       {formValues.cliente ? (
         <div className="space-y-4">
           <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
@@ -179,6 +182,7 @@ return (
               <button
                 type="button"
                 onClick={() => {
+                  onAccountData?.(null);
                   setValue('cliente', null, { shouldValidate: true });
                   setValue('activeAccount', null, { shouldValidate: true });
                 }}

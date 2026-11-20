@@ -1,3 +1,4 @@
+import { communityConfig } from '../../config/communityConfig';
 import { useState } from "react";
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -15,7 +16,7 @@ import { getLocalDateISO } from '../../utils/dateUtils';
 
 /*
   This JavaScript function, capitalizeFirstLetter, takes a string as input and returns a new string
-  with the first letter capitalized and the rest of the letters in lowercase. If the input is empty 
+  with the first letter capitalized and the rest of the letters in lowercase. If the input is empty
   or null, it returns the original value. {UseRegister.jsx:capitalizeFirstLetter}
  */
 const capitalizeFirstLetter = (value) => {
@@ -26,14 +27,7 @@ const capitalizeFirstLetter = (value) => {
 // Agregar fecha de inicio y fecha de fin, ya que estqa no se estan agregando \
 // en las data del json
 // Definir todas las opciones de manzana posibles
-const allManzanaOptions = [
-  { value: 'tepetate', label: 'Tepetate' },
-  { value: 'cerritos', label: 'Cerritos' },
-  { value: 'garambullo', label: 'Garambullo' },
-  { value: 'yhonda', label: 'Yhonda' },
-  { value: 'centro', label: 'Centro' },
-  { value: 'buenavista', label: 'Buena Vista' },
-];
+const allManzanaOptions = communityConfig.geography.zones;
 
 // Función para obtener el esquema de validación de manzana dinámicamente
 const getManzanaSchema = (userRole, userFraction) => {
@@ -56,7 +50,7 @@ const schema = yup.object().shape({
     .test('single-word', 'Solo se permite una palabra', value => {
       return value && value.trim().split(/\s+/).length === 1;
     }),
-  
+
   segundo_nombre: yup.string()
     .transform(value => {
       // Convertir a "n/a" si está vacío después de limpiar
@@ -71,36 +65,23 @@ const schema = yup.object().shape({
     .test('single-word', 'Solo se permite una palabra', value => {
       return !value || value.trim().split(/\s+/).length === 1;
     }),
-  
+
   apellido: yup.string()
     .required('El apellido paterno es requerido')
     .transform(value => value ? value.trim() : value) // Eliminar espacios al inicio/final
-    .matches(/^[A-Za-zÁÉÍÓÚáéíóúñÑ]+$/, 'Solo se permiten letras')
-    .transform(value => capitalizeFirstLetter(value))
-    .test('single-word', 'Solo se permite una palabra', value => {
-      return value && value.trim().split(/\s+/).length === 1;
-    }),
-  
+    .matches(/^[A-Za-zÁÉÍÓÚáéíóúñÑ]+(?:\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)*$/, 'Solo se permiten letras')
+    .transform(value => capitalizeFirstLetter(value)),
+
   segundo_apellido: yup.string()
     .required('El apellido materno es requerido')
     .transform(value => value ? value.trim() : value) // Eliminar espacios al inicio/final
-    .matches(/^[A-Za-zÁÉÍÓÚáéíóúñÑ]+$/, 'Solo se permiten letras')
-    .transform(value => capitalizeFirstLetter(value))
-    .test('single-word', 'Solo se permite una palabra', value => {
-      return value && value.trim().split(/\s+/).length === 1;
-    }),
-  
+    .matches(/^[A-Za-zÁÉÍÓÚáéíóúñÑ]+(?:\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)*$/, 'Solo se permiten letras')
+    .transform(value => capitalizeFirstLetter(value)),
+
   manzana: yup.string()
     .required('La manzana es requerida')
-    .oneOf([
-      'tepetate', 
-      'cerritos', 
-      'garambullo', 
-      'yhonda', 
-      'centro', 
-      'buenavista'
-    ], 'Seleccione una manzana válida'),
-  
+    .oneOf(communityConfig.geography.zones.map(zone => zone.value), 'Seleccione una manzana válida'),
+
   // La validación de manzana se definirá dinámicamente en el componente
 calle: yup.string()
   .required('La calle es requerida')
@@ -149,11 +130,9 @@ fecha_nacimiento: yup
       }
       return value;
     })
-    .test('min-date', 'La fecha de nacimiento no puede ser anterior a 1940', (value) => {
+    .test('min-date', 'La fecha de nacimiento no puede ser anterior a 1910', (value) => {
       if (!value) return true;
-      const date = new Date(value);
-      const minDate = new Date(1940, 0, 1);
-      return date >= minDate;
+      return String(value).slice(0, 10) >= '1910-01-01';
     })
     .test('max-date', 'Debe tener al menos 5 años de edad', (value) => {
       if (!value) return true;
@@ -166,40 +145,40 @@ fecha_nacimiento: yup
     .string()
     .required('El estado de la persona es requerido')
     .oneOf([
-      'Estudiante', 'Inmigrante', 'Pequeño propietario', 
+      'Estudiante', 'Inmigrante', 'Pequeño propietario',
       'Vecino', 'Ranchero', 'Invalido', 'Residente', 'Vecino exento'
     ], 'Estado no válido')
     .test('age-restriction', 'Las personas menores de 15 años solo pueden ser Estudiante o Invalido', function(value) {
       const fechaNacimiento = this.parent.fecha_nacimiento;
       if (!fechaNacimiento || !value) return true;
-      
+
       const birthDate = new Date(fechaNacimiento);
       const today = new Date();
       const age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
       const dayDiff = today.getDate() - birthDate.getDate();
-      
+
       // Calcular edad exacta
       let exactAge = age;
       if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
         exactAge--;
       }
-      
+
       // Si es menor de 15 años, solo puede ser Estudiante o Invalido
       if (exactAge < 15) {
         return value === 'Estudiante' || value === 'Invalido';
       }
-      
+
       return true;
     }),});
 
 /**
  * Componente de registro de usuarios.
- * 
+ *
  * Contiene un formulario que solicita los datos personales del usuario y su dirección.
  * Al enviar el formulario, se llama a la función `onSubmit` que se encarga de
  * agregar el usuario a la base de datos.
- * 
+ *
  * @returns {ReactElement} Componente JSX del formulario de registro.
  */
 function UserRegister() {
@@ -208,7 +187,7 @@ function UserRegister() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  
+
   // Estados para el modal de confirmación
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingData, setPendingData] = useState(null);
@@ -225,10 +204,10 @@ function UserRegister() {
   });
 
   const filteredManzanaOptions = userRole === 'subdelegado' ? allManzanaOptions.filter(option => option.value === userFraction) : allManzanaOptions;
-  
-  const { 
-    register, 
-    handleSubmit, 
+
+  const {
+    register,
+    handleSubmit,
     formState: { errors },
     setValue
   } = useForm({
@@ -249,16 +228,16 @@ function UserRegister() {
   // Función de confirmación - ejecuta la lógica real
   const handleConfirm = async () => {
     if (!pendingData || isSubmitting) return; // Verificar que hay datos y prevenir doble envío
-    
+
     setShowConfirmModal(false); // Cerrar modal
     setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(false);
-    
+
     try {
       const fechaData = AgregarFechaActual();
       const fechaFin = AgregarFechaFinVacio();
-      
+
       const dataConFecha = {
         ...pendingData,
         ...fechaData,
@@ -268,11 +247,9 @@ function UserRegister() {
       const requestData = {
         data: dataConFecha
       };
-      console.log("Datos enviados al endpoint front:", requestData);
+
       const response = await AgregarUsuario(requestData);
 
-      console.log("Respuesta del endpoint front:", response.id);
-      
       if (response.id) {
         setSubmitSuccess(true);
         // Pequeño delay para que el usuario vea el mensaje de éxito
@@ -322,7 +299,7 @@ function UserRegister() {
                 <div className="mb-8">
                   <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Agregar Usuario</h1>
                 </div>
-                
+
                 {/* Mensaje de éxito */}
                 {submitSuccess && (
                   <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center animate-fade-in">
@@ -332,7 +309,7 @@ function UserRegister() {
                     <span>¡Registro exitoso! Redirigiendo...</span>
                   </div>
                 )}
-                
+
                 {/* Mensaje de error */}
                 {submitError && (
                   <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center animate-fade-in">
@@ -341,7 +318,7 @@ function UserRegister() {
                     </svg>
                     <span>{submitError}</span>
                   </div>
-                )} 
+                )}
 
                 <div className="flex-1">
                   <form onSubmit={handleSubmit(submitForm)} className="h-full flex flex-col">
@@ -352,39 +329,29 @@ function UserRegister() {
                           <label className="block text-sm mb-1 font-black" htmlFor="nombre">
                             Nombre <span className="text-red-500">*</span>
                           </label>
-                          <input 
-                            id="nombre" 
-                            className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full rounded-lg ${errors.nombre ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
-                            type="text" 
-                            {...register("nombre")}
-                            onBlur={(e) => {
-                              if (e.target.value) {
-                                setValue('nombre', capitalizeFirstLetter(e.target.value));
-                              }
-                            }}
+                          <input
+                            id="nombre"
+                            className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full rounded-lg ${errors.nombre ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            type="text"
+                            {...register("nombre", { onBlur: (e) => { if (e.target.value) setValue("nombre", capitalizeFirstLetter(e.target.value)); } })}
                             disabled={isSubmitting}
                           />
                           {errors.nombre && (
                             <span className="text-red-500 text-sm mt-1 block animate-fade-in">
                               {errors.nombre.message}
                             </span>
-                          )} 
+                          )}
                         </div>
-                        
+
                         <div className="flex-1">
                           <label className="block text-sm font-medium mb-1" htmlFor="segundo_nombre">
                             Segundo Nombre
                           </label>
-                          <input 
-                            id="segundo_nombre" 
-                            className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full rounded-lg ${errors.segundo_nombre ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
-                            type="text" 
-                            {...register("segundo_nombre")}
-                            onBlur={(e) => {
-                              if (e.target.value) {
-                                setValue('segundo_nombre', capitalizeFirstLetter(e.target.value));
-                              }
-                            }}
+                          <input
+                            id="segundo_nombre"
+                            className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full rounded-lg ${errors.segundo_nombre ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            type="text"
+                            {...register("segundo_nombre", { onBlur: (e) => { if (e.target.value) setValue("segundo_nombre", capitalizeFirstLetter(e.target.value)); } })}
                             disabled={isSubmitting}
                           />
                           {errors.segundo_nombre && (
@@ -394,23 +361,18 @@ function UserRegister() {
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Apellidos */}
                       <div className="flex space-x-4">
                         <div className="flex-1">
                           <label className="block text-sm font-medium mb-1" htmlFor="apellido">
                             Apellido Paterno <span className="text-red-500">*</span>
                           </label>
-                          <input 
-                            id="apellido" 
-                            className={`dark:text-gray-700 dark:bg-gray-100 form-input w-full rounded-lg ${errors.apellido ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
+                          <input
+                            id="apellido"
+                            className={`dark:text-gray-700 dark:bg-gray-100 form-input w-full rounded-lg ${errors.apellido ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                             type="text"
-                            {...register("apellido")}
-                            onBlur={(e) => {
-                              if (e.target.value) {
-                                setValue('apellido', capitalizeFirstLetter(e.target.value));
-                              }
-                            }}
+                            {...register("apellido", { onBlur: (e) => { if (e.target.value) setValue("apellido", capitalizeFirstLetter(e.target.value)); } })}
                             placeholder="Escribe tu apellido paterno"
                             disabled={isSubmitting}
                           />
@@ -418,23 +380,18 @@ function UserRegister() {
                             <span className="text-red-500 text-sm mt-1 block animate-fade-in">
                               {errors.apellido.message}
                             </span>
-                          )} 
+                          )}
                         </div>
-                        
+
                         <div className="flex-1">
                           <label className="block text-sm font-medium mb-1" htmlFor="segundo_apellido">
                             Apellido Materno <span className="text-red-500">*</span>
                           </label>
-                          <input 
-                            id="segundo_apellido" 
-                            className={`dark:text-gray-700 dark:bg-gray-100 form-input w-full rounded-lg ${errors.segundo_apellido ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
+                          <input
+                            id="segundo_apellido"
+                            className={`dark:text-gray-700 dark:bg-gray-100 form-input w-full rounded-lg ${errors.segundo_apellido ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                             type="text"
-                            {...register("segundo_apellido")}
-                            onBlur={(e) => {
-                              if (e.target.value) {
-                                setValue('segundo_apellido', capitalizeFirstLetter(e.target.value));
-                              }
-                            }}
+                            {...register("segundo_apellido", { onBlur: (e) => { if (e.target.value) setValue("segundo_apellido", capitalizeFirstLetter(e.target.value)); } })}
                             placeholder="Escribe tu apellido materno"
                             disabled={isSubmitting}
                           />
@@ -442,22 +399,22 @@ function UserRegister() {
                             <span className="text-red-500 text-sm mt-1 block animate-fade-in">
                               {errors.segundo_apellido.message}
                             </span>
-                          )} 
+                          )}
                         </div>
                       </div>
-          
+
                       {/* Manzana */}
                       <div>
                         <label className="block text-sm font-medium mb-1" htmlFor="manzana">
                           Manzana <span className="text-red-500">*</span>
                         </label>
-                        <select 
-                          id="manzana" 
+                        <select
+                          id="manzana"
                           className={`form-select dark:text-gray-800 w-full rounded-lg ${errors.manzana ? 'border-red-500' : 'border-gray-300'} ${(isSubmitting || (userRole === 'subdelegado' && userFraction)) ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                           {...register("manzana")} // Usar register aquí
                           // Deshabilitar si es subdelegado y ya tiene una fracción asignada
-                          disabled={isSubmitting || (userRole === 'subdelegado' && userFraction)} 
-                        > 
+                          disabled={isSubmitting || (userRole === 'subdelegado' && userFraction)}
+                        >
                           <option value="">Seleccione una opción</option>
                           {filteredManzanaOptions.map(option => (
                             <option key={option.value} value={option.value}>
@@ -471,16 +428,16 @@ function UserRegister() {
                           </span>
                         )}
                       </div>
-                      
+
                       {/* Dirección */}
                       <div className="flex space-x-4">
                         <div className="flex-1">
                           <label className="block text-sm font-medium mb-1" htmlFor="calle">
                             Calle <span className="text-red-500">*</span>
                           </label>
-                          <input 
-                            id="calle" 
-                            className={`dark:text-gray-700 dark:bg-gray-100 form-input w-full rounded-lg ${errors.calle ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
+                          <input
+                            id="calle"
+                            className={`dark:text-gray-700 dark:bg-gray-100 form-input w-full rounded-lg ${errors.calle ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                             type="text"
                             {...register("calle")}
                             placeholder="Escribe la dirección"
@@ -490,19 +447,19 @@ function UserRegister() {
                             <span className="text-red-500 text-sm mt-1 block animate-fade-in">
                               {errors.calle.message}
                             </span>
-                          )} 
+                          )}
                         </div>
-                        
+
                         <div className="flex-1">
                           <label className="block text-sm font-medium mb-1" htmlFor="n_exterior">
                             Número Exterior <span className="text-red-500">*</span>
                           </label>
-                          <input 
-                            id="n_exterior" 
-                            className={`dark:text-gray-700 dark:bg-gray-100 form-input w-full rounded-lg ${errors.n_exterior ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
+                          <input
+                            id="n_exterior"
+                            className={`dark:text-gray-700 dark:bg-gray-100 form-input w-full rounded-lg ${errors.n_exterior ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                             type="text"
                             {...register("n_exterior")}
-                            inputMode="numeric"
+
                             placeholder="Escribe el numero exterior"
                             disabled={isSubmitting}
                           />
@@ -510,23 +467,23 @@ function UserRegister() {
                             <span className="text-red-500 text-sm mt-1 block animate-fade-in">
                               {errors.n_exterior.message}
                             </span>
-                          )} 
+                          )}
                         </div>
                       </div>
-                      
+
                       {/* Fecha de nacimiento */}
                       <div className="mb-6">
                         <label className="block text-sm font-medium mb-1" htmlFor="fecha_nacimiento">
                           Fecha de Nacimiento <span className="text-red-500">*</span>
                         </label>
-                        
+
                         {/* Contenedor relativo para posicionar el icono */}
                         <div className="relative max-w-xs">
-                          <input 
-                            id="fecha_nacimiento" 
+                          <input
+                            id="fecha_nacimiento"
                             className={`dark:text-gray-900 dark:bg-gray-100 form-input w-full rounded-lg pl-10 pr-3 py-2 ${
                               errors.fecha_nacimiento ? 'border-red-500' : 'border-gray-300'
-                            } ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`} 
+                            } ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                             type="date"
                             {...register("fecha_nacimiento")}
                             max={(() => {
@@ -536,36 +493,36 @@ function UserRegister() {
                             })()}
                             disabled={isSubmitting}
                           />
-                          
+
                           {/* Icono de calendario */}
                           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                            <svg 
-                              className="w-5 h-5 text-gray-400 dark:text-gray-500" 
-                              fill="none" 
-                              stroke="currentColor" 
+                            <svg
+                              className="w-5 h-5 text-gray-400 dark:text-gray-500"
+                              fill="none"
+                              stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
-                              <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                strokeWidth={2} 
-                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                               />
                             </svg>
                           </div>
                         </div>
-                        
+
                         {errors.fecha_nacimiento && (
                           <span className="text-red-500 text-sm mt-1 block animate-fade-in">
                             {errors.fecha_nacimiento.message}
                           </span>
-                        )} 
+                        )}
                       </div>
 
                       {/* Información de la cuenta - Ahora debajo de la fecha con separación */}
                       <div className="mb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Información de la cuenta</h2>
-                        
+
                         <div className="mb-6">
                           <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
                             Estado de la persona <span className="text-red-500">*</span>
@@ -586,7 +543,7 @@ function UserRegister() {
                             <option value="Residente">Residente</option>
                             <option value="Vecino exento">Vecino exento</option>
                           </select>
-                          
+
                           {errors.estadoPersona && (
                             <p className="mt-1 text-sm text-red-600 dark:text-red-500">
                               {errors.estadoPersona.message}
@@ -598,7 +555,7 @@ function UserRegister() {
                         {/* Espacio para otro campo si es necesario */}
                       </div>
                     </div>
-                      
+
                     {/* Botones de acción */}
                     <div className="flex items-center justify-between gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                       <Link
@@ -622,8 +579,8 @@ function UserRegister() {
                         </span>
                       </Link>
 
-                      <button 
-                        type="submit" 
+                      <button
+                        type="submit"
                         disabled={isSubmitting}
                         className={`
                           flex-1 px-6 py-3
@@ -650,7 +607,7 @@ function UserRegister() {
                             Registrar <span className="ml-1">-&gt;</span>
                           </span>
                         )}
-                        
+
                         {/* Efecto de hover (solo cuando no está submitting) */}
                         {!isSubmitting && (
                           <span className="
@@ -668,13 +625,13 @@ function UserRegister() {
                 </div>
               </div>
             </div>
-            
+
             {/* Image container */}
             <div className="hidden md:block w-1/3 relative">
-              <img 
-                className="absolute inset-0 object-cover object-center w-full h-full" 
-                src={OnboardingImage} 
-                alt="Onboarding" 
+              <img
+                className="absolute inset-0 object-cover object-center w-full h-full"
+                src={OnboardingImage}
+                alt="Onboarding"
               />
             </div>
           </div>

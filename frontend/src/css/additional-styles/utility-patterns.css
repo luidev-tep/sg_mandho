@@ -1,9 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=fallback');
 
 /* ========== Fuente global ========== */
 body {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: 'Inter', sans-serif;
   @apply antialiased;
 }
 
@@ -16,7 +15,7 @@ input, textarea, button, select,
 
 /* ========== Typography ========== */
 .h1, .h2, .h3, .h4 {
-  font-family: 'Bebas Neue', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .h1 {

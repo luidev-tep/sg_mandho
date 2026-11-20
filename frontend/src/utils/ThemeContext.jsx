@@ -6,8 +6,7 @@ const ThemeContext = createContext({
 });
 
 export default function ThemeProvider({children}) {  
-  const persistedTheme = localStorage.getItem('theme');
-  const [theme, setTheme] = useState(persistedTheme || 'light');
+  const [theme, setTheme] = useState(() => document.documentElement.classList.contains('dark') ? 'dark' : 'light');
 
   const changeCurrentTheme = (newTheme) => {
     setTheme(newTheme);

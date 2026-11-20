@@ -1,31 +1,32 @@
 // src/pages/PaymentStatusPage.jsx
-import React from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate } from 'react-router-dom';
 import Header from "../../partials/Header";
 import Sidebar from '../../partials/SideBar';
 
 const PaymentStatus = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   
   // Obtener parámetros de la URL (coinciden con los nombres del onSubmit)
   const searchParams = new URLSearchParams(location.search);
   const type = searchParams.get('type'); // 'success' o 'error'
-  const text = decodeURIComponent(searchParams.get('text') || '');
-  const customerName = decodeURIComponent(searchParams.get('customerName') || '');
-  const menuPath = decodeURIComponent(searchParams.get('menuPath') || '/'); // Nueva propiedad
+  const text = searchParams.get('text') || '';
+  const customerName = searchParams.get('customerName') || '';
+  const menuPath = searchParams.get('menuPath') || '/'; // Nueva propiedad
 
   const isSuccess = type === 'success';
 
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-white dark:bg-gray-900">
       {/* Sidebar */}
-      <Sidebar sidebarOpen={false} setSidebarOpen={() => {}} variant="v2" />
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} variant="v2" />
 
       {/* Content area */}
       <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
         {/* Site header */}
-        <Header sidebarOpen={false} setSidebarOpen={() => {}} variant="v3" />
+        <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} variant="v3" />
 
         <main className="grow">
           <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-[96rem] mx-auto">

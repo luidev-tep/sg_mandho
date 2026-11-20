@@ -15,8 +15,6 @@ export const GetCostoServicio = async (DIM_CustomerId, moduleName) => {
         //console.log("Los datos llegaron correctamente a Api.js en MostrarPagos", data);
         const response = await axiosInstance.post('payment/get_cost/', data);
 
-        console.log("Respuesta del servidor:", response.data);
-
         return {
             success: response.data.status === 'success',
             message: response.data.message,

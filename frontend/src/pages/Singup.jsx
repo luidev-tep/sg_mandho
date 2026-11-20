@@ -1,3 +1,5 @@
+import { communityConfig } from '../config/communityConfig';
+import BrandLogo from '../components/BrandLogo';
 import { useForm } from 'react-hook-form';
 import { useState, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -7,10 +9,11 @@ import { useAuth } from '../utils/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 function Signup() {
-  const { 
-    register, 
-    handleSubmit, 
-    formState: { errors }, 
+  const [showPassword, setShowPassword] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
     setValue
   } = useForm({
     mode: 'onChange'
@@ -39,15 +42,15 @@ function Signup() {
       return;
     }
 
-    setIsSubmitting(true); 
+    setIsSubmitting(true);
     setApiError(null);
     setLoginSuccess(false);
 
     try {
       const response = await ObtenerUsuario(data);
-      
-      dispatch({ 
-        type: "SET_USER_AND_TOKENS", 
+
+      dispatch({
+        type: "SET_USER_AND_TOKENS",
         payload: {
           usuario: response.data,
           tokens: response.tokens
@@ -86,14 +89,12 @@ function Signup() {
           <div className="min-h-[100dvh] h-full flex flex-col after:flex-1">
             <div className="flex-1">
               <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-                <svg className="fill-violet-500" xmlns="http://www.w3.org/2000/svg" width={32} height={32}>
-                  <path d="M31.956 14.8C31.372 6.92 25.08.628 17.2.044V5.76a9.04 9.04 0 0 0 9.04 9.04h5.716ZM14.8 26.24v5.716C6.92 31.372.63 25.08.044 17.2H5.76a9.04 9.04 0 0 1 9.04 9.04Zm11.44-9.04h5.716c-.584 7.88-6.876 14.172-14.756 14.756V26.24a9.04 9.04 0 0 1 9.04-9.04ZM.044 14.8C.63 6.92 6.92.628 14.8.044V5.76a9.04 9.04 0 0 1-9.04 9.04H.044Z" />
-                </svg>
+                <BrandLogo />
               </div>
             </div>
 
             <div className="max-w-sm mx-auto w-full px-4 py-8">
-              <center><h1 className="text-3xl text-gray-800 dark:text-gray-100 font-bold mb-6">Bienvenido</h1></center>
+              <h1 className="text-3xl text-gray-800 dark:text-gray-100 font-bold tracking-tight text-center mb-6">Bienvenido</h1>
 
               <form onSubmit={onSubmit}>
                 {/* Mensaje de éxito */}
@@ -122,9 +123,9 @@ function Signup() {
                     <label className="block text-sm font-medium mb-1" htmlFor="name">
                       Usuario <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      id="name" 
-                      className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full ${errors.name ? 'border-red-500' : ''}`} 
+                    <input
+                      id="name"
+                      className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full ${errors.name ? 'border-red-500' : ''}`}
                       type="text"
                       {...register("name", {
                         required: 'El usuario es requerido',
@@ -144,8 +145,8 @@ function Signup() {
                     <label className="block text-sm font-medium mb-1" htmlFor="role">
                       Rol <span className="text-red-500">*</span>
                     </label>
-                    <select 
-                      id="role" 
+                    <select
+                      id="role"
                       className="text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-select w-full"
                       {...register("role", {
                         required: 'Selecciona un rol',
@@ -162,36 +163,24 @@ function Signup() {
                       <span className="text-red-500 text-sm">{errors.role.message}</span>
                     )}
                   </div>
-                  
+
                   {/* Manzana */}
                   <div>
                     <label className="block text-sm font-medium mb-1" htmlFor="manzana">
                       Manzana <span className="text-red-500">*</span>
                     </label>
-                    <select 
-                      id="manzana" 
+                    <select
+                      id="manzana"
                       className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-select w-full rounded-lg ${errors.manzana ? 'border-red-500' : 'border-gray-300'} ${isSubmitting ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                      {...register("manzana", { 
+                      {...register("manzana", {
                         required: 'La manzana es requerida',
-                        validate: value => [
-                          'tepetate', 
-                          'cerritos', 
-                          'garambullo', 
-                          'yhonda', 
-                          'centro', 
-                          'buenavista'
-                        ].includes(value) || 'Seleccione una manzana válida',
+                        validate: value => communityConfig.geography.zones.some(zone => zone.value === value) || 'Seleccione una manzana válida',
                         onChange: () => setApiError(null)
                       })}
                       disabled={isSubmitting}
                     >
                       <option value="">Seleccione una opción</option>
-                      <option value="tepetate">Tepetate</option>
-                      <option value="cerritos">Cerritos</option>
-                      <option value="garambullo">Garambullo</option>
-                      <option value="yhonda">Yhonda</option>
-                      <option value="centro">Centro</option>
-                      <option value="buenavista">Buena Vista</option>
+                      {communityConfig.geography.zones.map(zone => <option key={zone.value} value={zone.value}>{zone.label}</option>)}
                     </select>
                     {errors.manzana && (
                       <span className="text-red-500 text-sm mt-1 block animate-fade-in">
@@ -205,11 +194,11 @@ function Signup() {
                       Contraseña <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <input 
-                        id="password" 
-                        className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full pr-10 ${errors.password ? 'border-red-500' : ''}`} 
-                        type="password" 
-                        autoComplete="on"
+                      <input
+                        id="password"
+                        className={`text-gray-900 dark:bg-gray-100 dark:text-gray-700 form-input w-full pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
                         {...register("password", {
                           required: 'La contraseña es requerida',
                           minLength: {
@@ -219,17 +208,12 @@ function Signup() {
                           onChange: () => setApiError(null)
                         })}
                       />
-                      <button 
+                      <button
                         type="button"
                         className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 dark:text-gray-400"
-                        onClick={() => {
-                          const passwordInput = document.getElementById('password');
-                          if (passwordInput.type === 'password') {
-                            passwordInput.type = 'text';
-                          } else {
-                            passwordInput.type = 'password';
-                          }
-                        }}
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        aria-pressed={showPassword}
+                        onClick={() => setShowPassword(value => !value)}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -252,8 +236,8 @@ function Signup() {
                       />
                     </div>
                   )}
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-lg shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isSubmitting || loginSuccess || isThrottled}
                   >

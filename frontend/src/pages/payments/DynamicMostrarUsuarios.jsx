@@ -1,3 +1,4 @@
+import { communityConfig } from '../../config/communityConfig';
 // Customer interfaz principal
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../partials/SideBar';
@@ -59,12 +60,7 @@ function DynamicMenuCusomers() {
   };
 
   const filterOptions = [
-    { label: 'Cerritos', value: 'cerritos' },
-    { label: 'Centro', value: 'centro' },
-    { label: 'Garambullo', value: 'garambullo' },
-    { label: 'Yhonda', value: 'yhonda' },
-    { label: 'Tepetate', value: 'tepetate' },
-    { label: 'Buena vista', value: 'buenavista' },
+    ...communityConfig.geography.zones,
     { label: 'Defunciones', value: 'enddate' }
   ];
 
