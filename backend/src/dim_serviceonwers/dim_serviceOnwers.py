@@ -4,8 +4,6 @@ from src.dim_serviceonwers.models.DIM_ServiceOnwers import DIM_ServiceOnwers
 
 from src.dim_service.DIM_Service import DIM_Service
 
-hanlder_dim_date = DIM_DATE()
-
 # ESTA CLASE POR EL MOMENTO NO SE UTILIZARA, PUES YA QUE SERA UNA TABLA PREDEFINIDA, SE ACTUALIZARA EN OTRO MOMENTO
 class DIM_ServiceOnwersCrud:
     """Class to handle CRUD operations for service owners."""
@@ -25,6 +23,7 @@ class DIM_ServiceOnwersCrud:
         if not service_id:
             return 404, "Servicio no encontrado"
         try:
+            hanlder_dim_date = DIM_DATE()
             data_format = {
                 "DIM_ServiceOnwersId": create_id([service_owner_json['DIM_OnwerCustomerId'], service_id]),
                 "DIM_DateId": hanlder_dim_date.dateId,
