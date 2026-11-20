@@ -29,6 +29,10 @@ resource "azurerm_static_web_app" "frontend" {
   location            = "centralus"
   sku_tier            = "Free"
   sku_size            = "Free"
+  # Azure owns the existing GitHub connection; publishing uses its deployment token.
+  lifecycle {
+    ignore_changes = [repository_branch, repository_url]
+  }
 }
 
 resource "azurerm_container_registry" "registry" {
