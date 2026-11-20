@@ -1,17 +1,23 @@
 # Importaciones generale sobre la parte de cuentas
+from src.utils.conexion import Conexion
 from src.utils.validate_data import validate_data
 from src.dim_dates.dim_date import DIM_DATE
 from src.utils.id_generator import create_id
 
 # importaciones espeficias de insert_account
 from src.accounts.repository.insert import insert
-from src.accounts.services.validate import validate_account, descativar_otra_cuenta
+from src.accounts.services.validate import (
+    validate_account,
+    descativar_otra_cuenta,
+    convertir_a_formato_legible,
+    validate_status,
+    has_active_account,
+)
 from src.accounts.models.DIM_account import DIM_Account
 from src.dim_status.status import DIM_status
 
 #Importaciones de mostrar o leer ceuntas
 from src.accounts.repository.show import show_account
-from src.accounts.services.validate import convertir_a_formato_legible, validate_status, descativar_otra_cuenta, has_active_account
 
 #importacion de roles 
 from src.dim_roles.role import Role
@@ -32,7 +38,7 @@ class AccountCrud():
 
     AUN SE DEBEN CORREGIR VARIOS ERRORES RELACIONADOS CON LA CUENTA Y LOS USUARIOS
     """
-    def insert_account(self, account_json = dict[str: str|int]) -> tuple: 
+    def insert_account(self, account_json: dict, db: Conexion | None = None) -> tuple: 
         """
         Funcion la cual se encarga de la opcion create 
         Tiene todo lo nesesario, hace las validaciones, y si toda la informacion esta bien retorna 
@@ -41,6 +47,7 @@ class AccountCrud():
 
         Args:
             account_json (dict): Un diccionario que contiene la información del usuario.
+            db (Conexion | None, optional): Conexión opcional para transacciones compartidas.
 
         Returns:
             int: Se retorna un codigo de error o exito
@@ -119,7 +126,7 @@ class AccountCrud():
         
         #asi se desactivan las cuentas anteriores correctamente 
         if has_active_account(account_json["customer_id"]):
-            self.desactivate_account(account_json["customer_id"])
+            descativar_otra_cuenta(account_json["customer_id"], db=db)
         
         #Estatus sera para ver si el pago ya esta pendiente o pagado, los roles seran los que tomaran la fucniona ctual de estatus
         estado = DIM_status()
@@ -153,7 +160,7 @@ class AccountCrud():
             # Ingresar los datos a la base de datos 
             cuenta = DIM_Account(**account_data)
             
-            request, message = insert(cuenta)
+            request, message = insert(cuenta, db=db)
             # request, message = (True, 'Prueba de testeo para crear usuarios')
             
             if request:
@@ -239,16 +246,16 @@ class AccountCrud():
             return 400, mensaje, []
         
     
-    def desactivate_account(self, persona_id: str ) -> None :
+    def desactivate_account(self, persona_id: str, db: Conexion | None = None) -> None:
         """
         Esta función desactiva una cuenta en la base de datos.
 
         Args:
             persona_id (str): El id de la persona que se desea desactivar.
+            db (Conexion | None, optional): Conexión de base de datos opcional para transacciones compartidas.
 
         Returns:
             None (NoneType): No responde nada solo hace una accion
 
         """
-        descativar_otra_cuenta(persona_id)
-    
+        descativar_otra_cuenta(persona_id, db=db)

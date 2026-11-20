@@ -1,6 +1,5 @@
-import sqlite3
 from src.dim_dates.dim_date import DIM_DATE
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 
 
 def set_defuncion(DIM_CustomerId) :
@@ -20,7 +19,7 @@ def set_defuncion(DIM_CustomerId) :
         WHERE DIM_CustomerId = ?"""
         hancer_coencction.cursor.execute(query, (fecha_defuncion, DIM_CustomerId))
         hancer_coencction.save_changes()
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al actualizar la informacion de la persona: {e}")
     finally:
         hancer_coencction.close_conexion()
@@ -42,13 +41,13 @@ def defuncion_validation(DIM_CustomerId) -> bool:
         handler_coencction.cursor.execute(query, (DIM_CustomerId,))
         result = handler_coencction.cursor.fetchone()
         
-        if result[0] == "s/n" or result is None:
+        if result is None or result[0] == "s/n":
             # print("El usuario es valido para marcar como defuncion")
             # print(result[0])
             return True
         else:
             return False
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al verificar la informacion de la persona: {e}")
         return False
     finally:
@@ -80,7 +79,7 @@ def is_admin(DIM_CustomerId) -> bool:
             return True
         else:
             return False
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al verificar la informacion de la persona: {e}")
         return False
     finally:

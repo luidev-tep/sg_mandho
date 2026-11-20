@@ -1,3 +1,4 @@
+import BrandLogo from '../components/BrandLogo';
 import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import SidebarLinkGroup from "./SidebarLinkGroup";
@@ -11,21 +12,21 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = 'default' }) {
   const trigger = useRef(null);
   const sidebar = useRef(null);
   const hamburgerButtonRef = useRef(null);
-  
+
   // Estado para controlar el módulo activo y sus opciones
   const [activeModule, setActiveModule] = useState(null);
   const [moduleOptions, setModuleOptions] = useState([]);
   // Roles y permisos
   const userRole = usuario?.RoleName?.toLowerCase();
   const userService = usuario?.ServiceName?.toLowerCase();
-  // Definir las opciones para cada módulo /modulos/usuarios/ 
+  // Definir las opciones para cada módulo /modulos/usuarios/
 const moduleOptionsMap = {
   panteon: [
     { path: "/Analytics/panteon", label: "Panel de Control" },
     { path: "/modulos/panteon", label: "Ver Registros" },
     { path: "/modulos/crear_pago/panteon", label: "Generar registro" },
     { path: "/modulos/usuarios/panteon", label: "Ver Personas" }
-  ], 
+  ],
   personas: [
     ...(userRole === 'delegado' ? [{ path: "/Analytics/delegado", label: "Panel de Control" }] : []),
     { path: "/personas/usuarios", label: "Lista de personas" },
@@ -62,11 +63,11 @@ useEffect(() => {
       setModuleOptions([]);
     } else {
       let options = moduleOptionsMap[currentModule];
-      
+
       // Si el usuario es 'delegado', filtramos las opciones que no debe ver en los módulos.
       if (userRole === 'delegado' && currentModule !== 'personas') {
-        options = options.filter(option => 
-          !option.path.includes('/crear_pago/') && 
+        options = options.filter(option =>
+          !option.path.includes('/crear_pago/') &&
           !option.path.includes('/modulos/usuarios/')
         );
       }
@@ -80,28 +81,30 @@ useEffect(() => {
   }
 }, [pathname, userRole, userService]);
 
+  useEffect(() => { setSidebarOpen(false); }, [pathname, setSidebarOpen]);
+
   // close on click outside - MODIFICADO
   useEffect(() => {
     const clickHandler = ({ target }) => {
       // No hacer nada si no tenemos las referencias necesarias
       if (!sidebar.current || !trigger.current || !hamburgerButtonRef.current) return;
-      
+
       // No cerrar si:
       // 1. La barra lateral ya está cerrada
       // 2. El clic fue dentro de la barra lateral
       // 3. El clic fue en el trigger (botón de cerrar dentro de la barra)
       // 4. El clic fue en el botón de hamburguesa flotante
-      if (!sidebarOpen || 
-          sidebar.current.contains(target) || 
+      if (!sidebarOpen ||
+          sidebar.current.contains(target) ||
           trigger.current.contains(target) ||
           hamburgerButtonRef.current.contains(target)) {
         return;
       }
-      
+
       // Si llegamos aquí, cerrar la barra lateral
       setSidebarOpen(false);
     };
-    
+
     document.addEventListener("click", clickHandler);
     return () => document.removeEventListener("click", clickHandler);
   }, [sidebarOpen]); // Añadimos sidebarOpen como dependencia
@@ -177,9 +180,7 @@ return (
           </button>
           {/* Logo */}
           <NavLink end to="/" className="block">
-            <svg className="fill-violet-500" xmlns="http://www.w3.org/2000/svg" width={32} height={32}>
-              <path d="M31.956 14.8C31.372 6.92 25.08.628 17.2.044V5.76a9.04 9.04 0 0 0 9.04 9.04h5.716ZM14.8 26.24v5.716C6.92 31.372.63 25.08.044 17.2H5.76a9.04 9.04 0 0 1 9.04 9.04Zm11.44-9.04h5.716c-.584 7.88-6.876 14.172-14.756 14.756V26.24a9.04 9.04 0 0 1 9.04-9.04ZM.044 14.8C.63 6.92 6.92.628 14.8.044V5.76a9.04 9.04 0 0 1-9.04 9.04H.044Z" />
-            </svg>
+            <BrandLogo />
           </NavLink>
         </div>
         {/* Links */}
@@ -259,14 +260,14 @@ return (
               </SidebarLinkGroup>
               {/* Módulos */}
               {userRole === 'delegado' && (
-                <SidebarLinkGroup alwaysOpen={true} activecondition={pathname.includes("panteon") || pathname.includes("agua") || pathname.includes("personas") || pathname.includes("delegacion")}>
+                <SidebarLinkGroup alwaysOpen={true} activecondition={pathname.includes("feria") || pathname.includes("panteon") || pathname.includes("agua") || pathname.includes("personas") || pathname.includes("delegacion")}>
                   {(handleClick, open) => {
                     return (
                       <React.Fragment>
                         <a
                           href="#0"
                           className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
-                            pathname.includes("panteon") || pathname.includes("personas") || pathname.includes("agua") || pathname.includes("delegacion") ? "" : "hover:text-gray-900 dark:hover:text-white"
+                            pathname.includes("feria") || pathname.includes("panteon") || pathname.includes("personas") || pathname.includes("agua") || pathname.includes("delegacion") ? "" : "hover:text-gray-900 dark:hover:text-white"
                           }`}
                           onClick={(e) => {
                             e.preventDefault();
@@ -276,13 +277,13 @@ return (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
                               <svg className={`shrink-0 fill-current ${
-                                pathname.includes('panteon') || pathname.includes('agua') || pathname.includes('personas') || pathname.includes('delegacion') ? 
+                                pathname.includes('feria') || pathname.includes('panteon') || pathname.includes('agua') || pathname.includes('personas') || pathname.includes('delegacion') ?
                                 'text-violet-500' : 'text-gray-400 dark:text-gray-500'
                               }`} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                 <path d="M6 0a6 6 0 0 0-6 6c0 1.077.304 2.062.78 2.912a1 1 0 1 0 1.745-.976A3.945 3.945 0 0 1 2 6a4 4 0 0 1 4-4c.693 0 1.344.194 1.936.525A1 1 0 1 0 8.912.779 5.944 5.944 0 0 0 6 0Z" />
                                 <path d="M10 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm-4 6a4 4 0 1 1 8 0 4 4 0 0 1-8 0Z" />
                               </svg><span className="text-base font-semibold ml-4 lg:opacity-100 2xl:opacity-100 duration-200">
-                                Modulos
+                                Módulos
                               </span>
                             </div>
                             {/* Icon */}
@@ -406,7 +407,7 @@ return (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
                               <svg className={`shrink-0 fill-current ${
-                                pathname.includes('personas') ? 
+                                pathname.includes('personas') ?
                                 'text-violet-500' : 'text-gray-400 dark:text-gray-500'
                               }`} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                 <path d="M6 0a6 6 0 0 0-6 6c0 1.077.304 2.062.78 2.912a1 1 0 1 0 1.745-.976A3.945 3.945 0 0 1 2 6a4 4 0 0 1 4-4c.693 0 1.344.194 1.936.525A1 1 0 1 0 8.912.779 5.944 5.944 0 0 0 6 0Z" />
@@ -461,7 +462,7 @@ return (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
                               <svg className={`shrink-0 fill-current ${
-                                pathname.includes(userService) ? 
+                                pathname.includes(userService) ?
                                 'text-violet-500' : 'text-gray-400 dark:text-gray-500'
                               }`} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                 <path d="M6 0a6 6 0 0 0-6 6c0 1.077.304 2.062.78 2.912a1 1 0 1 0 1.745-.976A3.945 3.945 0 0 1 2 6a4 4 0 0 1 4-4c.693 0 1.344.194 1.936.525A1 1 0 1 0 8.912.779 5.944 5.944 0 0 0 6 0Z" />
@@ -512,7 +513,7 @@ return (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
                               <svg className={`shrink-0 fill-current ${
-                                pathname.includes(activeModule) ? 
+                                pathname.includes(activeModule) ?
                                 'text-violet-500' : 'text-gray-400 dark:text-gray-500'
                               }`} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                 <path d="M6.753 2.659a1 1 0 0 0-1.506-1.317L2.451 4.537l-.744-.744A1 1 0 1 0 .293 5.207l1.5 1.5a1 1 0 0 0 1.46-.048l3.5-4ZM6.753 10.659a1 1 0 1 0-1.506-1.317l-2.796 3.195-.744-.744a1 1 0 0 0-1.414 1.414l1.5 1.5a1 1 0 0 0 1.46-.049l3.5-4ZM8 4.5a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H9a1 1 0 0 1-1-1ZM9 11.5a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2H9Z" />

@@ -7,7 +7,6 @@ import axiosInstance from "./axiosInstance";
  * 
  * @param {string} query - Término de búsqueda (mínimo 3 caracteres recomendado).
  *                        Puede buscar por: nombre, apellido, ID de usuario o manzana.
- *                        Ejemplo: "Juan Pérez" o "YHONDA"
  * 
  * @returns {Promise<Array<{
  *   id: string,
@@ -45,7 +44,6 @@ import axiosInstance from "./axiosInstance";
  *     nombre_completo: "John s/n Torres",
  *     direccion: "Main Street s/n",
  *     fecha_creacion: "2022-01-01",
- *     manzana: "Yhonda",
  *     selectable: true,
  *     reason: ""
  *   }
@@ -81,7 +79,7 @@ export const buscarClientes = async (query, signal = null) => {
   } catch (err) {
     // Manejar error de cancelación específicamente
     if (axios.isCancel(err)) {
-      console.log('Búsqueda cancelada para:', query);
+
       return []; // Devolver array vacío en lugar de lanzar error
     }
     

@@ -21,10 +21,10 @@ def test_security_inser_user():
     """
     handler_user = SecurityUsers()
     data = {
-        'DIM_CustomerId': '9154e0f2-1f5f-5f2d',
+        'DIM_CustomerId': 'test-customer-001',
         'CustomerFraction': 'tepetate',
-        'username': 'Arcov',
-        'password': 'xdxd12345',
+        'username': 'demo_user',
+        'password': 'ChangeMe123!',
         'RoleName':"comitiva",
         'serviceName': 'agua',
     }

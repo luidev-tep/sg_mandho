@@ -1,3 +1,6 @@
+import Pagination from '../../components/Pagination';
+import { formatFullName } from '../../utils/formatFullName';
+import { communityConfig } from '../../config/communityConfig';
 // partials/customers/CustomersTable.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import Customer from './CustomersTableItem';
@@ -12,6 +15,9 @@ function CustomersTable({ filters }) {
   const [error, setError] = useState(null);
   const tableRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [searchTerm, filters]);
+  useEffect(() => { setPage(current => Math.min(current, Math.max(1, Math.ceil(filteredCustomers.length / 20)))); }, [filteredCustomers.length]);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -23,15 +29,8 @@ function CustomersTable({ filters }) {
         const backendFilters = {};
         
         // Mapear filtros de zona
-        const zonas = [];
-        if (filters.cerritos) zonas.push('cerritos');
-        if (filters.centro) zonas.push('centro');
-        if (filters.garambullo) zonas.push('garambullo');
-        if (filters.yhonda) zonas.push('yhonda');
-        if (filters.tepetate) zonas.push('tepetate');
-        if (filters.buenavista) zonas.push('buenavista');
-        
-        if (zonas.length > 0) {
+        const zonas = communityConfig.geography.zones.filter(zone => filters[zone.value]).map(zone => zone.value);
+if (zonas.length > 0) {
           backendFilters.CustomerFraction = zonas;
         }
         
@@ -177,12 +176,13 @@ function CustomersTable({ filters }) {
 
         {/* Cuerpo de la tabla */}
         <div className="space-y-2 md:space-y-0 pb-24">
-              {filteredCustomers.map(customer => {
+              {filteredCustomers.length === 0 && <p className="px-5 py-10 text-center text-gray-600 dark:text-gray-300">No se encontraron resultados. Prueba con otros filtros.</p>}
+          {filteredCustomers.slice((page - 1) * 20, page * 20).map(customer => {
                 const firstName = formatName(customer.first_name);
                 const secondName = formatName(customer.second_name);
                 
                 // Construir el nombre completo, evitando espacios extra cuando secondName está vacío
-                const fullName = `${firstName}${secondName ? ' ' + secondName : ''}`;
+                const fullName = formatFullName(firstName, secondName);
                 
                 return (
                   <Customer
@@ -190,7 +190,7 @@ function CustomersTable({ filters }) {
                     id={customer.id_user}
                     image={customer.image}
                     name={fullName}
-                    last_name={customer.last_name + ' ' + customer.second_last_name}
+                    last_name={formatFullName(customer.last_name, customer.second_last_name)}
                     birth_date={customer.date_of_birth}
                     manzana={customer.manzana}
                     address={customer.street + ' ' + customer.number_ext}
@@ -202,6 +202,7 @@ function CustomersTable({ filters }) {
                 );
               })}
         </div>
+        <Pagination page={page} pages={Math.ceil(filteredCustomers.length / 20)} onPageChange={setPage} />
       </div>
     </div>
   );

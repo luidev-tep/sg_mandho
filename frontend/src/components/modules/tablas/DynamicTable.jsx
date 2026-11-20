@@ -1,3 +1,6 @@
+import Pagination from '../../Pagination';
+import { formatFullName } from '../../../utils/formatFullName';
+import { communityConfig } from '../../../config/communityConfig';
 // partials/customers/CustomersTable.jsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import DynamicTableItem from './DynamicTableItem';
@@ -16,6 +19,9 @@ function DynamicTable({ filters, serviceName }) {
   const [error, setError] = useState(null);
   const tableRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [searchTerm, filters, serviceName]);
+  useEffect(() => { setPage(current => Math.min(current, Math.max(1, Math.ceil(filteredCustomers.length / 20)))); }, [filteredCustomers.length]);
   const [isCorteCajaModalOpen, setIsCorteCajaModalOpen] = useState(false);
   const { state } = useAuth();
   const userRole = state.usuario?.RoleName?.toLowerCase();
@@ -29,15 +35,8 @@ function DynamicTable({ filters, serviceName }) {
       const backendFilters = {};
       
       // Mapear filtros de zona
-      const CustomerFraction = [];
-      if (filters.cerritos) CustomerFraction.push('cerritos');
-      if (filters.centro) CustomerFraction.push('centro');
-      if (filters.garambullo) CustomerFraction.push('garambullo');
-      if (filters.yhonda) CustomerFraction.push('yhonda');
-      if (filters.tepetate) CustomerFraction.push('tepetate');
-      if (filters.buenavista) CustomerFraction.push('buenavista');
-      
-      if (CustomerFraction.length > 0) {
+      const CustomerFraction = communityConfig.geography.zones.filter(zone => filters[zone.value]).map(zone => zone.value);
+if (CustomerFraction.length > 0) {
         backendFilters.CustomerFraction = CustomerFraction;
       }
       
@@ -234,7 +233,8 @@ function DynamicTable({ filters, serviceName }) {
 
         {/* Cuerpo de la tabla con padding inferior para el menú de acciones */}
         <div className="space-y-2 md:space-y-0 pb-24">
-          {filteredCustomers.map(customer => {
+          {filteredCustomers.length === 0 && <p className="px-5 py-10 text-center text-gray-600 dark:text-gray-300">No se encontraron resultados. Prueba con otros filtros.</p>}
+          {filteredCustomers.slice((page - 1) * 20, page * 20).map(customer => {
             // Crear clave única combinando ID de cuenta y tipo de servicio
             const uniqueKey = getUniqueKey(customer);
             
@@ -243,7 +243,7 @@ function DynamicTable({ filters, serviceName }) {
                 key={uniqueKey}
                 id={customer.DIM_AccountId}
                 image={customer.image}
-                full_name={`${customer.CustomerName} ${customer.CustomerMiddleName || ''} ${customer.CustomerLastName} ${customer.CustomerSecondLastName || ''}`}
+                full_name={formatFullName(customer.CustomerName, customer.CustomerMiddleName, customer.CustomerLastName, customer.CustomerSecondLastName)}
                 role_name={customer.RoleName}
                 status_factura={customer.StatusFactura}
                 service_type={customer.ServiceDetailesType || 'N/A'}
@@ -259,6 +259,7 @@ function DynamicTable({ filters, serviceName }) {
             );
           })}
         </div>
+        <Pagination page={page} pages={Math.ceil(filteredCustomers.length / 20)} onPageChange={setPage} />
       </div>
       {userRole !== 'delegado' && isCorteCajaModalOpen && (
         <CorteCajaModal

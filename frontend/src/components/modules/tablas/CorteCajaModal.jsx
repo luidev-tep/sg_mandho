@@ -33,8 +33,7 @@ function CorteCajaModal({ serviceName, serviceDetailTypes, onClose, onSuccess })
           }
         };
         const response = await Get_servicios_disponibles(payload);
-        
-        console.log("Servicios disponibles para corte de caja:", response);
+
         if (response.success && response.data && response.data.length > 0) {
           setAvailableServices(response.data);
         } else {
@@ -67,8 +66,6 @@ function CorteCajaModal({ serviceName, serviceDetailTypes, onClose, onSuccess })
       return;
     }
 
-    console.log("Usuario para corte de caja:", usuario);
-
     setIsConfirming(true);
     setShowPasswordModal(false);
     setError(null);
@@ -80,7 +77,6 @@ function CorteCajaModal({ serviceName, serviceDetailTypes, onClose, onSuccess })
         "DIM_service": serviceName
       };
 
-      console.log("Enviando a CorteDeCaja:", payload);
       const response = await CorteDeCaja(payload);
       
       if (response.success && (response.status === 200 || response.status === 201)) {

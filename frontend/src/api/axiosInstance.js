@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { RefrescarToken } from './api_auth';
-import { AuthProvider } from '../utils/AuthContext';
 
 // 1. Crear la instancia de Axios
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL, // URL base de tu API desde .env
+  timeout: 30000,
 });
 
 // 2. Crear un interceptor de peticiones
@@ -33,52 +33,71 @@ axiosInstance.interceptors.request.use(
   } 
 );
 
+let refreshPromise = null;
+
 // 3. Crear un interceptor de respuestas para manejar tokens expirados
 export const setupInterceptors = (store) => {
-  axiosInstance.interceptors.response.use(
+  const interceptorId = axiosInstance.interceptors.response.use(
     (response) => response, // Si la respuesta es exitosa, la devuelve sin más.
     async (error) => {
         const originalRequest = error.config;
         
         // Si el error es 401 (No autorizado) y no hemos reintentado ya esta petición
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
             originalRequest._retry = true; // Marcamos la petición para evitar bucles infinitos
             
-            // Obtenemos el estado actual para acceder al refresh token
             const tokensString = localStorage.getItem('tokens');
             if (!tokensString) {
                 store.dispatch({ type: 'CLEAR_USER' });
                 return Promise.reject(error);
             }
-            const storedData = JSON.parse(tokensString);
-            const refreshToken = storedData?.tokens?.refresh_token;
 
+            let storedData = null;
+            try {
+                storedData = JSON.parse(tokensString);
+            } catch {
+                store.dispatch({ type: 'CLEAR_USER' });
+                return Promise.reject(error);
+            }
+
+            const refreshToken = storedData?.tokens?.refresh_token;
             if (!refreshToken) {
                 store.dispatch({ type: 'CLEAR_USER' });
                 return Promise.reject(error);
             }
 
             try {
-                // Intentamos refrescar el token, pasándole el refresh token
-                const newAccessToken = await RefrescarToken(refreshToken);
-                
-                // Actualizamos los tokens en el estado global
-                const newTokens = { ...storedData.tokens, access_token: newAccessToken };
-                store.dispatch({ type: 'SET_TOKENS', payload: newTokens });
+                if (!refreshPromise) {
+                    refreshPromise = RefrescarToken(refreshToken).finally(() => {
+                        refreshPromise = null;
+                    });
+                }
+                const newAccessToken = await refreshPromise;
 
-                // Reintentamos la petición original con el nuevo token
-                // El interceptor de peticiones se encargará de añadir el nuevo token
+                const newTokens = { ...storedData.tokens, access_token: newAccessToken };
+                // Escribir síncronamente en localStorage antes del retry para que el request interceptor lea el token nuevo
+                localStorage.setItem('tokens', JSON.stringify({
+                    tokens: newTokens,
+                    refreshTokenTimestamp: storedData.refreshTokenTimestamp || Date.now(),
+                }));
+                originalRequest.headers = originalRequest.headers || {};
+                originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+
+                store.dispatch({ type: 'SET_TOKENS', payload: newTokens });
                 return axiosInstance(originalRequest);
             } catch (refreshError) {
-                // Si el refresco falla (ej. refresh token también expiró), cerramos sesión.
                 store.dispatch({ type: 'CLEAR_USER' });
                 return Promise.reject(refreshError);
             }
         }
         
-        return Promise.reject(error); // Para cualquier otro error, lo propagamos
+        return Promise.reject(error);
     }
   );
+
+  return () => {
+    axiosInstance.interceptors.response.eject(interceptorId);
+  };
 };
 
 export default axiosInstance;

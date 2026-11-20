@@ -1,3 +1,4 @@
+from src.utils.conexion import Conexion
 import random   
 from src.payments.repository.cash_cut_querys import create_cash_cut_register, found_pending, search_service_Valid, is_service_exist
 from src.payments.model.pending_paid import CashCutModel
@@ -76,46 +77,50 @@ class cashCutCrud(PaymentCrud):
         
         #Se inicializa antes ya que sera insertado en fact Revenues
         DIM_serviceDatilsId = get_service_detailsID(data_json['DIM_ServiceDetailesType'], date[0], data_json['DIM_service']) #Para simbolizxar que se envia el anio
+        if not DIM_serviceDatilsId:
+            return 404, f"No se encontró el servicio {data_json['DIM_ServiceDetailesType']} para el año {date[0]}"
+
         data_json['DIM_ServiceDetailsId'] = DIM_serviceDatilsId
-        
-        pending_accounts = found_pending(data_json['DIM_ServiceDetailesType'], data_json['DIM_service'])
-        data_format = []
-        
+
         #Validacion final del servicio
         if not search_service_Valid(date[0], DIM_serviceDatilsId):
             return 400, f"No se puede hacer un corte de caja para el servicio {data_json['DIM_ServiceDetailesType']}"
-        
-        
-        # Crear registros de fact_revenue para las cuentas pendientes
+
+        pending_accounts = found_pending(
+            data_json['DIM_ServiceDetailesType'],
+            data_json['DIM_service'],
+            DIM_serviceDatilsId,
+        )
+        data_format = []
+
+        # Crear registros de fact_revenue para las cuentas pendientes (si existen)
         if pending_accounts:
             data_format = self.__Fact_revenues_registers(pending_accounts, data_json)
-        
-        if not data_format:
-            return 500, "Error al crear los registros de fact_revenue pendientes"
-        
-        # for data in data_format:
-        #   print(data)
-        response = insert_many_fact_revenues(data_format)
-        
-        if not response:
-            return 500, "Error al insertar los registros de fact_revenue"
-        
+            if not data_format:
+                return 500, "Error al crear los registros de fact_revenue pendientes"
+
         data_cash_cut = {
+            "DIM_CashCutId": create_id([DIM_serviceDatilsId, data_json['DIM_ServiceOwnersId'], len(data_format)]),
             "DIM_CountRegisters": len(data_format),
             "DIM_ServiceDetailsId": DIM_serviceDatilsId,
             "DIM_DateId": handler_date.dateId,
             "DIM_ServiceOwnersId": data_json['DIM_ServiceOwnersId']
-            }
-        # print(data_cash_cut['DIM_CountRegisters'])
-        # print(data_cash_cut['DIM_ServiceDetailsId'])
-        # print(data_cash_cut['DIM_DateId'])
-        # print(data_cash_cut['DIM_ServiceOwnersId'])
-        status, message = self._create_cash_cut(data_cash_cut)
-        
-        if status != 201:
-            return status, message
-        mensaje = f"Se hizo el corte de caja exitosamente, Se crearon {data_cash_cut['DIM_CountRegisters']} registros"
-        return status, mensaje
+        }
+        cash_cut_model = CashCutModel(**data_cash_cut)
+
+        with Conexion() as tx:
+            if data_format:
+                ok_rev = insert_many_fact_revenues(data_format, db=tx)
+                if not ok_rev:
+                    tx.rollback()
+                    return 500, "Error al insertar las facturas"
+            ok_cut = create_cash_cut_register(cash_cut_model, db=tx)
+            if not ok_cut:
+                tx.rollback()
+                return 500, "Error al generar el corte de caja"
+            tx.save_changes()
+            mensaje = f"Se hizo el corte de caja exitosamente, Se crearon {data_cash_cut['DIM_CountRegisters']} registros"
+            return 201, mensaje
         
     def __Fact_revenues_registers(self, pending_accounts: list, data_json: dict) -> list[FACT_Revenue] | bool:
         """
@@ -137,9 +142,13 @@ class cashCutCrud(PaymentCrud):
         dim_date_data = DIM_DATE()
         year = str(dim_date_data.dateId)
         
-        # Obtener el movementId para el cash cut (usamos un movimiento específico para pendientes)
+        # Obtener el movementId y el estado pendiente una sola vez fuera del loop
         movement_id = handler_movement.get_movement_id("ingreso")
-        
+        status = get_status_payment(1000.0, 0.0)
+        estatus_id = handler_status.get_status_id(status, "fact_revenue")
+        if not estatus_id or not movement_id:
+            return False
+
         for account in pending_accounts:
             
             # Generar hash único para la cuenta primero
@@ -154,15 +163,6 @@ class cashCutCrud(PaymentCrud):
             id = create_id([account_hash, data_json['DIM_ServiceDetailesType'], year[4:]])
              
             fact_revenueId = create_id([id, data_json['DIM_ServiceDetailsId'], account[0]])
-            
-            # Obtener el estado para montos pendientes (0 amount)
-            # En la función get_status_payment, un monto_pagado de 0 debería mapearse a un estado específico.
-            status = get_status_payment(1000.0, 0.0)
-            estatus_id = handler_status.get_status_id(status, "fact_revenue")
-            
-            if not estatus_id:
-                # Usar estado por defecto si no se encuentra
-                return False
             
             data_item = {
                 'FACT_RevenueId': fact_revenueId,

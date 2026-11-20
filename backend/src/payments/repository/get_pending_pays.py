@@ -1,5 +1,4 @@
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.payments.services.special_services import SpecialServices
 from src.payments.model.pending_paid import PendingPaidModel, PendingPaidModel2
 
@@ -151,7 +150,7 @@ def get_pending_pays(DIM_accountsId: int, serviceName: str) -> None | list[dict[
         
         # Ordenamiento por año ascendente
         return sorted(response, key=lambda x: x['year'])
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print("""Error al obtener el ID del servicio: """, e)
         return None
     finally:

@@ -103,7 +103,7 @@ def busqueda_tiempo_real() -> tuple[Response, Literal[400]] | Response | tuple[R
         }), 400
 
     handler_date = DIM_DATE()
-    conn = None
+    db_handler = None
     try:
         # 3️⃣ Conexión a BD
         db_handler = Conexion()
@@ -113,7 +113,7 @@ def busqueda_tiempo_real() -> tuple[Response, Literal[400]] | Response | tuple[R
         # Nota: El uso de parámetros evita inyección SQL
         like_term = f"%{search_term}%"
         query = """
-        SELECT 
+        SELECT TOP 50
             DIM_CustomerId,
             DIM_DateId,
             CustomerName,
@@ -127,12 +127,15 @@ def busqueda_tiempo_real() -> tuple[Response, Literal[400]] | Response | tuple[R
             CustomerFraction,
             CustomerNumberExt
         FROM DIM_Customer
-        WHERE LOWER(CustomerName) LIKE ?
-           OR LOWER(CustomerMiddleName) LIKE ?
-           OR LOWER(CustomerLastName) LIKE ?
-           OR LOWER(CustomerSecondLastName) LIKE ?
-           OR CustomerFraction LIKE ?
-        LIMIT 50;
+        WHERE CustomerEndDate = 's/n'
+          AND (
+               LOWER(CustomerName) LIKE ?
+            OR LOWER(CustomerMiddleName) LIKE ?
+            OR LOWER(CustomerLastName) LIKE ?
+            OR LOWER(CustomerSecondLastName) LIKE ?
+            OR LOWER(CustomerFraction) LIKE ?
+          )
+        ;
         """
         cursor.execute(query, (like_term, like_term, like_term, like_term, like_term))
         registros = cursor.fetchall()
@@ -152,8 +155,8 @@ def busqueda_tiempo_real() -> tuple[Response, Literal[400]] | Response | tuple[R
                 "date_of_birth": r[6],
                 "date_user_start": r[7],
                 "date_user_end": r[8],
-                "manzana": r[9],
-                "street": r[10],
+                "street": r[9],
+                "manzana": r[10],
                 "number_ext": r[11],
             }
 
@@ -181,5 +184,5 @@ def busqueda_tiempo_real() -> tuple[Response, Literal[400]] | Response | tuple[R
         return send_error(str(e), 500)
 
     finally:
-        if conn:
-            conn.close()
+        if db_handler:
+            db_handler.close_conexion()

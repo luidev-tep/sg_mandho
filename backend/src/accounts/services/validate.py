@@ -1,7 +1,6 @@
 #from src.account.models.DIM_account import DIM_account
-import sqlite3
 from typing import Literal
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 
 #Importaciones de mostrar o leer ceuntas
 from src.users.repository.show import get_user
@@ -31,22 +30,25 @@ def validate_account(user_id: str) -> bool:
         
     """
     object_connection = Conexion()
-    #Se hace la conexion Verificar si funciona esta funcion
-    query = f"SELECT COUNT(*) FROM DIM_account WHERE DIM_CustomerId = '{user_id}' AND DIM_StatusId = 'status1'"
-    object_connection.cursor.execute(query)
-    result = object_connection.cursor.fetchone()  # Obtiene la primera fila de resultados
-    
-    if result[0] == 0: # No hay cuentas asociadas a este id
-        return 0
-    
-    account_count = result[0]  # El COUNT(*) es el primer elemento de la tupla
-    
-    # Verificar el límite (menor a 15)
-    if account_count <= 15:
-        return account_count
-    else:
-        return False
-    
+    try:
+        #Se hace la conexion Verificar si funciona esta funcion
+        query = "SELECT COUNT(*) FROM DIM_Account WHERE DIM_CustomerId = ? AND DIM_StatusId = 'status1'"
+        object_connection.cursor.execute(query, (user_id,))
+        result = object_connection.cursor.fetchone()  # Obtiene la primera fila de resultados
+        
+        if result[0] == 0: # No hay cuentas asociadas a este id
+            return 0
+        
+        account_count = result[0]  # El COUNT(*) es el primer elemento de la tupla
+        
+        # Verificar el límite (menor a 15)
+        if account_count <= 15:
+            return account_count
+        else:
+            return False
+    finally:
+        object_connection.close_conexion()
+
 
 
 
@@ -83,16 +85,17 @@ def convertir_a_formato_legible(datos_crudos: list[DIM_Account]) -> list:
     return datos_legibles
 
 
-def descativar_otra_cuenta(Customer_id):
+def descativar_otra_cuenta(Customer_id: str, db: Conexion | None = None) -> None:
     """Funcion la cual hace una consulta a la base de datos para descativar una cuenta,
     Se modifica la cuenta activa actual para agregarle un EndDate y cambiarle el status
 
     Args:
         Customer_id (str): El id de la persona
+        db (Conexion | None, optional): Conexión de base de datos opcional para transacciones compartidas.
     Returns:
         None
     """
-    handler_conn = Conexion()
+    handler_conn = Conexion(shared_conn=db)
     handler_status = DIM_status()
     dim_date = DIM_DATE()
     try:
@@ -109,8 +112,10 @@ def descativar_otra_cuenta(Customer_id):
         handler_conn.cursor.execute(query, values)
         handler_conn.save_changes()
 
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al descativar la cuenta: {e}")
+        if db is not None:
+            raise
     finally:
         handler_conn.close_conexion()
 
@@ -173,6 +178,9 @@ def has_active_account(user_id: str) -> bool:
         AND DIM_StatusId = 'status1'
         """
     object_connection = Conexion()
-    object_connection.cursor.execute(query, (user_id,))
-    result = object_connection.cursor.fetchone()
-    return result[0] > 0
+    try:
+        object_connection.cursor.execute(query, (user_id,))
+        result = object_connection.cursor.fetchone()
+        return result[0] > 0
+    finally:
+        object_connection.close_conexion()

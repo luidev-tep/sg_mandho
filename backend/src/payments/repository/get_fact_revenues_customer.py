@@ -1,86 +1,79 @@
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.payments.model.vista_model import VistaModel
-import sqlite3
 
-def get_query_base() -> str:
+ALLOWED_SERVICES = {"agua", "feria", "panteon", "delegacion"}
+
+
+def get_fact_revenues_by_customer_id(
+    DIM_CustomerId: str,
+    serviceName: str,
+    service_type: str,
+    Year: str,
+    db: Conexion | None = None,
+) -> tuple[int, list[dict]]:
     """
-    Construye la consulta SQL base para la vista de pagos.
+    Obtiene los pagos realizados por un cliente para un tipo de servicio y año específicos.
 
-    Esta función retorna una cadena de texto que contiene una consulta SELECT
-    estándar para la vista de pagos, utilizando un placeholder `[tabla]`
-    para ser reemplazado posteriormente con el nombre de servicio
-    correspondiente.
-
-    Returns:
-        str: La cadena de consulta SQL base.
-    """
-    return f"""
-        SELECT
-        vw.CustomerName,
-        vw.CustomerMiddleName,
-        vw.CustomerLastName,
-        vw.CustomerSecondLastName,
-        vw.StatusFactura,
-        vw.amount,
-        vw.DIM_DateId,
-        DIM_AccountId
-        from VISTA_PAGOS_DETALLADO_[tabla] as vw
-        """
-
-def get_fact_revenues_by_customer_id(DIM_CustomerId: str, serviceName: str, service_type: str, Year: str) -> tuple[int, list[dict]]:
-    """
-    Obtiene los pagos realizados por un cliente para un tipo de servicio específico.
-
-    Esta función realiza una consulta a la base de datos para recuperar los
-    detalles de los pagos (facturas) de un cliente, filtrando por su ID de
-    cliente y el tipo de servicio. La tabla de la base de datos se determina
-    dinámicamente a partir del nombre del servicio.
+    Valida `serviceName` contra una lista blanca de servicios permitidos y consulta
+    directamente `FACT_Revenue` con parámetros preparados (sin interpolación SQL)
+    para retornar los montos individuales y los IDs reales `FACT_RevenueId`.
 
     Args:
         DIM_CustomerId (str): El ID único del cliente.
-        serviceName (str): El nombre del servicio, utilizado para construir el
-                           nombre de la tabla en la base de datos.
-        service_type (str): El tipo de servicio (por ejemplo, 'mensual', 'anual').
+        serviceName (str): El nombre del servicio ('agua', 'feria', 'panteon', 'delegacion').
+        service_type (str): El tipo de detalle del servicio.
+        Year (str): El año del servicio/pago.
+        db (Conexion | None): Conexión compartida opcional para participar en transacciones.
 
     Returns:
-        tuple[int, list[dict]]: Una tupla que contiene:
-                                - Un código de estado (200 para éxito, 500 para error).
-                                - Una lista de diccionarios, donde cada diccionario
-                                  representa los datos de una factura. La lista
-                                  estará vacía si no se encuentran resultados
-                                  o si ocurre un error.
-
-    Raises:
-        sqlite3.Error: Si ocurre un error al interactuar con la base de datos SQLite.
+        tuple[int, list[dict]]: Código HTTP (200, 400, 500) y lista de diccionarios de facturas.
     """
-    handler_conexion = Conexion()
-    handler_vista = VistaModel()
-    query_base = get_query_base()
-    query_base += f"""
-        where vw.DIM_CustomerId = ? AND
-        vw.ServiceDetailesType = ? AND
-        vw.YearPay = ?
-        """
-    try:
-        quwery_base = query_base.replace("[tabla]", serviceName.upper())
-        values = (DIM_CustomerId, service_type, str(Year))
+    normalized_service = (serviceName or "").strip().lower()
+    if normalized_service not in ALLOWED_SERVICES:
+        return 400, []
 
-        #print(quwery_base , values)
-        handler_conexion.cursor.execute(quwery_base, values)
+    handler_vista = VistaModel()
+    query = """
+        SELECT
+            c.CustomerName,
+            c.CustomerMiddleName,
+            c.CustomerLastName,
+            c.CustomerSecondLastName,
+            st.StatusName AS StatusFactura,
+            fr.amount,
+            fr.DIM_DateId,
+            fr.DIM_AccountId,
+            fr.FACT_RevenueId
+        FROM FACT_Revenue AS fr
+        INNER JOIN DIM_Account AS acc ON acc.DIM_AccountId = fr.DIM_AccountId
+        INNER JOIN DIM_Customer AS c ON c.DIM_CustomerId = acc.DIM_CustomerId
+        INNER JOIN DIM_ServiceDetails AS sd ON sd.DIM_ServiceDetailsId = fr.DIM_ServiceDetailsId
+        INNER JOIN DIM_Service AS s ON s.DIM_ServiceId = sd.DIM_ServiceId
+        INNER JOIN DIM_Date AS d_sd ON d_sd.DIM_DateId = sd.DIM_DateId
+        INNER JOIN DIM_Status AS st ON st.DIM_StatusId = fr.DIM_StatusId
+        INNER JOIN DIM_Movement AS m ON m.DIM_MovementId = fr.DIM_MovementId
+        WHERE c.DIM_CustomerId = ?
+          AND LOWER(s.ServiceName) = ?
+          AND sd.ServiceDetailesType = ?
+          AND CAST(d_sd.[Year] AS NVARCHAR(10)) = ?
+          AND UPPER(m.MovementName) = N'INGRESO'
+        ORDER BY fr.DIM_DateId ASC, fr.FACT_RevenueId ASC
+    """
+
+    handler_conexion = Conexion(shared_conn=db)
+    try:
+        values = (DIM_CustomerId, normalized_service, service_type, str(Year))
+        handler_conexion.cursor.execute(query, values)
         rows = handler_conexion.cursor.fetchall()
 
-        if rows is None or not rows:
+        if not rows:
             return 200, []
 
-        # Construimos los datos utilizando el modelo de vista
-        datos = [handler_vista.Buid_vista_by_customer(*row, f'{row[-2]}{row[-1]}') for row in rows if row]  # Usamos unpacking para pasar los valores
-
+        datos = [handler_vista.Buid_vista_by_customer(*row) for row in rows if row]
         return 200, datos
 
-    except sqlite3.Error as e:
-        # En caso de un error con la base de datos, retornamos un código 500 (Internal Server Error)
+    except DatabaseError as e:
         print(f"Error de base de datos: {e}")
         return 500, []
     finally:
-        # Aseguramos que la conexión se cierre
         handler_conexion.close_conexion()

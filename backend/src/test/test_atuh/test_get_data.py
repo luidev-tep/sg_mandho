@@ -1,12 +1,14 @@
+import os
+
 from src.security.security import  SecurityUsers                
 
 def test_get_admin_account():
     hanlder = SecurityUsers()
     data = {
-        'name':"miriamComitiva",
+        'name':"demo_comitiva",
         'manzana': 'yhonda',
         'role': 'comitiva',
-        'password': 'TacosHola!8'
+        'password': os.environ.get("TEST_DEMO_PASSWORD", "ChangeMe123!")
     }
     
     status, mensaje, data = hanlder.authenticate_user(data )

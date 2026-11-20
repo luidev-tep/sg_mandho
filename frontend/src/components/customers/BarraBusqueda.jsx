@@ -13,6 +13,8 @@ const BarraBusquedaAutomatica = ({
   setSelectedClient
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectionError, setSelectionError] = useState('');
+  const requestRef = useRef(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -21,10 +23,13 @@ const BarraBusquedaAutomatica = ({
 
   // Efecto para búsqueda automática
   useEffect(() => {
+    const controller = new AbortController();
+    requestRef.current = controller;
     const search = async () => {
       if (!debouncedSearchTerm || debouncedSearchTerm.length < 2) {
         setSearchResults([]);
         setHasSearched(false);
+        setIsSearching(false);
         return;
       }
 
@@ -32,30 +37,31 @@ const BarraBusquedaAutomatica = ({
       setHasSearched(true);
       
       try {
-        const results = await buscarClientes(debouncedSearchTerm);
-        setSearchResults(results);
+        const results = await buscarClientes(debouncedSearchTerm, controller.signal);
+        if (!controller.signal.aborted) setSearchResults(results);
       } catch (err) {
-        console.error('Error en búsqueda:', err);
-        setSearchResults([]);
+        if (!controller.signal.aborted) { console.error('Error en búsqueda:', err); setSearchResults([]); }
       } finally {
-        setIsSearching(false);
-        // Restaurar el foco después de la búsqueda
-        inputRef.current?.focus();
+        if (!controller.signal.aborted) setIsSearching(false);
       }
     };
 
     search();
+    return () => controller.abort();
   }, [debouncedSearchTerm]);
 
   // Seleccionar cliente
   const selectClient = (client) => {
     if (!client.selectable) {
-      alert(client.reason || 'Este usuario no está disponible');
+      setSelectionError(client.reason || 'Este usuario no está disponible');
       return;
     }
-    setValue(name, client.id);
+    setSelectionError('');
+    requestRef.current?.abort();
+    setIsSearching(false);
+    setValue(name, client.id, { shouldValidate: true });
     setSelectedClient(client);
-    setValue('cliente', client.nombre_completo);
+
     setSearchResults([]);
     setSearchQuery('');
     setHasSearched(false);
@@ -63,7 +69,8 @@ const BarraBusquedaAutomatica = ({
 
   return (
     <div className="mb-6">
-      <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+      {selectionError && <p role="alert" className="mb-3 text-red-700 dark:text-red-300">{selectionError}</p>}
+      <label htmlFor="client-search" className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
         Cliente <span className="text-red-500">*</span>
       </label>
       
@@ -85,7 +92,7 @@ const BarraBusquedaAutomatica = ({
               type="button"
               onClick={() => {
                 setSelectedClient(null);
-                setValue('cliente', '');
+                setValue(name, '', { shouldValidate: true });
               }}
               className="text-sm text-red-600 dark:text-red-400 hover:underline"
             >
@@ -109,13 +116,13 @@ const BarraBusquedaAutomatica = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
+                id="client-search"
                 ref={inputRef}
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { requestRef.current?.abort(); setIsSearching(false); setSearchResults([]); setHasSearched(false); setSearchQuery(e.target.value); }}
                 className="flex-1 p-2 focus:outline-none text-gray-700 dark:text-gray-200 bg-transparent"
                 placeholder="Buscar por nombre, dirección o manzana..."
-                disabled={isSearching}
                 autoComplete="off"
               />
               {searchQuery && (
@@ -158,7 +165,6 @@ const BarraBusquedaAutomatica = ({
                     {searchResults.map(persona => (
                       <tr 
                         key={persona.id}
-                        onClick={() => selectClient(persona)}
                         className={`cursor-pointer transition-all duration-200 ${
                           persona.selectable 
                             ? 'hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:shadow-md' 
@@ -166,9 +172,7 @@ const BarraBusquedaAutomatica = ({
                         }`}
                       >
                         <td className="py-3 px-4">
-                          <div className="text-gray-800 dark:text-gray-200 font-medium">
-                            {persona.nombre_completo}
-                          </div>
+                          <button type="button" className="text-left text-gray-800 dark:text-gray-200 font-medium hover:underline" onClick={() => selectClient(persona)}>{persona.nombre_completo}</button>
                         </td>
                         <td className="py-3 px-4 text-gray-600 dark:text-gray-300">
                           {persona.direccion}

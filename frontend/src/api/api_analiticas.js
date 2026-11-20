@@ -75,7 +75,6 @@ export const GetAnalytics = async (data) => {
 // FORMATO EN QUE SE DEBE REGRESAR LA INFORMACION PARA DASHBORAD CARD 10
 //   const chartData = {
 //     labels: [
-//       'Centro', 'Yhonda', 'garambullo', 'Buenavista', 'tepetate', 'cerritos',
 //     ],
 //     datasets: [
 //       // Light blue bars
@@ -95,7 +94,6 @@ export const GetAnalytics = async (data) => {
 
 // [
 //     { manzana: 'Centro', ingresos: 12500 },
-//     { manzana: 'Yhonda', ingresos: 9800 },
 //     // ...
 //   ]
 
@@ -105,7 +103,6 @@ export const GetAnalytics = async (data) => {
 //     "manzanas": [
 //       {
 //         "id": 3,
-//         "nombre": "Yhonda",
 //         "personas": 143,
 //         "pagados": 115,
 //         "pendientes": 28,
@@ -114,7 +111,6 @@ export const GetAnalytics = async (data) => {
 //       },
 //       {
 //         "id": 4,
-//         "nombre": "Buenavista",
 //         "personas": 127,
 //         "pagados": 89,
 //         "pendientes": 38,

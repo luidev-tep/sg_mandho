@@ -27,7 +27,7 @@ hanlder_analitycs = Analitycs()
 #Importacione spara obtener la informacion de los administradores para mostrar en la pantalla principal
 from src.users.repository.home_info import get_admins_home_info
 
-#importacion para verificar si la persona a marcar como morida ya no tien eningun pago activo
+# Importación para verificar que la persona a dar de baja por defunción no tenga pagos pendientes.
 class UserCrud:
     """ 
     Clase la cual hara la mayoria del curd, aun no hara la parte de mostrar ya que esta se esta legando la bd

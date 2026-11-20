@@ -1,5 +1,4 @@
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.utils.build_filters import BuildFilters
 from typing import Any
 from src.payments.model.vista_model import VistaModel
@@ -130,7 +129,7 @@ class ReadPayment:
 
             return 200, datos
 
-        except sqlite3.Error as e:
+        except DatabaseError as e:
             # En caso de un error con la base de datos, retornamos un código 500 (Internal Server Error)
             print(f"Error de base de datos: {e}")
             return 500, []
@@ -158,31 +157,29 @@ class ReadPayment:
                                       un registro de pago filtrado. La lista estará vacía si ocurre
                                       un error o no se encuentran resultados.
         """
-        object_conection = Conexion()
-        handler_filters = BuildFilters()
         query_base = self._obtener_query(service_name)
-        query_filtros = ""
         if not query_base:
             return 400, []
-        
-        if not filters['DIM_Date']:
+
+        if not filters.get('DIM_Date'):
             return 404, []
-        # Construcción de la consulta base con JOIN
-        query_filtros += """
+
+        handler_filters = BuildFilters()
+        query_filtros = """
                 INNER JOIN DIM_Customer AS p 
                 ON vw.DIM_CustomerId = p.DIM_CustomerId
-                INNER JOIN DIM_Date AS d 
-                    ON vw.DIM_DateId = d.DIM_DateId
                 WHERE vw.YearPay =  ?  """  # Se agrega la tabla para buscar por filtros de manzana también
-        
+
         values = [str(filters.get("DIM_Date"))]
+        object_conection = Conexion()
 
         try:
             # Construcción de condiciones adicionales basadas en los filtros proporcionados
             if 'CustomerFraction' in filters and filters['CustomerFraction']:
                 manzana_cond, manzana_values = handler_filters.build_manzana_condition(filters['CustomerFraction'])
-                query_filtros += f" AND ({manzana_cond})"
-                values.extend(manzana_values)
+                if manzana_cond:
+                    query_filtros += f" AND ({manzana_cond})"
+                    values.extend(manzana_values)
 
             # Filtro específico para el estado de la factura pendiente
             if 'DIM_StatusId' in filters and filters['DIM_StatusId']:
@@ -272,9 +269,7 @@ class ReadPayment:
             print(f"Error al construir los filtros: {e}")
             return None
         finally:
-            # La conexión no se cierra aqui por que se vuelve a utilizar en el servicio que la llama
-            # hanlder_conexion.close_conexion()
-            pass
+            hanlder_conexion.close_conexion()
             
 
     def update_payment_view(self, service_name: str, customer_id: str, year_payment: str, service_type: str) -> tuple[int, list[dict]] | None:

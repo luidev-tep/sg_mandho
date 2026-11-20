@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from '../../partials/SideBar';
 import Header from "../../partials/Header";
 import OnboardingImage from "../../images/onboarding-image.jpg";
 import { Link, useParams } from 'react-router-dom';
 
 function Onboarding04() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   // Obtener el ID de la URL
   const { id } = useParams();
 
@@ -12,12 +13,12 @@ function Onboarding04() {
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-white dark:bg-gray-900">
       {/* Sidebar */}
-      <Sidebar sidebarOpen={false} setSidebarOpen={() => {}} variant="v2" />
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} variant="v2" />
 
       {/* Content area */}
       <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
         {/* Site header */}
-        <Header sidebarOpen={false} setSidebarOpen={() => {}} variant="v3" />
+        <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} variant="v3" />
 
         <main className="grow">
           <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-[96rem] mx-auto h-full">

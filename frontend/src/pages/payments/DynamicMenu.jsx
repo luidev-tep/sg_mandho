@@ -1,3 +1,4 @@
+import { communityConfig } from '../../config/communityConfig';
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../partials/SideBar.jsx';
 import Header from '../../partials/Header.jsx';
@@ -14,12 +15,7 @@ function DynamicMenu() {
   const { state } = useAuth();
   const userRole = state.usuario?.RoleName?.toLowerCase();
   const filterOptions = [
-    { label: 'Cerritos', value: 'cerritos' },
-    { label: 'Centro', value: 'centro' },
-    { label: 'Garambullo', value: 'garambullo' },
-    { label: 'Yhonda', value: 'yhonda' },
-    { label: 'Tepetate', value: 'tepetate' },
-    { label: 'Buena vista', value: 'buenavista' },
+    ...communityConfig.geography.zones,
     { label: 'Pendientes', value: 'pendiente' } 
   ];
 

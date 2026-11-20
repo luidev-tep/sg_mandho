@@ -1,0 +1,12 @@
+[flyway]
+locations = ["filesystem:migrations"]
+sqlMigrationPrefix = "V"
+repeatableSqlMigrationPrefix = "R"
+sqlMigrationSeparator = "__"
+sqlMigrationSuffixes = [".sql"]
+baselineOnMigrate = true
+baselineVersion = "1"
+baselineDescription = "Baseline schema sg_mandho (11 tables + 5 indexes)"
+validateOnMigrate = true
+outOfOrder = false
+mixed = true

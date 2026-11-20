@@ -1,7 +1,7 @@
-import sqlite3
 from typing import Optional, List
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.dim_dates.model.modelo import DIM_DATE_MODEL
+import calendar
 import datetime 
 from datetime import date
 from zoneinfo import ZoneInfo
@@ -46,8 +46,8 @@ class DIM_DATE:
         Returns:
             Optional[DIM_DATE_MODEL]: Modelo de fecha si existe, None si no se encuentra
         """
+        connection = Conexion()
         try:
-            connection = Conexion()
             query = "SELECT * FROM DIM_Date WHERE DIM_DateId = ?"
             connection.cursor.execute(query, (date_id,))
             result = connection.cursor.fetchone()
@@ -56,9 +56,11 @@ class DIM_DATE:
                 return None
             
             return self._row_to_model(result)
-        except sqlite3.Error as e:
+        except DatabaseError as e:
             print(f"Error al obtener fecha por ID: {e}")
             return None
+        finally:
+            connection.close_conexion()
 
     def get_fiscal_year(self, year: int) -> str:
         """"
@@ -105,7 +107,7 @@ class DIM_DATE:
             connection.cursor.execute(query, (date_id,))
             result = connection.cursor.fetchone()
             return result[0] if result else None
-        except sqlite3.Error as e:
+        except DatabaseError as e:
             print(f"Error al obtener ID de fecha: {e}")
             return None
         finally:
@@ -152,16 +154,21 @@ class DIM_DATE:
         
         handler_connection = Conexion()
         try:
-            query = """
-            INSERT OR IGNORE INTO DIM_Date (
-                DIM_DateId, FiscalYear, FiscalMonth, FiscalQuarter,
-                FiscalWeek, FiscalDay, Year, Month, Week, Day
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
-            handler_connection.cursor.executemany(query, registers)
-            handler_connection.save_changes()
+            existing_ids = {row[0] for row in handler_connection.cursor.execute(
+                "SELECT DIM_DateId FROM DIM_Date WHERE Year = ?", (registers[0][6],)
+            ).fetchall()}
+            new_registers = [r for r in registers if r[0] not in existing_ids]
+            if new_registers:
+                query = """
+                INSERT INTO DIM_Date (
+                    DIM_DateId, FiscalYear, FiscalMonth, FiscalQuarter,
+                    FiscalWeek, FiscalDay, Year, Month, Week, Day
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+                handler_connection.cursor.executemany(query, new_registers)
+                handler_connection.save_changes()
             return True
-        except sqlite3.Error as e:
+        except DatabaseError as e:
             print(f"Error al insertar registros: {e}")
             return False
         finally:
@@ -269,17 +276,14 @@ def generar_anio_real(id_anio: int) -> List[tuple]:
     }
     
     registros = []
-    dias_por_mes = {
-        1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30,
-        7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
-    }
-    
+
     for mes in range(1, 13):
         trimestre = (mes - 1) // 3 + 1
         semana_mes = 1
         dia_semana = 0  # Contador de días en la semana actual
-        
-        for dia in range(1, dias_por_mes[mes] + 1):
+        dias_mes = calendar.monthrange(id_anio, mes)[1]
+
+        for dia in range(1, dias_mes + 1):
             # Incrementar semana cada 7 días
             dia_semana += 1
             if dia_semana > 7:

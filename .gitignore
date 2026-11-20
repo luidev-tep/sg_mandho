@@ -128,8 +128,10 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Environments / secrets
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -173,3 +175,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Local SQLite databases & DB browser projects
+*.db
+*.sqlite
+*.sqlite3
+*.sqbpro
+
+# Flyway local overrides (credentials)
+backend/db/flyway.local.toml
+

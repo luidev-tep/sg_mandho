@@ -24,9 +24,11 @@ from src.routes.security_route import security_route
 from src.routes.payment_route import payment_route
 from src.routes.analitycs_route import analitycs_route
 from src.routes.home_route import home_route
+from src.utils.conexion import Conexion, get_pool_status, init_db_teardown
 
 
 app = Flask(__name__)
+init_db_teardown(app)
 
 secret_key = os.environ.get('SECRET_KEY')
 if not secret_key:
@@ -55,7 +57,7 @@ app.register_blueprint(home_route)
 # Obtener las URLs del frontend
 frontend_urls = os.environ.get("URL_FRONTEND", "http://localhost:5173")
 # Convertir a lista si hay múltiples URLs separadas por coma
-origins_list = [url.strip() for url in frontend_urls.split(',')]
+origins_list = [url.strip().rstrip('/') for url in frontend_urls.split(',') if url.strip()]
 
 CORS(app, resources={
     r"/*": {
@@ -78,5 +80,17 @@ CORS(app, resources={
     }
 })
 
+@app.get('/health')
+def health():
+    try:
+        with Conexion() as db:
+            db.cursor.execute('SELECT 1')
+            db.cursor.fetchone()
+        return {'status': 'ok', 'database': 'up', 'pool': get_pool_status()}, 200
+    except Exception:
+        return {'status': 'degraded', 'database': 'down'}, 503
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    debug_mode = os.environ.get('FLASK_DEBUG', 'false').strip().lower() in ('true', '1', 'yes')
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')), debug=debug_mode)

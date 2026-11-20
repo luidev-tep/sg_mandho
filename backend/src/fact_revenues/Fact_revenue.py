@@ -1,5 +1,7 @@
+from src.utils.conexion import Conexion
 from typing import Literal
-import random  
+import random
+import uuid
 from src.fact_revenues.services.service import get_status_payment
 from src.fact_revenues.models.fact_revenue import FACT_Revenue
 from src.utils.id_generator import create_id
@@ -48,80 +50,106 @@ class factRevenueCrud():
 
         if not isvalid:
             return 400, "La cantidad registrada no coincide con la del servicio"
-        
-        # Aunque las funciones hacen lo mismo, para evitar errores inesperados se separan
+
+        dim_date_data = DIM_DATE()
+        movement_id = handler_movement.get_movement_id(data_json['movementName'])
+        completo_status_id = handler_status.get_status_id("completo", "fact_revenue")
+        pendiente_status_id = handler_status.get_status_id("pendiente", "fact_revenue")
+        status_map = {
+            "completo": completo_status_id,
+            "pendiente": pendiente_status_id,
+        }
+        fact_revenue_id = f"rev-{uuid.uuid4().hex[:14]}"
+
         if data_json['entrada'] == 'crear_pago':
             statusName = get_status_payment(data_json['amount'], data_json['FactAmount'])
-        else:
-            #Ya se encarga internamente de actualizar todos los registros como pagados,
-            params = [data_json['amount'], data_json['FactAmount'], data_json['DIM_CustomerId'],data_json['serviceDetailsType'],  data_json['ServiceName'], data_json['AnioPago'],]
-            statusName = get_status_payment_for_registers(*params)
-            
+            if not statusName:
+                return 400, "El monto recibido excede el costo del servicio"
 
-        estatus_id = handler_status.get_status_id(statusName, "fact_revenue")
-        if not estatus_id:
-            return 500, f"No se pudo obtener el esto de pago, {statusName}"
-        
-        dim_date_data = DIM_DATE()
-        year = str(dim_date_data.dateId)
-        #Se hashea una vez antes para que la posibilidad de que el revenue se repita sea menor
-        hash_revenue = create_id([data_json['DIM_AccountId'], data_json['entrada'], data_json['AnioPago']]) 
-        
-        data_format = {
-            'FACT_RevenueId': create_id([data_json['FactAmount'], hash_revenue, year[4:]]), #Asi se evita que el id se repita
-            'DIM_DateId': dim_date_data.dateId,
-            'DIM_AccountId': data_json['DIM_AccountId'],
-            'DIM_ServiceDetailsId': data_json['DIM_ServiceDetailsId'],
-            'DIM_MovementId': handler_movement.get_movement_id(data_json['movementName']),
-            'DIM_StatusId': estatus_id,
-            'amount': data_json['FactAmount'],
-        }
-        fact_register = FACT_Revenue(**data_format)
+            estatus_id = status_map.get(statusName) or handler_status.get_status_id(statusName, "fact_revenue")
+            if not estatus_id:
+                return 500, f"No se pudo obtener el esto de pago, {statusName}"
 
-        isvalid = insert_fact_revenue(fact_register)
+            data_format = {
+                'FACT_RevenueId': fact_revenue_id,
+                'DIM_DateId': dim_date_data.dateId,
+                'DIM_AccountId': data_json['DIM_AccountId'],
+                'DIM_ServiceDetailsId': data_json['DIM_ServiceDetailsId'],
+                'DIM_MovementId': movement_id,
+                'DIM_StatusId': estatus_id,
+                'amount': data_json['FactAmount'],
+            }
+            fact_register = FACT_Revenue(**data_format)
+            isvalid = insert_fact_revenue(fact_register)
+            if not isvalid:
+                return 500, "Error creando el pago"
+            return 201, "Pago creado exitosamente"
 
-        if not isvalid:
-            return 500, "Error creando el pago"
-        
-        return 201, "Pago creado exitosamente"
+        params = [
+            data_json['amount'],
+            data_json['FactAmount'],
+            data_json['DIM_CustomerId'],
+            data_json['serviceDetailsType'],
+            data_json['ServiceName'],
+            data_json['AnioPago'],
+        ]
+        with Conexion() as tx:
+            statusName = get_status_payment_for_registers(
+                *params,
+                db=tx,
+                completo_status_id=completo_status_id,
+            )
+            if not statusName:
+                tx.rollback()
+                return 400, "El monto recibido excede el saldo pendiente del servicio"
+
+            estatus_id = status_map.get(statusName)
+            if not estatus_id:
+                tx.rollback()
+                return 500, f"No se pudo obtener el esto de pago, {statusName}"
+
+            data_format = {
+                'FACT_RevenueId': fact_revenue_id,
+                'DIM_DateId': dim_date_data.dateId,
+                'DIM_AccountId': data_json['DIM_AccountId'],
+                'DIM_ServiceDetailsId': data_json['DIM_ServiceDetailsId'],
+                'DIM_MovementId': movement_id,
+                'DIM_StatusId': estatus_id,
+                'amount': data_json['FactAmount'],
+            }
+            fact_register = FACT_Revenue(**data_format)
+            isvalid = insert_fact_revenue(fact_register, db=tx)
+            if not isvalid:
+                tx.rollback()
+                return 500, "Error creando el pago"
+
+            tx.save_changes()
+            return 201, "Pago creado exitosamente"
     
-    def insert_many_register(self, data_format: list) -> tuple[Literal[500], Literal['Error creating payment']] | tuple[Literal[201], Literal['Payment created successfully']]:
+    def insert_many_register(self, data_format: list, ServiceDetailesId: str | None = None) -> tuple[int, str]:
         """
-        Inserta una lista de pagos formateados y validados en la base de datos.
+        Inserta una lista de pagos formateados y validados en la base de datos de forma atómica.
 
         Esta función procesa una lista de diccionarios de datos de pago, crea
         registros de tipo 'trabajado' y los inserta en la tabla `fact_revenues`.
-        También actualiza el estado del servicio asociado.
+        También actualiza el estado del servicio asociado a 'status8' en una única transacción.
 
         Args:
             data_format (list): Una lista de diccionarios, donde cada diccionario
-                                representa un pago a ser insertado. Se asume que
-                                los datos han sido previamente formateados y
-                                validados.
+                                representa un pago a ser insertado.
+            ServiceDetailesId (str | None): ID opcional del detalle del servicio.
 
         Returns:
-            tuple[Literal[500], Literal['Error creating payment']] | tuple[Literal[201], Literal['Payment created successfully']]:
-                - (201, "Pagos creados exitosamente"): Si la inserción y
-                la actualización del servicio fueron exitosas.
-                - (400, "serviceDetailsType '...' no se encontró."): Si no se
-                encuentra el ID del detalle del servicio.
-                - (500, "Error creando los pagos"): Si hay un error durante la
-                inserción de los registros en la base de datos.
-                - (status, mensaje): Si falla la actualización del estado del
-                servicio, se retorna el código de estado y el mensaje de error.
-
-        Raises:
-            Exception: Captura y maneja cualquier excepción que ocurra durante el
-                    proceso, retornando un error genérico.
+            tuple[int, str]: Código de estado y mensaje descriptivo.
         """
         try:
-            # Obtener el ID del detalle del servicio del primer elemento de la lista
+            # Obtener el ID del detalle del servicio
             test_data = data_format[0]
-            dim_service_detail_id = get_service_detailsID(test_data['serviceDetailsType'], test_data["AnioPago"], test_data['ServiceName'])
+            dim_service_detail_id = ServiceDetailesId if ServiceDetailesId else get_service_detailsID(test_data['serviceDetailsType'], test_data["AnioPago"], test_data['ServiceName'])
             
             # Si el ID del servicio no existe, retornar un error
             if not dim_service_detail_id:
-                return 400, f"serviceDetailsType '{test_data['serviceDetailsType']}' no se encontró."
+                return 400, f"serviceDetailsType '{test_data.get('serviceDetailsType', '')}' no se encontró."
             
             # Obtener el monto asociado al servicio
             amount = get_amount_by_id(dim_service_detail_id)
@@ -138,14 +166,11 @@ class factRevenueCrud():
             
             model_format = []
             for data_json in data_format:
-                # Generar un ID único para el registro de pago
-                #Se creara un hash ramdon de 3 carateres de tamanio complatmente aleatorio
-                #Se hizo de esta forma para que practiamente nunca haya coincidencias de id
                 index1 = random.randint(0, 15)
                 index2 = random.randint(0, 15)
                 index3 = random.randint(0, 15)
-                extract =create_id([data_json['DIM_AccountId'][index1:], data_json['DIM_AccountId'][index2:], data_json['DIM_AccountId'][index3:] ]) #Asi se eligera una cadena de tamanio variable
-                extrat2 = create_id([dim_service_detail_id[index1:], dim_service_detail_id[index2:], dim_service_detail_id[index3:]]) #Asi se eligera una cadena de tamanio variable
+                extract = create_id([data_json['DIM_AccountId'][index1:], data_json['DIM_AccountId'][index2:], data_json['DIM_AccountId'][index3:]])
+                extrat2 = create_id([dim_service_detail_id[index1:], dim_service_detail_id[index2:], dim_service_detail_id[index3:]])
                 new_id = create_id([extract, extrat2, year[4:]])
                 
                 # Formatear los datos para el modelo de la base de datos
@@ -161,23 +186,21 @@ class factRevenueCrud():
                 
                 model_format.append(FACT_Revenue(**formatted_data))
             
-            #Testear que se inserten todos los registros
-            
-            # Insertar todos los registros en la base de datos de manera masiva
-            isvalid = insert_many_fact_revenues(model_format)
-            
-            if not isvalid:
-                print("Error creando los pagos aquiiii")
-                return 500, "Error creando los pagos"
-            
-            # Actualizar el estado del servicio a 'usado' (status8)
-            status, mensaje = hanlder_service_details.Update_dim_service_details(dim_service_detail_id, 'status8')
-            
-            mensaje += " en el servicio " + test_data['ServiceName']
-            if not status == 200:
-                return status, mensaje
-            
-            return 201, "Pagos creados exitosamente"
+            # Transacción atómica (Flujo C de la SPEC §3.3)
+            with Conexion() as tx:
+                isvalid = insert_many_fact_revenues(model_format, db=tx)
+                if not isvalid:
+                    tx.rollback()
+                    return 500, "Error al insertar las facturas"
+                
+                status, mensaje = hanlder_service_details.Update_dim_service_details(dim_service_detail_id, 'status8', db=tx)
+                if status != 200:
+                    tx.rollback()
+                    mensaje += " en el servicio " + test_data.get('ServiceName', '')
+                    return status, mensaje
+                
+                tx.save_changes()
+                return 201, "Pagos creados exitosamente"
         
         except Exception as e:
             print(e)

@@ -7,7 +7,7 @@ import * as yup from 'yup';
 import { crearRegistroPago } from '../../api/pagos/api_crear_pago.js';
 import { getAmount } from '../../api/pagos/api_get_costo_servicio.js';
 import { useAuth } from "../../utils/AuthContext.jsx";
-import { data } from "react-router-dom";
+import { getLocalDateISO } from "../../utils/dateUtils.js";
 
 // Esquema de validación
 const editSchema = yup.object().shape({
@@ -16,14 +16,13 @@ const editSchema = yup.object().shape({
     .typeError('La cantidad debe ser un número válido')
     .required('La cantidad recibida es requerida')
     .positive('La cantidad debe ser positiva')
-    .integer('La cantidad debe ser un número entero')
 });
 
 function FinishPayment({onClose, onUpdate, props }) {
   const { state } = useAuth();
   const { usuario } = state;
   const [isLoading, setIsLoading] = useState(true);
-  const [fechaActual] = useState(new Date().toISOString().split('T')[0]);
+  const [fechaActual] = useState(() => getLocalDateISO());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -154,7 +153,7 @@ function FinishPayment({onClose, onUpdate, props }) {
       };
 
       const response = await crearRegistroPago(payload);
-      if (response && response.message === "Pago creado satisfactoriamente") {
+      if (response?.success) {
         // Mostrar modal de éxito
         setResultModalData({
           type: 'success',
@@ -214,7 +213,7 @@ function FinishPayment({onClose, onUpdate, props }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white dark:bg-gray-800 shadow-xs rounded-xl relative max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <header className="px-5 py-4 sticky top-0 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">
@@ -288,7 +287,7 @@ function FinishPayment({onClose, onUpdate, props }) {
                     <div>
                       <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Monto pagado hasta ahora</label>
                       <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-                        {amount.toFixed(2)}
+                        {Number(amount || 0).toFixed(2)}
                       </p>
                     </div>
                     <div>
@@ -300,13 +299,13 @@ function FinishPayment({onClose, onUpdate, props }) {
                     <div>
                       <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Costo del servicio</label>
                       <p className="text-base font-medium text-gray-900 dark:text-white p-2 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-                        {amountTotal.toFixed(2)}
+                        {Number(amountTotal || 0).toFixed(2)}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-red-500 dark:text-red-400 mb-1">Cantidad faltante por pagar</label>
                       <p className="text-lg font-bold text-red-600 dark:text-red-400 p-2 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-200 dark:border-red-700">
-                        {cantidadFaltante.toFixed(2)}
+                        {Number(cantidadFaltante || 0).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -357,7 +356,7 @@ function FinishPayment({onClose, onUpdate, props }) {
 
       {/* Modal de Confirmación */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
@@ -389,7 +388,7 @@ function FinishPayment({onClose, onUpdate, props }) {
 
       {/* Modal de Resultado (Éxito/Error) */}
       {showResultModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
             <div className="p-6">
               <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4 ${

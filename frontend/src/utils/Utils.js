@@ -1,11 +1,11 @@
-export const formatValue = (value) => Intl.NumberFormat('en-US', {
+export const formatValue = (value) => Intl.NumberFormat('es-MX', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'MXN',
   maximumSignificantDigits: 3,
   notation: 'compact',
 }).format(value);
 
-export const formatThousands = (value) => Intl.NumberFormat('en-US', {
+export const formatThousands = (value) => Intl.NumberFormat('es-MX', {
   maximumSignificantDigits: 3,
   notation: 'compact',
 }).format(value);

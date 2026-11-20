@@ -1,0 +1,1 @@
+export const formatFullName = (...parts) => parts.filter(part => part != null && !/^(?:n\/a|s\/n|undefined|null)$/i.test(String(part).trim())).map(part => String(part).trim()).filter(Boolean).join(' ');

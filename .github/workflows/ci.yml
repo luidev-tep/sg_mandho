@@ -1,0 +1,44 @@
+name: CI
+on:
+  push:
+    branches: [main, front_dev]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  backend-check:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: backend
+      SECRET_KEY: ci-only-placeholder
+      RECAPTCHA_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: sudo apt-get update && sudo apt-get install -y unixodbc-dev
+      - run: pip install -r backend/requirements-dev.txt
+      - run: python -m compileall -q backend/src backend/app.py
+      - run: python -m pytest backend/src/test/test_atuh/test_security_hashing.py backend/src/test/test_azure_readiness.py backend/src/test/test_azure_unit.py -v
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      VITE_API_URL: https://example.invalid/api/
+      VITE_RECAPTCHA_SITE_KEY: dummy
+      VITE_RECAPTCHA_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build

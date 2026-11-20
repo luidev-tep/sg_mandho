@@ -1,0 +1,78 @@
+name: Deploy Azure
+on:
+  workflow_dispatch:
+  # When secrets and variables are configured, optionally add:
+  # push:
+  #   branches: [main]
+permissions:
+  contents: read
+jobs:
+  db-migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Flyway migrate
+        env:
+          FLYWAY_URL: ${{ secrets.AZURE_SQL_JDBC_URL }}
+          FLYWAY_USER: ${{ secrets.AZURE_SQL_USER }}
+          FLYWAY_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+        run: docker run --rm -e FLYWAY_URL -e FLYWAY_USER -e FLYWAY_PASSWORD -v "$PWD/backend/db:/flyway/work" -w /flyway/work flyway/flyway:11 -configFiles=flyway.toml migrate
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: db-migrate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Build and push image
+        env:
+          ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+          SHA: ${{ github.sha }}
+        run: |
+          az acr login --name "$ACR_NAME"
+          server=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
+          docker build -t "$server/sg-mandho:$SHA" -t "$server/sg-mandho:latest" backend
+          docker push "$server/sg-mandho:$SHA"
+          docker push "$server/sg-mandho:latest"
+      - name: Update Container App
+        env:
+          ACR_NAME: ${{ vars.AZURE_ACR_NAME }}
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          APP_NAME: ${{ vars.AZURE_CONTAINER_APP_NAME }}
+          SHA: ${{ github.sha }}
+        run: |
+          server=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
+          az containerapp update --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --image "$server/sg-mandho:$SHA"
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Build
+        env:
+          API_URL: ${{ vars.VITE_API_URL }}
+          VITE_RECAPTCHA_SITE_KEY: ${{ vars.VITE_RECAPTCHA_SITE_KEY }}
+          VITE_RECAPTCHA_ENABLED: ${{ vars.VITE_RECAPTCHA_ENABLED }}
+        run: |
+          test -n "$API_URL"
+          export VITE_API_URL="${API_URL%/}/"
+          pnpm build
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: frontend/dist
+          skip_app_build: true

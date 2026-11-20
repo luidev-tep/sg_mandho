@@ -11,6 +11,7 @@ import BarraBusquedaAutomatica from '../../components/customers/BarraBusqueda';
 import { crearCuenta } from '../../api/api_account';
 import FormattedErrorMessage from '../../components/alertas/FormattedErrorMessage';
 import ConfirmationModal from '../../components/Modalmessaje'; // Importamos el modal de confirmación
+import { getLocalDateISO, formatLocalDate } from '../../utils/dateUtils';
 
 const accountSchema = yup.object().shape({
   clienteId: yup.string().required('Debe seleccionar un cliente'),
@@ -18,15 +19,15 @@ const accountSchema = yup.object().shape({
     .required('Debe seleccionar un estado para la persona')
     .oneOf([
       'Estudiante', 'Inmigrante', 'Pequeño propietario', 
-      'Vecino', 'Ranchero', 'Invalido'
-    ], 'Estado no válido', 'Residente', 'Vecino exento')
+      'Vecino', 'Ranchero', 'Invalido', 'Residente', 'Vecino exento'
+    ], 'Estado no válido')
 });
 
 function Cart() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
-  const [fechaActual] = useState(new Date().toISOString().split('T')[0]);
+  const [fechaActual] = useState(() => getLocalDateISO());
   const [message, setMessage] = useState({ text: '', type: '' });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingData, setPendingData] = useState(null);
@@ -64,7 +65,7 @@ function Cart() {
     }
 
     // Validación para menores de 15 años
-    if (selectedClient.edad < 15) {
+    if (typeof selectedClient.edad === 'number' && selectedClient.edad < 15) {
       if (pendingData.estadoPersona !== "Estudiante" && pendingData.estadoPersona !== "Invalido") {
         setMessage({ 
           text: 'Para personas menores de 15 años solo se permite "Estudiante" o "Invalido"', 
@@ -124,7 +125,7 @@ function Cart() {
   // Función para formatear fechas
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('es-ES', options);
+    return formatLocalDate(dateString, 'es-MX', options);
   };
 
   return (
@@ -176,7 +177,7 @@ function Cart() {
                       className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 ${
                         errors.estadoPersona ? 'border-red-500' : 'border-gray-300'
                       } ${
-                        selectedClient?.edad < 15 && estadoPersonaValue && 
+                        typeof selectedClient?.edad === 'number' && selectedClient.edad < 15 && estadoPersonaValue && 
                         estadoPersonaValue !== "Estudiante" && estadoPersonaValue !== "Invalido" 
                           ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
                           : ''
@@ -195,7 +196,7 @@ function Cart() {
                     </select>
                     
                     {/* Mensaje de validación para menores */}
-                    {selectedClient?.edad < 15 && estadoPersonaValue && 
+                    {typeof selectedClient?.edad === 'number' && selectedClient.edad < 15 && estadoPersonaValue && 
                      estadoPersonaValue !== "Estudiante" && estadoPersonaValue !== "Invalido" && (
                       <p className="mt-1 text-sm text-orange-600 dark:text-orange-400">
                         Para menores de 15 años solo se permite "Estudiante" o "Invalido"
@@ -215,7 +216,7 @@ function Cart() {
                     </label>
                     <input
                       type="text"
-                      value={new Date(fechaActual).toLocaleDateString('es-ES')}
+                      value={formatLocalDate(fechaActual, 'es-MX')}
                       className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-not-allowed"
                       readOnly
                     />
@@ -251,7 +252,7 @@ function Cart() {
 
                     <button 
                       type="submit" 
-                      disabled={(selectedClient?.edad < 15 && 
+                      disabled={isSubmitting || (typeof selectedClient?.edad === 'number' && selectedClient.edad < 15 && 
                         estadoPersonaValue && 
                         estadoPersonaValue !== "Estudiante" && 
                         estadoPersonaValue !== "Invalido")}

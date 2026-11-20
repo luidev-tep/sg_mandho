@@ -31,8 +31,6 @@ function AccountsTableModal({ id_user, onClose }) {
               }))
             : [];
 
-          console.log(accountsData);
-          
           setAccounts(accountsData);
           
           // Establecer el nombre del cliente si hay cuentas
@@ -164,7 +162,7 @@ function AccountsTableModal({ id_user, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white dark:bg-gray-800 shadow-xs rounded-xl relative max-w-6xl w-full max-h-[80vh] overflow-y-auto">
         <header className="px-5 py-4 sticky top-0 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">

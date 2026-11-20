@@ -79,21 +79,12 @@ function Analytics() {
   // Obtener el mes formateado
   const mesFormateado = formatMonth(mes);
 
-  // Efecto para establecer el mes anterior como filtro por defecto al montar el componente
+  // Efecto para establecer el mes y año actual como filtro por defecto al montar el componente
   useEffect(() => {
     const today = new Date();
-    const currentMonth = today.getMonth(); // 0-11
-    
-    // Calcular el mes anterior
-    let previousMonth = currentMonth;
-    if (previousMonth === 0) {
-      previousMonth = 11;
-    } else {
-      previousMonth = currentMonth - 1;
-    }
-    
-    const defaultMonth = `M${String(previousMonth + 1).padStart(2, '0')}`;
+    const defaultMonth = `M${String(today.getMonth() + 1).padStart(2, '0')}`;
     setMes(defaultMonth);
+    setAnio(today.getFullYear().toString());
   }, []);
 
   // Función para obtener datos analíticos con useCallback
@@ -127,7 +118,7 @@ function Analytics() {
           dataCountUsers: formattedDataCountUsers,
           dataServiceMembers: response.dataServiceMembers ? [...response.dataServiceMembers] : []
         });
-        console.log("Datos recibidos:", response);
+
       }
     } catch (err) {
       console.error('Error al cargar datos analíticos:', err);
@@ -185,7 +176,7 @@ function Analytics() {
             //EMODIFICAR LA PRIMERA LETRA DE LA MANZANA PAR QU ESTE COMO MAYUSCULA
             // 
             Esto aplica para toda slas interface de dashboard*/}
-            <div className="w-full mb-6">
+            <div className="w-full mb-6 space-y-6">
               {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                   {error}
@@ -193,11 +184,8 @@ function Analytics() {
               )}
               
               <FintechIntro comitiva={comitiva} mes_format={mesFormateado}/>
-              <br />
-              <br />
               
               <AnaliticsButton comitiva={comitiva} mes_format={mesFormateado}/>
-              <br />
               
               <DashboardCard09 
                 comitiva={comitiva} 
@@ -205,9 +193,6 @@ function Analytics() {
                 data={dashboardData.dataIncomes}
                 loading={loading}
               />
-               
-              <br />
-              <br />
               
               <DashboardCard10 
                 comitiva={comitiva} 
@@ -215,8 +200,6 @@ function Analytics() {
                 data={dashboardData.dataFractions}
                 loading={loading}
               />
-              <br />
-              <br />
               
               {/* DashboardCard07 recibe dataUserBills que ya tiene el formato correcto */}
               <DashboardCard07 
@@ -227,9 +210,6 @@ function Analytics() {
                 loading={loading}
               />
 
-              <br />
-              <br />
-
               {/* FintechCard09 recibe dataCountUsers que ya tiene el formato correcto */}
               <FintechCard09 
                 comitiva={comitiva} 
@@ -237,8 +217,6 @@ function Analytics() {
                 data={dashboardData.dataCountUsers}
                 loading={loading}
               />
-              <br />
-              <br />
 
             </div>
             

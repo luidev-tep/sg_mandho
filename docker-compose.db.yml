@@ -1,0 +1,29 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sg_mandho_sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-MandhoDev2026!}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+  flyway:
+    image: flyway/flyway:11
+    profiles: ["migrate"]
+    depends_on:
+      - sqlserver
+    volumes:
+      - ./backend/db/migrations:/flyway/sql:ro
+      - ./backend/db/flyway.toml:/flyway/conf/flyway.toml:ro
+    environment:
+      FLYWAY_URL: "jdbc:sqlserver://sqlserver:1433;databaseName=${DB_NAME:-sg_mandho};encrypt=false;trustServerCertificate=true"
+      FLYWAY_USER: "sa"
+      FLYWAY_PASSWORD: "${MSSQL_SA_PASSWORD:-MandhoDev2026!}"
+    command: migrate
+
+volumes:
+  sqlserver_data:

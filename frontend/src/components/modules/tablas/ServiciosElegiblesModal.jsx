@@ -98,8 +98,6 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
       };
     }).filter(Boolean); // Filtramos por si algún usuario no se encontró
 
-    console.log("Payloads a enviar:", payloads);
-
     try {
       // Enviamos todos los payloads en una sola petición
       const response = await crearRegistroPago(payloads);
@@ -127,7 +125,7 @@ function ServiciosElegiblesModal({ ServiceDetailType, users, serviceName, onClos
     <>
       {/* Contenedor del Modal (Overlay) */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"
+        className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4"
         onClick={handleClose}
       >
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] transform transition-all animate-scale-in" onClick={(e) => e.stopPropagation()}>

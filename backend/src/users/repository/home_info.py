@@ -1,5 +1,5 @@
-from src.utils.conexion import Conexion
-import sqlite3
+from src.utils.conexion import Conexion, DatabaseError
+
 
 def get_admins_home_info() -> list:
     """
@@ -9,20 +9,20 @@ def get_admins_home_info() -> list:
     Returns:
         list: Lista de administradores con su informacion
     """
-    hanlder_conection = Conexion()
+    handlers = Conexion()
     try:
         query = """
         SELECT 
             sc.fullname,
             sc.RoleName,
-            cu.CustomerFraction || ' ' || cu.CustomerAddress || ' ' || cu.CustomerNumberExt AS adress,
+            CONCAT(cu.CustomerFraction, ' ', cu.CustomerAddress, ' ', cu.CustomerNumberExt) AS adress,
             sc.ServiceName
         from SecurityUsers as sc
         JOIN DIM_Customer as cu on
             sc.DIM_CustomerId  = cu.DIM_CustomerId
         """
-        hanlder_conection.cursor.execute(query)
-        registros = hanlder_conection.cursor.fetchall()
+        handlers.cursor.execute(query)
+        registros = handlers.cursor.fetchall()
         data_format = []
         for registro in registros:
             persona = {
@@ -33,8 +33,8 @@ def get_admins_home_info() -> list:
             }
             data_format.append(persona)
         return data_format
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al realizar la consulta: {e}")
         return []
     finally:
-        hanlder_conection.close_conexion()
+        handlers.close_conexion()

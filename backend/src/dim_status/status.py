@@ -1,6 +1,5 @@
 from typing import Any, Never
-from src.utils.conexion import Conexion
-import sqlite3
+from src.utils.conexion import Conexion, DatabaseError
 
 class DIM_status:
     """
@@ -58,7 +57,7 @@ class DIM_status:
             if status_id is None:
                 return ""
             return status_id[0]
-        except sqlite3.Error as e:
+        except DatabaseError as e:
             print(f"Error de base de datos al obtener el ID del estado: {e}")
             return ""
         finally:
@@ -91,7 +90,7 @@ class DIM_status:
                 return self.StatusId, self.StatusName
             else:
                 return ()
-        except sqlite3.Error as e:
+        except DatabaseError as e:
             print(f"Error de base de datos al obtener el estado: {e}")
             return ()
         finally:

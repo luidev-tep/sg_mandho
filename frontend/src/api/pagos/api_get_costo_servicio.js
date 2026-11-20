@@ -1,9 +1,9 @@
-import axiosInstance from "./axiosInstance";
+import axiosInstance from "../axiosInstance";
 
 export const GetCostoServicio = async (DIM_CustomerId, moduleName) => {
     try {
         // Validación de campos requeridos
-        if (!DIM_CustomerId && !moduleName) {
+        if (!DIM_CustomerId || !moduleName) {
             throw new Error('Faltan campos requeridos para mostrar los pagos');
         }
 
@@ -15,13 +15,11 @@ export const GetCostoServicio = async (DIM_CustomerId, moduleName) => {
         //console.log("Los datos llegaron correctamente a Api.js en MostrarPagos", data);
         const response = await axiosInstance.post('payment/get_cost/', data);
 
-        console.log("Respuesta del servidor:", response.data);
-
         return {
-            success: response.data.status || false,
+            success: response.data.status === 'success',
             message: response.data.message,
             data: response.data.body || []
-        }; // ← Aquí faltaba cerrar el return y agregar el punto y coma
+        };
 
     } catch (error) {
         let errorMessage; // ← Declarar la variable errorMessage
@@ -59,8 +57,9 @@ export const getAmount = async (data) => {
             throw new Error('No se recibieron datos del servidor');
         }
 
-        // Extraer el amount de la respuesta
-        const amount = parseFloat(response.data.body || response.data);
+        // Extraer el amount de la respuesta (permite 0)
+        const raw = response.data.body ?? response.data;
+        const amount = parseFloat(raw);
 
         // Validar que el amount sea un número válido
         if (isNaN(amount)) {

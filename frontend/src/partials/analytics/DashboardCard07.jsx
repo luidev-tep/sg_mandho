@@ -97,33 +97,34 @@ function DashboardCard07({ comitiva, anio, data, loading }) {
               )}
             </tbody>
             {/* Table footer con totales */}
-            {data && data.manzanas && data.manzanas.length > 0 && !loading && (
-              <tfoot className="text-sm font-bold text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/70">
-                <tr>
-                  <td className="p-2 text-left">Total</td>
-                  <td className="p-2 text-center">
-                    {data.manzanas.reduce((total, manzana) => total + manzana.personas, 0)}
-                  </td>
-                  <td className="p-2 text-center text-green-500">
-                    {data.manzanas.reduce((total, manzana) => total + manzana.pagados, 0)}
-                  </td>
-                  <td className="p-2 text-center text-red-500">
-                    {data.manzanas.reduce((total, manzana) => total + manzana.pendientes, 0)}
-                  </td>
-                  <td className="p-2 text-center" style={{ 
-                    color: getPercentageColor(
-                      (data.manzanas.reduce((total, manzana) => total + manzana.pagados, 0) /
-                      data.manzanas.reduce((total, manzana) => total + manzana.personas, 0)) * 100
-                    )
-                  }}>
-                    {formatPercentage(
-                      (data.manzanas.reduce((total, manzana) => total + manzana.pagados, 0) /
-                        data.manzanas.reduce((total, manzana) => total + manzana.personas, 0)) * 100
-                    )}%
-                  </td>
-                </tr>
-              </tfoot>
-            )}
+            {data && data.manzanas && data.manzanas.length > 0 && !loading && (() => {
+              const totalPersonas = data.manzanas.reduce((total, manzana) => total + (Number(manzana.personas) || 0), 0);
+              const totalPagados = data.manzanas.reduce((total, manzana) => total + (Number(manzana.pagados) || 0), 0);
+              const totalPendientes = data.manzanas.reduce((total, manzana) => total + (Number(manzana.pendientes) || 0), 0);
+              const totalPorcentaje = totalPersonas > 0 ? (totalPagados / totalPersonas) * 100 : 0;
+
+              return (
+                <tfoot className="text-sm font-bold text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/70">
+                  <tr>
+                    <td className="p-2 text-left">Total</td>
+                    <td className="p-2 text-center">
+                      {totalPersonas}
+                    </td>
+                    <td className="p-2 text-center text-green-500">
+                      {totalPagados}
+                    </td>
+                    <td className="p-2 text-center text-red-500">
+                      {totalPendientes}
+                    </td>
+                    <td className="p-2 text-center" style={{ 
+                      color: getPercentageColor(totalPorcentaje)
+                    }}>
+                      {formatPercentage(totalPorcentaje)}%
+                    </td>
+                  </tr>
+                </tfoot>
+              );
+            })()}
           </table>
         </div>
       </div>

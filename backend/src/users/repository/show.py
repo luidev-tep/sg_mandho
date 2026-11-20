@@ -1,5 +1,4 @@
-import sqlite3
-from src.utils.conexion import Conexion
+from src.utils.conexion import Conexion, DatabaseError
 from src.users.models.user import User
 from src.utils.build_filters import BuildFilters
 
@@ -15,34 +14,37 @@ def get_all_users() -> list:
         list: Todos los registros que se encuentren en la base de datos
     """
     handlers = Conexion()
-    conn ,cursor  = handlers.conexion()
-    query = """SELECT * FROM DIM_Customer"""
-    cursor.execute(query)
-    registros = cursor.fetchall()
+    try:
+        conn, cursor = handlers.conexion()
+        query = """SELECT * FROM DIM_Customer"""
+        cursor.execute(query)
+        registros = cursor.fetchall()
+        
+        data_format = []
+        #Registros mapeados a como deben de llamarse en el frontend
+        for registro in registros:
+            #Mapeado a como se enviaran en el frontend
+            persona = {
+                "id_user": registro[0],
+                "date_id": registro[1],
+                "first_name": registro[2],
+                "second_name": registro[3],
+                "last_name": registro[4],
+                "second_last_name": registro[5],
+                "date_of_birth": registro[6],
+                "date_user_start": registro[7],
+                "date_user_end": registro[8],
+                "manzana": registro[9],
+                "street": registro[10],
+                "number_ext": registro[11]
+            }
+            data_format.append(persona)
+        print("desde show en users")
+        return data_format
+    finally:
+        handlers.close_conexion()
     
-    data_format = []
-    #Registros mapeados a como deben de llamarse en el frontend
-    for registro in registros:
-        #Mapeado a como se enviaran en el frontend
-        persona = {
-            "id_user": registro[0],
-            "date_id": registro[1],
-            "first_name": registro[2],
-            "second_name": registro[3],
-            "last_name": registro[4],
-            "second_last_name": registro[5],
-            "date_of_birth": registro[6],
-            "date_user_start": registro[7],
-            "date_user_end": registro[8],
-            "manzana": registro[9],
-            "street": registro[10],
-            "number_ext": registro[11]
-        }
-        data_format.append(persona)
-    print("desde show en users")
-    return data_format
-    
-def get_user(id_user: str)-> dict[str, str] | dict:
+def get_user(id_user: str) -> dict[str, str] | dict:
     """
     Funcion para optener la informacion de un usuario en especifico
     Args:
@@ -53,12 +55,11 @@ def get_user(id_user: str)-> dict[str, str] | dict:
 
     print(f"Id de usuario: {id_user}")
 
-    object_conection = Conexion() 
-    
+    handlers = Conexion() 
 
     try:
         # Se instancia la clase para todas las funciones  
-        conn, cursor = object_conection.conexion()
+        conn, cursor = handlers.conexion()
 
         # Usando parámetros seguros para evitar SQL injection
         query = """SELECT  
@@ -78,7 +79,6 @@ def get_user(id_user: str)-> dict[str, str] | dict:
         cursor.execute(query, (id_user,))
 
         registros = cursor.fetchall()
-        object_conection.close_conexion()
 
         if registros:  # Si se encontraron resultados
             # Tomamos el primer registro (asumiendo búsqueda por ID devuelve solo 1)
@@ -91,11 +91,11 @@ def get_user(id_user: str)-> dict[str, str] | dict:
         else:
             return {}  # O puedes lanzar una excepción si lo prefieres
     
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al realizar la consulta: {e}")
-        object_conection.close_conexion()
         return {}
-    
+    finally:
+        handlers.close_conexion()
 
 
 def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | list:
@@ -140,11 +140,12 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
         # Construcción de condiciones (se mantiene igual)
         if 'CustomerFraction' in filters and filters['CustomerFraction']:
             manzana_cond, manzana_values = handler_filters.build_manzana_condition(filters['CustomerFraction'])
-            query += f" AND ({manzana_cond})"
-            valores.extend(manzana_values)
+            if manzana_cond:
+                query += f" AND ({manzana_cond})"
+                valores.extend(manzana_values)
 
         if 'CustomerEndDate' in filters and filters['CustomerEndDate']:
-            query += " AND  p.CustomerEndDate is not 's/n'"
+            query += " AND  p.CustomerEndDate <> 's/n'"
 
         fechas_cond, fechas_values = handler_filters.add_date(filters.get("DIM_Date"))
         if fechas_cond:
@@ -180,6 +181,8 @@ def get_users_with_filters(filters: dict[str, str]) -> list[dict[str, str]] | li
     except Exception as e:
         print(f"[ERROR] Fallo al ejecutar consulta: {str(e)}")
         raise
+    finally:
+        conecion.close_conexion()
 
 
 def get_user_register_creation(dim_customer_id: str) -> str | None:
@@ -204,9 +207,7 @@ def get_user_register_creation(dim_customer_id: str) -> str | None:
             return registros[0]
         else:
             return None
-    except sqlite3.Error as e:
+    except DatabaseError as e:
         print(f"Error al realizar la consulta: {e}")
     finally:
         object_conection.close_conexion()
-
-

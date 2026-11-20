@@ -16,6 +16,7 @@ from src.dim_servicedetails.repository.create import insertar_registro
 
 
 from src.dim_servicedetails.repository.update import update_ServiceDetails
+from src.utils.conexion import Conexion
 
 class ServiceDetailsCrud:
     """Class to handle CRUD operations for service details."""
@@ -156,14 +157,14 @@ para el dim_dateid hazlo en este formato 20200101
             return 500, {}
         
     
-    def Update_dim_service_details(self, dim_service_details_id: str, dim_status_id: str) -> tuple:
+    def Update_dim_service_details(self, dim_service_details_id: str, dim_status_id: str, db: Conexion | None = None) -> tuple:
         """
         Funcion que actualiza el unico parametro modificable de dim_service_details
         el parametro que se actualizara sera el dim_statusId, ya qi epasara no usado a usado
         
         """
         
-        response = update_ServiceDetails(dim_status_id, dim_service_details_id)
+        response = update_ServiceDetails(dim_status_id, dim_service_details_id, db=db)
         
         if not response:
             return 500, "Error actualizando el servicio"
