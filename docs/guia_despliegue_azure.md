@@ -1,5 +1,13 @@
 # Despliegue de demostración en Azure
 
+> **Estado actual:** esta guía conserva instrucciones de una versión anterior y no
+> describe el despliegue existente. El servidor SQL de la demo usa autenticación
+> exclusiva de Microsoft Entra y el backend usa identidad administrada. No ejecute
+> el workflow `Deploy Azure` ni los comandos de aprovisionamiento de esta guía hasta
+> que se actualicen para esa infraestructura. La publicación actual es manual.
+> El estado de Terraform contiene datos sensibles y permanece local; no debe
+> compartirse ni añadirse a Git.
+
 ```mermaid
 flowchart LR
     U[Navegador] --> SWA[Azure Static Web Apps]
