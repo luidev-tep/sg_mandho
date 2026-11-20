@@ -1,5 +1,12 @@
 terraform {
   required_version = ">= 1.5.0"
+  backend "azurerm" {
+    resource_group_name  = "rg-community-mgmt"
+    storage_account_name = "sgcommunitytfstate536e"
+    container_name       = "tfstate"
+    key                  = "sg-community.tfstate"
+    use_azuread_auth     = true
+  }
   required_providers {
     azurerm = { source = "hashicorp/azurerm", version = "~> 4.0" }
     azapi   = { source = "Azure/azapi", version = "~> 2.0" }
@@ -48,7 +55,6 @@ resource "azurerm_user_assigned_identity" "backend" {
   location            = data.azurerm_resource_group.existing.location
 }
 
-# Demo deployment; reCAPTCHA must be configured before production use.
 resource "azurerm_container_app" "backend" {
   name                         = "ca-sg-community-api"
   container_app_environment_id = azurerm_container_app_environment.environment.id
@@ -63,9 +69,18 @@ resource "azurerm_container_app" "backend" {
     name  = "flask-secret"
     value = var.app_secret_key
   }
+  secret {
+    name                = "recaptcha-secret"
+    identity            = azurerm_user_assigned_identity.backend.id
+    key_vault_secret_id = "https://kv-sg-community-536e.vault.azure.net/secrets/recaptcha-secret"
+  }
   registry {
     server   = azurerm_container_registry.registry.login_server
     identity = "system"
+  }
+  # Image revisions are deployed by GitHub Actions, not by Terraform.
+  lifecycle {
+    ignore_changes = [template[0].container[0].image]
   }
   ingress {
     external_enabled = true
@@ -109,7 +124,11 @@ resource "azurerm_container_app" "backend" {
       }
       env {
         name  = "RECAPTCHA_ENABLED"
-        value = "false"
+        value = "true"
+      }
+      env {
+        name        = "RECAPTCHA_SECRET_KEY"
+        secret_name = "recaptcha-secret"
       }
     }
   }

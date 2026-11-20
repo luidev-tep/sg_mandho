@@ -1,112 +1,59 @@
-# Despliegue de demostración en Azure
+# Despliegue de SG Community en Azure
 
-> **Estado actual:** esta guía conserva instrucciones de una versión anterior y no
-> describe el despliegue existente. El servidor SQL de la demo usa autenticación
-> exclusiva de Microsoft Entra y el backend usa identidad administrada. No ejecute
-> el workflow `Deploy Azure` ni los comandos de aprovisionamiento de esta guía hasta
-> que se actualicen para esa infraestructura. La publicación actual es manual.
-> El estado de Terraform contiene datos sensibles y permanece local; no debe
-> compartirse ni añadirse a Git.
+La demo usa Static Web Apps, Azure Container Apps, Azure Container Registry y
+Azure SQL con autenticación exclusiva de Microsoft Entra. La aplicación accede
+a SQL mediante `uai-sg-community-backend`. El reCAPTCHA usa un secreto en
+`kv-sg-community-536e`, referenciado por la aplicación con esa identidad.
 
-```mermaid
-flowchart LR
-    U[Navegador] --> SWA[Azure Static Web Apps]
-    SWA -->|HTTPS /api| ACA[Azure Container Apps: Flask]
-    ACA -->|ODBC TLS| SQL[Azure SQL Database serverless]
-    GH[GitHub Actions] -->|Flyway| SQL
-    GH -->|imagen| ACR[Azure Container Registry]
-    ACR --> ACA
-    GH -->|dist| SWA
-```
+## Estado de Terraform
 
-## Recursos
+El backend `azurerm` almacena el estado en el contenedor privado `tfstate` de
+`sgcommunitytfstate536e`, con autenticación Entra y bloqueo de blob. El recurso
+se preparó por separado para evitar que Terraform destruya su propio backend.
+La cuenta tiene claves compartidas deshabilitadas, versionado y retención de
+eliminaciones. Conceda al operador `Storage Blob Data Contributor` en la cuenta
+de almacenamiento antes de ejecutar `terraform init`. El estado contiene datos
+sensibles: no lo descargue ni lo añada a Git. Los planes y copias locales también
+son sensibles y están ignorados por Git.
 
-Ejemplo Bash; seleccione nombres globalmente únicos y una región compatible. Revise costos y elegibilidad antes de crear recursos. La oferta gratuita requiere `--use-free-limit true`; `AutoPause` suspende al agotar el límite mensual. Consulte [Azure SQL free tier](https://learn.microsoft.com/azure/azure-sql/database/free-offer) y [sus límites](https://learn.microsoft.com/azure/azure-sql/database/free-offer-faq).
+El estado remoto y las copias históricas pueden contener el secreto Flask y la
+antigua contraseña del administrador SQL, incluso con autenticación Entra-only.
+La configuración actual todavía recibe esas variables sensibles al planificar.
+La imagen del backend se despliega por GitHub Actions y Terraform ignora cambios
+en su etiqueta para no revertirla. No aplique un plan sin revisar todos sus cambios.
 
-```bash
-az login
-az account set --subscription '<subscription-id>'
-RG=rg-sg-mandho-demo
-REGION=eastus
-SQLSERVER='<nombre-sql-unico>'
-ACR='<nombreacrúnico>'
-APP=sg-mandho-api
-SWA='<nombre-swa-unico>'
-az group create -n "$RG" -l "$REGION"
-# Lea contraseñas de forma segura en su terminal; no las incluya en el historial.
-read -rsp 'SQL admin password: ' SQL_PASSWORD; echo
-az sql server create -g "$RG" -n "$SQLSERVER" -l "$REGION" -u sqladmin -p "$SQL_PASSWORD"
-az sql db create -g "$RG" -s "$SQLSERVER" -n sg_mandho --edition GeneralPurpose --family Gen5 --capacity 2 --compute-model Serverless --use-free-limit true --free-limit-exhaustion-behavior AutoPause
-az acr create -g "$RG" -n "$ACR" --sku Basic
-az containerapp env create -g "$RG" -n sg-mandho-env -l "$REGION"
-# Crear primero con imagen pública, configurar identidad y luego desplegar la imagen propia.
-az containerapp create -g "$RG" -n "$APP" --environment sg-mandho-env --image mcr.microsoft.com/k8se/quickstart:latest --target-port 5000 --ingress external --min-replicas 1
-az containerapp identity assign -g "$RG" -n "$APP" --system-assigned
-PRINCIPAL=$(az containerapp identity show -g "$RG" -n "$APP" --query principalId -o tsv)
-ACR_ID=$(az acr show -g "$RG" -n "$ACR" --query id -o tsv)
-az role assignment create --assignee-object-id "$PRINCIPAL" --assignee-principal-type ServicePrincipal --role AcrPull --scope "$ACR_ID"
-az containerapp registry set -g "$RG" -n "$APP" --server "$ACR.azurecr.io" --identity system
-az staticwebapp create -g "$RG" -n "$SWA" -l "$REGION" --sku Free
-```
+## Secretos
 
-La asignación de roles puede tardar en propagarse. La identidad administrada necesita `AcrPull` para descargar la imagen ([documentación](https://learn.microsoft.com/azure/container-apps/managed-identity-image-pull)). Configure reglas de firewall de SQL para las IP autorizadas; el runner hospedado de GitHub tiene IP variable, por lo que se requiere conectividad explícita (por ejemplo runner privado con acceso de red). Configure el acceso de la Container App a SQL y el DNS. No exponga SQL indiscriminadamente.
+El secreto `recaptcha-secret` de Key Vault se referencia sin versión mediante
+la identidad administrada del backend. `RECAPTCHA_ENABLED=true` y
+`RECAPTCHA_SECRET_KEY` apunta al secreto de Container Apps, no al valor en Git.
+La clave de sitio es pública y se incluye durante la compilación del frontend.
+Autorice cada dominio utilizado en la consola de Google reCAPTCHA.
 
-Antes del primer despliegue, configure en Container Apps los secretos y variables: `SECRET_KEY`, `DB_SERVER=<servidor>.database.windows.net,1433`, `DB_NAME=sg_mandho`, `DB_USER`, `DB_PASSWORD`, `DB_ENCRYPT=yes`, `DB_TRUST_CERT=no`, `DB_TRUSTED_CONNECTION=no`, `URL_FRONTEND=https://<dominio-swa>`, `RECAPTCHA_ENABLED=true` y `RECAPTCHA_SECRET_KEY`. Guarde contraseñas como secretos de Container Apps y use referencias `secretref:`; no las incluya en archivos versionados ni argumentos visibles en procesos. `DB_DRIVER` usa Driver 18 por defecto en la imagen. Defina probes HTTP `/health` en puerto 5000 en la configuración de Container Apps: el `HEALTHCHECK` de Docker por sí solo no configura probes de Container Apps.
+## Despliegue
 
-## GitHub Actions
+El workflow manual `Deploy Azure` usa OpenID Connect con la identidad
+`uai-sg-community-github`, limitada a `main`. Primero ejecuta Flyway con Entra;
+solo si la migración pasa construye la imagen, actualiza Container Apps y
+publica el frontend. Requiere conectividad del runner a Azure SQL y un usuario
+de base de datos para la identidad de despliegue. Las variables de GitHub
+identifican la suscripción, los recursos y la clave pública; el token de
+publicación de Static Web Apps está en GitHub Secrets. No se emplea una
+contraseña SQL ni un secreto de cliente Entra.
 
-El flujo se inicia manualmente. Para habilitar push a main, descomente el bloque en el workflow después de configurar y comprobar el acceso.
+El despliegue automático debe validarse con una ejecución manual antes de
+considerarlo operativo. Mantenga el historial de migraciones y no ejecute un
+baseline automático sobre una base existente.
 
-| Tipo | Nombre | Contenido |
-|---|---|---|
-| Secret | `AZURE_CREDENTIALS` | JSON del service principal para azure/login |
-| Secret | `AZURE_SQL_JDBC_URL` | `jdbc:sqlserver://<servidor>.database.windows.net:1433;database=sg_mandho;encrypt=true;trustServerCertificate=false` |
-| Secret | `AZURE_SQL_USER` | Usuario SQL para migraciones |
-| Secret | `AZURE_SQL_PASSWORD` | Contraseña SQL |
-| Secret | `AZURE_STATIC_WEB_APPS_API_TOKEN` | Token de despliegue de Static Web Apps |
-| Variable | `AZURE_RESOURCE_GROUP` | Grupo de recursos |
-| Variable | `AZURE_ACR_NAME` | Nombre de ACR sin dominio |
-| Variable | `AZURE_CONTAINER_APP_NAME` | Nombre de Container App |
-| Variable | `VITE_API_URL` | `https://<app>/api/` |
-| Variable | `VITE_RECAPTCHA_SITE_KEY` | Clave pública de reCAPTCHA |
-| Variable | `VITE_RECAPTCHA_ENABLED` | `true` o `false` |
+## Usuarios demo
 
-Un administrador con permiso para asignar roles puede crear un principal limitado al grupo (proteja la salida JSON):
+`backend/scripts/seed_demo_azure.py` inserta seis administradores y datos
+sintéticos; exige `DEMO_ADMIN_PASSWORD` en el entorno, de al menos ocho
+caracteres. Los seis usuarios comparten esa contraseña. Repetir el seed no
+actualiza contraseñas existentes. Ejecútelo únicamente contra una base demo
+migrada, con acceso Entra y conectividad autorizada temporalmente. Las cuentas
+sembradas son válidas para 2026. No incluya contraseñas en Git, logs ni chat.
 
-```bash
-SUB=$(az account show --query id -o tsv)
-az ad sp create-for-rbac --name sg-mandho-github --role Contributor --scopes "/subscriptions/$SUB/resourceGroups/rg-sg-mandho-demo" --sdk-auth
-```
-
-Copie el JSON completo a `AZURE_CREDENTIALS`; el rol no concede acceso a otros grupos. Alternativamente configure OIDC y adapte `azure/login` al identificador de cliente y tenant. Obtenga el token de SWA con `az staticwebapp secrets list -g "$RG" -n "$SWA"` sin imprimirlo en logs públicos. Flyway usa `backend/db/flyway.toml`; el bootstrap Python es para bases de demostración y no crea historial Flyway: para producción use Flyway desde el inicio. No haga baseline de una base parcial.
-
-## Datos ficticios
-
-Después de migrar una base de demo, configure las variables `DB_*` del perfil Azure en `backend/.env` o en el entorno, incluyendo Driver 18. En PowerShell:
-
-```powershell
-$env:DEMO_ADMIN_PASSWORD = Read-Host 'Contraseña demo (mínimo 8 caracteres)'
-.\backend\venv\Scripts\python.exe backend\scripts\seed_demo_azure.py
-Remove-Item Env:DEMO_ADMIN_PASSWORD
-```
-
-Las seis cuentas comparten la contraseña proporcionada por el operador; vuelva a usar la misma al repetir el seed. No se actualiza la contraseña de cuentas existentes.
-
-| Usuario | Rol | Servicio | Manzana |
-|---|---|---|---|
-| demo_delegado | delegado | delegado | centro |
-| demo_agua | comitiva | agua | tepetate |
-| demo_feria | comitiva | feria | garambullo |
-| demo_panteon | comitiva | panteon | yhonda |
-| demo_delegacion | comitiva | delegacion | centro |
-| demo_subdelegado | subdelegado | personas | cerritos |
-
-Las cuentas de demostración son vigentes únicamente durante 2026; para otros años será necesario actualizar los datos de prueba. Los datos generados son ficticios.
-
-## Día del congreso
-
-- Verifique si la oferta y configuración permiten desactivar la pausa automática de inactividad (`az sql db update -g "$RG" -s "$SQLSERVER" -n sg_mandho --auto-pause-delay -1`). El límite gratuito mensual y su comportamiento son independientes; mantener la base activa puede generar cargos o encontrar restricciones de la oferta. Consulte la documentación antes de cambiarlo.
-- Mantenga al menos una réplica: `az containerapp update -g "$RG" -n "$APP" --min-replicas 1`.
-- Abra `https://<app>/health` y confirme `status=ok`, `database=up`.
-- Confirme que el dominio de Static Web Apps esté autorizado en Google reCAPTCHA y que la clave pública y secreta correspondan.
-- Ejecute un inicio de sesión de prueba y revise el presupuesto y la conectividad de SQL.
+Después de desplegar, verifique `/health`, el inicio de sesión con reCAPTCHA,
+la navegación, los pagos y las analíticas. Para validar el arranque en frío,
+compruebe además la respuesta después de la pausa de SQL y Container Apps.
